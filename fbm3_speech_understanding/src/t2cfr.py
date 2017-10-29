@@ -321,7 +321,7 @@ def get_actions_by_verb():
     return actions_by_verb
 
 pub_topic = 'CFR_Out'
-sub_topic = "Text_4_CFR"
+sub_topic = "/hearts/stt"
 
 # zeke's key:
 #textrazor.api_key = "9a7bb531e0ea81b43e8fba17a517152d4d016847ab88a63a54c6cb36"
