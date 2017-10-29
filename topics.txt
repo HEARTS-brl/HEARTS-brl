@@ -1,0 +1,2 @@
+speech-to-text: /hearts/stt (std_msgs/String)
+text-to-speech: /hearts/tts (std_msgs/String)  

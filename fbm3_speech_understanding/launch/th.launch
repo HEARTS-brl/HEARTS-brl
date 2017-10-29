@@ -1,0 +1,18 @@
+<launch>
+    <param name='SR_DATAPATHOUT' value='/home/turtlebot/Documents/BRL_speech_results/' />
+    <param name='SR_VERBSFILE' value='/home/turtlebot/tb_ws/src/hearts/speech_recognition/scripts/TrainingDatasetVerbs.csv' />
+    <param name='SR_GROUNDTRUTH' value='/home/turtlebot/tb_ws/src/hearts/speech_recognition/data_in/CFR/ground_truth.csv' />
+    <!-- if SR_SRL_AUDIOPATH is defined then SR_BRL_AUDIO_DIR is ignored.  -->
+    <param name='SR_BRL_AUDIO_DIR' value='/home/turtlebot/Documents/uwe/rockin_audiofiles1.2/' />
+    <param name='SR_ERL_AUDIO_DIR' value='/home/turtlebot/tb_ws/src/data/lisbon_2017_test/fbm3_run1/' />
+    <node name='SR_TH' pkg='fbm3_speech_understanding' type='th.py' output='screen' />
+    <node name='SR_T2CFR' pkg='fbm3_speech_understanding' type='t2cfr.py' output='screen' />
+    <include file="$(find hearts_stt)/launch/hearts_stt.launch">
+        <arg name="SR_speechrec_engine" value="google_cloud" />
+        <arg name="SR_TH" value="TH" />
+        <arg name="SR_GCP_KEYWORDSFILE" value="/home/turtlebot/tb_ws/src/brl-hearts/hearts_stt/data_in/CFR/gcp_keywords_vb.txt" />
+        <arg name="SR_ERL_DATAPATHOUT" value="/home/turtlebot/Documents/ERL_speech_results/" />
+        <arg name="SR_ENERGY_THRESHOLD" value="1000" />
+        <arg name="listen" value="" />
+    </include>
+</launch>

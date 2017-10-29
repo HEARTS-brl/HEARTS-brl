@@ -1,0 +1,5 @@
+<launch>
+  <include file="$(find hearts_tts)/launch/hearts_tts.launch" />
+  <!-- <node name="rostopic" pkg="rostopic" type="rostopic" args="pub /hearts/tts std_msgs/String testing" /> -->
+  <node name="tts_test" pkg="hearts_tts" output="screen" type="tts_test.py" /> 
+</launch>
