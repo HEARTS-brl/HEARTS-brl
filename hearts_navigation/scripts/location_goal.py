@@ -15,14 +15,15 @@ class Location():
     def __init__(self):
 
         # Load the location data
-        self.dict = json.load(open('/home/turtlebot/workspace/src/main/hearts_nav/conf/locations.json'))
+        self.locations_file_path = '~/tb_ws/src/brl-hearts/hearts_navigation/data/locations.json'
+        self.load_dict()
         self.var = rospy.Time.now()
 
         # Set up publishers
-        self.pubCurrent = rospy.Publisher('hearts/nav/location/current', String, queue_size=10)
-        self.pubGoal = rospy.Publisher('hearts/nav/pose/goal', PoseStamped, queue_size=10)
+        self.pubCurrent = rospy.Publisher('hearts/navigation/pose/location', String, queue_size=10)
+        self.pubGoal = rospy.Publisher('/hearts/navigation/goal', PoseStamped, queue_size=10)
 
-        rospy.Subscriber("hearts/nav/location/goal", String, self.locGoal_callback)
+        rospy.Subscriber("hearts/navigation/goal/location", String, self.locGoal_callback)
         rospy.Subscriber("move_base_simple/current_pose", Pose, self.currentPose_callback)
 
         self.loop()
@@ -33,7 +34,7 @@ class Location():
         self.find_current_location()
 
     def load_dict(self):
-        self.dict = json.load(open('/home/turtlebot/workspace/src/main/hearts_nav/conf/locations.json'))
+        self.dict = json.load(open(self.locations_file_path))
 
     def clicked_callback(self, data):
         print data.data

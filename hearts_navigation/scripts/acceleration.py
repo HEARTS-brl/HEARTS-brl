@@ -18,15 +18,17 @@ class Acc():
 
         self.halt = False
 
-        self.pubVel = rospy.Publisher('cmd_vel_mux/input/teleop', Twist, queue_size=10)
+        # todo; define these in the launch file
+        # for turtlebot, use cmd_vel_mux/input/teleop
+        self.pubVel = rospy.Publisher('/key_vel', Twist, queue_size=10)
 
         self.accLinearStep = 0.055
         self.accAngularStep = 0.055
 
         self.currentTwist = Twist()
 
-        rospy.Subscriber("hearts/input/teleop", Twist, self.inputCallback)
-        rospy.Subscriber("hearts/stop", String, self.haltCallback)
+        rospy.Subscriber("/hearts/input/teleop", Twist, self.inputCallback)
+        rospy.Subscriber("/hearts/navigation/stop", String, self.haltCallback)
 
     def haltCallback(self, data):
 
@@ -51,9 +53,9 @@ class Acc():
         else:
             self.currentTwist.angular.z = data.angular.z
 
-        if(self.halt == True):
-            self.currentTwist.linear.x = 0
-            self.currentTwist.angular.z = 0
+        #if(self.halt == True):
+        #    self.currentTwist.linear.x = 0
+        #    self.currentTwist.angular.z = 0
 
         self.pubVel.publish(self.currentTwist)
 

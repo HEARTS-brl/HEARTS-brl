@@ -19,13 +19,13 @@ class Navigator():
 
         self.pubGoal = rospy.Publisher('/move_base_simple/goal', PoseStamped, queue_size=1)
 
-        self.pubStatus = rospy.Publisher('/hearts/navigator/status', String, queue_size=1)
-        self.pubPose = rospy.Publisher('/hearts/navigator/current', String, queue_size=1)
+        self.pubStatus = rospy.Publisher('/hearts/navigation/status', String, queue_size=1)
+        self.pubPose = rospy.Publisher('/hearts/navigation/current', String, queue_size=1)
 
         rospy.Subscriber('move_base/status', GoalStatusArray, self.StatusCallback)   # Get status of plan
 
-        rospy.Subscriber('hearts/navigator/goal', Pose2D, self.goalCallback)
-        rospy.Subscriber('hearts/stop', String, self.stopCallback)
+        rospy.Subscriber('hearts/navigation/goal', Pose2D, self.goalCallback)
+        rospy.Subscriber('hearts/navigation/stop', String, self.stopCallback)
 
     def goalCallback(self, data):
 

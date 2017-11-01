@@ -1,2 +1,10 @@
-speech-to-text: /hearts/stt (std_msgs/String)
-text-to-speech: /hearts/tts (std_msgs/String)  
+navigation goal (pub):          /hearts/navigation/goal (geometry_msgs/Pose2D)
+navigation goal location (pub): /hearts/navigation/goal/location (std_msgs/String)
+navigation status (sub):        /hearts/navigation/status (std_msgs/String)
+navigation stop (pub):          /hearts/navigation/stop (std_msgs/String)
+navigation pose location (sub): /hearts/navigation/pose/location
+navigation pose (sub):          /hearts/navigation/pose
+navigation wander (sub):        /hearts/controller/routine (std_msgs/String) = wander
+speech-to-text (sub):           /hearts/stt (std_msgs/String)
+teleop (pub):                   /hearts/input/teleop
+text-to-speech (pub):           /hearts/tts (std_msgs/String)

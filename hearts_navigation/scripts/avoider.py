@@ -16,8 +16,10 @@ class Avoid():
         # Publisher for object detected in front
         # currently publishing "True" / "False"
         # @TODO: publish the angles and/or distances
-        self.pubHalt = rospy.Publisher('hearts/stop', String, queue_size=10)
-        self.pubVel = rospy.Publisher('cmd_vel_mux/input/teleop', Twist, queue_size=10)
+        self.pubHalt = rospy.Publisher('/hearts/navigation/stop', String, queue_size=10)
+        # todo; define these in the launch file
+        # for turtlebot, use cmd_vel_mux/input/teleop
+        self.pubVel = rospy.Publisher('/key_vel', Twist, queue_size=10)
         # Distance threshold, something <= this will cause a msg to send
         self.avoidMinDistance = 0.0 # 0.5 meters
         self.avoidMaxDistance = 0.3 # 0.5 meters
@@ -29,7 +31,8 @@ class Avoid():
         self.stopTimeLimit = 100
         self.stopTurnLimit = 100
         # Reading the laser scan msg for object detection
-        rospy.Subscriber("laser_scan", LaserScan, self.scanCallback)
+        # for turtlebot, use laser_scan topic
+        rospy.Subscriber("scan", LaserScan, self.scanCallback)
 
         self.haltFlag = False
         self.timer = 0
@@ -97,7 +100,6 @@ class Avoid():
 
         for r in data.ranges:
         #for r in range(start, end):
-        
             if i >= self.start and i <= self.end:
                 if r >= self.avoidMinDistance and r <= self.avoidMaxDistance:
                     #print "Object at: " + str(i * data.angle_increment)

@@ -13,7 +13,7 @@ class JoyNode():
         self.isJoy = False
 
         self.pubJoy = rospy.Publisher('hearts/input/teleop', Twist, queue_size=1)
-        self.pubHalt = rospy.Publisher('hearts/stop', String, queue_size=10)
+        self.pubHalt = rospy.Publisher('hearts/navigation/stop', String, queue_size=10)
         self.pubVel = rospy.Publisher('cmd_vel_mux/input/teleop', Twist, queue_size=10)
 
         rospy.Subscriber('joy', Joy, self.joystickCallback)

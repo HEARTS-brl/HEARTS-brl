@@ -23,7 +23,7 @@ class Wander():
 
         # @TODO publish to own cmd_vel_mux msg.
         self.pubVel = rospy.Publisher('hearts/input/teleop', Twist, queue_size=10)
-        rospy.Subscriber("hearts/stop", String, self.haltCallback)
+        rospy.Subscriber("hearts/navigation/stop", String, self.haltCallback)
 
         # These limit the speed of the robot / weighted
         self.linearSpeed = 0.2
@@ -63,7 +63,7 @@ class Wander():
             # Clear temp twist msg every time.
             t = Twist()
             # Move forward if there is nothing detected, turn if there is:
-            if(self.halt == False):
+            if (self.halt == False):
                 print "Forward"
                 t.linear.x = 1.0
                 # @TODO add inverse releationship between object distance & speed
