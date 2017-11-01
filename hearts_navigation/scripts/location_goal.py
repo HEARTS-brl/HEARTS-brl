@@ -15,7 +15,8 @@ class Location():
     def __init__(self):
 
         # Load the location data
-        self.locations_file_path = '~/tb_ws/src/brl-hearts/hearts_navigation/data/locations.json'
+        #self.locations_file_path = '/home/tb_ws/src/brl-hearts/hearts_navigation/data/locations.json' ### path may need to be edited ###
+        self.locations_file_path = '/home/hearts/tb_ws/src/brl-hearts/hearts_navigation/data/locations.json' ### path may need to be edited ###
         self.load_dict()
         self.var = rospy.Time.now()
 
