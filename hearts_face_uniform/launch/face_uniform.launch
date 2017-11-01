@@ -1,0 +1,4 @@
+<launch>
+  <node name="face_uniform" pkg="face_uniform" type="face_uniform" />
+  <node name="bristol_camera" pkg="bristol_camera" type="camera.bash" />
+</launch>

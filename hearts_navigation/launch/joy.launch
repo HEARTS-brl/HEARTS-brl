@@ -1,0 +1,11 @@
+<launch>
+
+  <param name="joy_node/dev" value="/dev/input/js1" />
+  <node name="joy" pkg="joy" type="joy_node" />
+
+  <node name="ps4_ros" pkg="ps4_ros" type="ps4_ros" />
+  <node name="hearts_avoider" pkg="hearts_navigation" type="avoider.py" />
+  <node name="hearts_acceleration" pkg="hearts_navigation" type="acceleration.py" />
+  <!--<node name="hearts_joy" pkg="hearts_navigation" type="joy.py" /> -->
+
+</launch>

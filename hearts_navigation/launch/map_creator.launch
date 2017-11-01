@@ -1,0 +1,7 @@
+<launch>
+
+  <node name="hearts_acceleration" pkg="hearts_navigation" type="acceleration.py" />
+  <node name="hearts_avoider" pkg="hearts_navigation" type="avoider.py" />
+  <node name="hearts_wanderer" pkg="hearts_navigation" type="wanderer.py" />
+
+</launch>

@@ -1,0 +1,31 @@
+
+MODES:
+
+Mapping mode:
+	rosservice call /pal_navigation_sm "input: 'MAP'"
+
+Navigation mode(default):
+	rosservice call /pal_navigation_sm "input: 'LOC'"
+
+
+
+Mapping:
+
+1. Put in mapping mode
+2. Saving the map:
+	rosrun map_server map_saver
+		OR
+	rosservice call /pal_map_manager/save_map "directory: '<map_name>'"   (preferable?)
+
+
+Select Map(to navigate)
+	rosservice call /pal_map_manager/change_map "input: '<map_name>'"
+	rosservice call /pal_map_manager/change_map "input: 'HouseCompetitionBRL1'"
+
+
+*Localisation and path planning automatically started on boot up
+
+To use rviz:
+	rosrun rviz rviz -d 'rospack find tiago_2dnav' /config/rviz/navigation.rviz
+	
+

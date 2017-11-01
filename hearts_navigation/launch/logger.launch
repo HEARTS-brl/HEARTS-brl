@@ -1,0 +1,12 @@
+<launch>
+
+  <node name="rosbag_erl" pkg="rosbag" type="record"
+        args="-o /tmp/FBMH2_Hearts_.bag
+        /amcl_pose
+        /move_base/NavfnROS/plan
+        /move_base/DWAPlannerROS/local_plan
+        /move_base/DWAPlannerROS/global_plan
+        /scan
+        /tf" />
+
+</launch>
