@@ -15,14 +15,17 @@ class Location():
     def __init__(self):
 
         # Load the location data
-        #self.locations_file_path = '/home/tb_ws/src/brl-hearts/hearts_navigation/data/locations.json' ### path may need to be edited ###
-        self.locations_file_path = '/home/hearts/tb_ws/src/brl-hearts/hearts_navigation/data/locations.json' ### path may need to be edited ###
+###### path may need to be edited #####
+        self.locations_file_path = '/home/assistedliving/workspaces/tb_ws/src/brl-hearts/hearts_navigation/data/locations.json'  # assisted living small HP laptop
+        #self.locations_file_path = '/home/tb_ws/src/brl-hearts/hearts_navigation/data/locations.json' 
+        #self.locations_file_path = '/home/hearts/tb_ws/src/brl-hearts/hearts_navigation/data/locations.json' 
+        
         self.load_dict()
         self.var = rospy.Time.now()
 
         # Set up publishers
         self.pubCurrent = rospy.Publisher('hearts/navigation/pose/location', String, queue_size=10)
-        self.pubGoal = rospy.Publisher('/hearts/navigation/goal', PoseStamped, queue_size=10)
+        self.pubGoal = rospy.Publisher('/hearts/navigation/goal', PoseStamped, queue_size=10) ### problem here? ###
 
         rospy.Subscriber("hearts/navigation/goal/location", String, self.locGoal_callback)
         rospy.Subscriber("move_base_simple/current_pose", Pose, self.currentPose_callback)
