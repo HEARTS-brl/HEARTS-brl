@@ -1,0 +1,9 @@
+<launch>
+    <node name="set_nav_mode" pkg="rosservice" type="rosservice" args="call /pal_navigation_sm 'input: LOC'" output="screen" />
+    <node name="hearts_avoider" pkg="hearts_navigation" type="avoider.py" output="screen" />
+    <node name="hearts_navigator" pkg="hearts_navigation" type="navigator.py" output="screen" />
+    <node name="hearts_location_goal" pkg="hearts_navigation" type="location_goal.py" output="screen" />
+    <include file="$(find hearts_navigation)/launch/logger.launch">
+         <arg name="o" value="/tmp/hearts_navigation_log.bag" />
+    </include>
+</launch>

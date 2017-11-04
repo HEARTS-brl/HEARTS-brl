@@ -1,12 +1,11 @@
 <launch>
-
+  <arg name="o" default="/tmp/hearts_log.bag" />
   <node name="rosbag_erl" pkg="rosbag" type="record"
-        args="-o /tmp/FBMH2_Hearts_.bag
+        args="-o $(arg o)
         /amcl_pose
         /move_base/NavfnROS/plan
         /move_base/DWAPlannerROS/local_plan
         /move_base/DWAPlannerROS/global_plan
         /scan
         /tf" />
-
 </launch>
