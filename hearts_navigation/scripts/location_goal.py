@@ -32,7 +32,9 @@ class Location():
 
     def load_dict(self):
         # todo: path as ros param
-        self.dict = json.load(open('/home/turtlebot/tb_ws/src/brl-hearts/hearts_navigation/data/locations.json'))
+        json_name = rospy.get_param('locations_json')
+        with open(json_name) as json_data:
+            self.dict = json.load(json_data)
 
     def clicked_callback(self, data):
         print data.data
