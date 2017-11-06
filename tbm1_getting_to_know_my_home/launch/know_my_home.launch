@@ -1,8 +1,8 @@
 <launch>
   <node name="know_my_home" pkg="tbm1_getting_to_know_my_home" type="know_my_home_controller.py" />
-  <!-- <include file="$(find hearts_stt)/launch/hearts_stt.launch"/> -->
+  <include file="$(find hearts_stt)/launch/hearts_stt.launch"/>
   <include file="$(find hearts_tts)/launch/hearts_tts.launch"/>
-  <node name="location_goal" pkg="hearts_navigation" type="location_goal.py" />
-  <node name="nav_goal_pub" pkg="hearts_navigation" type="navigator.py" />
+  <!--<node name="location_goal" pkg="hearts_navigation" type="location_goal.py" />-->
+  <!--<node name="nav_goal_pub" pkg="hearts_navigation" type="navigator.py" />-->
 
 </launch>
