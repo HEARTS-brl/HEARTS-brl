@@ -30,3 +30,5 @@ To use rviz:
 	rosrun rviz rviz -d 'rospack find tiago_2dnav' /config/rviz/navigation.rviz
 	
 
+
+publish to /tab_vel a Twist_msg to turn/forward
