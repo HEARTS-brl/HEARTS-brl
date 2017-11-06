@@ -11,3 +11,6 @@ The code in this repository consists of ROS (indigo) packages written for the TI
 _tiago ssh details_
 name: pal@tiago-25c
 password: pal
+
+ssh pal@tiago-25c
+scp [-r] pal@tiago-25c:<remote> <local>

@@ -1,5 +1,3 @@
-(run these whilst ssh'd to tiago!)
-
 MODES:
 
 Mapping mode:

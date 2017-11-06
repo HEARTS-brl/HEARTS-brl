@@ -1,5 +1,0 @@
-<launch>
-  <node name="hearts_acceleration" pkg="hearts_navigation" type="acceleration.py" output="screen" />
-  <node name="hearts_avoider" pkg="hearts_navigation" type="avoider.py" output="screen" />
-  <node name="hearts_wanderer" pkg="hearts_navigation" type="wanderer.py" output="screen" />
-</launch>

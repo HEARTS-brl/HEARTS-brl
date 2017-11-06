@@ -1,0 +1,10 @@
+<launch>
+    <node name="set_nav_mode" pkg="rosservice" type="rosservice" args="call /pal_navigation_sm 'input: MAP'" output="screen" />
+    
+    <!-- exploration not currently working, consider using frontier_exploration package 
+         (http://wiki.ros.org/frontier_exploration) instead, for now mapping must be 
+         performed manually -->
+    <!-- <node name="hearts_acceleration" pkg="hearts_navigation" type="acceleration.py" output="screen" /> -->
+    <!-- <node name="hearts_avoider" pkg="hearts_navigation" type="avoider.py" output="screen" /> -->
+    <!-- <node name="hearts_wanderer" pkg="hearts_navigation" type="wanderer.py" output="screen" /> -->
+</launch>

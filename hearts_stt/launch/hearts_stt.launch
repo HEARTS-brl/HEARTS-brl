@@ -4,11 +4,11 @@
     <!-- determines whether audio is supplied from microphone ('') or audio file ('TH') -->
     <arg name="SR_TH" default="" />
     <!-- used to generate wav files e.g. wav out path -->
-    <arg name="SR_ERL_DATAPATHOUT" default="/home/turtlebot/Documents/ERL_speech_results" />
+    <arg name="SR_ERL_DATAPATHOUT" default=" $(find hearts_stt)/temp/" />
     <!-- used to configure listening energy threshold -->
     <arg name="SR_ENERGY_THRESHOLD" default="1000" />
     <!-- keywords for google -->
-    <arg name="SR_GCP_KEYWORDSFILE" default="/home/turtlebot/tb_ws/src/brl-hearts/speech_recognition/data_in/CFR/gcp_keywords_vb.txt" />
+    <arg name="SR_GCP_KEYWORDSFILE" default="$(find hearts_stt)/data_in/CFR/gcp_keywords_vb.txt" />
     <!-- Used in microphone mode: default is to listen continuously="", or to wait on keystoke="listen" -->
     <arg name="listen" default="" />
     

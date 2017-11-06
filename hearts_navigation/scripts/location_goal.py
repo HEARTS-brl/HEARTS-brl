@@ -3,8 +3,7 @@
 # https://github.com/studioimaginaire/phue
 
 import rospy
-import time
-from geometry_msgs.msg import PoseStamped, Pose
+from geometry_msgs.msg import PoseStamped, Pose, Pose2D
 from std_msgs.msg import String
 import json
 
@@ -15,14 +14,11 @@ class Location():
     def __init__(self):
 
         # Load the location data
-        #self.locations_file_path = '/home/tb_ws/src/brl-hearts/hearts_navigation/data/locations.json' ### path may need to be edited ###
-        self.locations_file_path = '/home/hearts/tb_ws/src/brl-hearts/hearts_navigation/data/locations.json' ### path may need to be edited ###
         self.load_dict()
-        self.var = rospy.Time.now()
-
+       
         # Set up publishers
         self.pubCurrent = rospy.Publisher('hearts/navigation/pose/location', String, queue_size=10)
-        self.pubGoal = rospy.Publisher('/hearts/navigation/goal', PoseStamped, queue_size=10)
+        self.pubGoal = rospy.Publisher('/hearts/navigation/goal', Pose2D, queue_size=10)
 
         rospy.Subscriber("hearts/navigation/goal/location", String, self.locGoal_callback)
         rospy.Subscriber("move_base_simple/current_pose", Pose, self.currentPose_callback)
@@ -35,7 +31,8 @@ class Location():
         self.find_current_location()
 
     def load_dict(self):
-        self.dict = json.load(open(self.locations_file_path))
+        # todo: path as ros param
+        self.dict = json.load(open('/home/turtlebot/tb_ws/src/brl-hearts/hearts_navigation/data/locations.json'))
 
     def clicked_callback(self, data):
         print data.data
@@ -86,19 +83,10 @@ class Location():
 
         try:
             print self.dict[location_name]
-            goal = PoseStamped()
-
-            goal.header.stamp = rospy.Time.now()
-            goal.header.frame_id = "/map"
-
-            goal.pose.position.x = self.dict[location_name]["pose"]["position"]["x"]
-            goal.pose.position.y = self.dict[location_name]["pose"]["position"]["y"]
-            goal.pose.position.z = self.dict[location_name]["pose"]["position"]["z"]
-
-            goal.pose.orientation.x = self.dict[location_name]["pose"]["orientation"]["x"]
-            goal.pose.orientation.y = self.dict[location_name]["pose"]["orientation"]["y"]
-            goal.pose.orientation.z = self.dict[location_name]["pose"]["orientation"]["z"]
-            goal.pose.orientation.w = self.dict[location_name]["pose"]["orientation"]["w"]
+            goal = Pose2D()
+            goal.x = self.dict[location_name]["x"]
+            goal.y = self.dict[location_name]["y"]
+            goal.theta = self.dict[location_name]["theta"]
 
             return goal
         except:
@@ -112,7 +100,7 @@ class Location():
         currentPose = self.current_pose
         location = ''
         for i in self.dict:
-            if(self.dict[i]["pose"]["position"] == currentPose):
+            if (self.dict[i]["x"] == currentPose.position.x and self.dict[i]["y"] == currentPose.position.y):
                 location = i
 
         return location
