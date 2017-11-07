@@ -29,4 +29,4 @@ To use rviz:
 	
 
 
-publish to /tab_vel a Twist_msg to turn/forward
+publish to /tab_vel a Twist_msg to turn, move forward etc

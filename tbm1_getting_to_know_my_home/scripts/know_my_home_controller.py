@@ -15,9 +15,13 @@ class Controller():
         #self.pubGoal = rospy.Publisher('/hearts/navigation/goal', PoseStamped, queue_size=10)
         self.pub_talk = rospy.Publisher('/hearts/tts', String, queue_size = 10)
 
-        # Subscribers - must listen for speech, location
+        # Subscribers - must listen for speech commands, location
+        
         rospy.Subscriber("hearts/navigation/goal/location", String, self.locGoal_callback)
+        
+        #reading in speech commands
         rospy.Subscriber("/hearts/stt", String, self.hearCommand_callback)
+        
         self.items = ['thing1','thing2','etc']
         self.tbm1_commands_dict = {
             "move": ["forward", "backward"],
