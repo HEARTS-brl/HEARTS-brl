@@ -1,0 +1,3 @@
+<launch>
+    <node name="ipcam" pkg="brl_ipcam" type="ipcam_node.py" output="screen" args="1" />
+</launch>

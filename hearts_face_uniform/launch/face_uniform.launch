@@ -1,4 +1,0 @@
-<launch>
-  <node name="hearts_face_uniform" pkg="hearts_face_uniform" type="hearts_face_uniform" />
-  <node name="bristol_camera" pkg="bristol_camera" type="camera.bash" />
-</launch>

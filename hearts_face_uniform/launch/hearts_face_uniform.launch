@@ -1,0 +1,3 @@
+<launch>
+  <node name="hearts_face_uniform" pkg="hearts_face_uniform" type="hearts_face_uniform" output="screen" />
+</launch>

@@ -1,0 +1,8 @@
+{
+   "1":
+      {
+         "ip":"http://192.168.0.100/snapshot.cgi?user=",
+         "name":"front_door",
+         "type":"snapshot"
+      }
+}
