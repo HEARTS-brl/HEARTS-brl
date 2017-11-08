@@ -8,3 +8,4 @@ navigation wander (sub):        /hearts/controller/routine (std_msgs/String) = w
 speech-to-text (sub):           /hearts/stt (std_msgs/String)
 teleop (pub):                   /hearts/input/teleop
 text-to-speech (pub):           /hearts/tts (std_msgs/String)
+camera save snapshot (pub):     /hearts/camera/snapshot (std_msgs/String)

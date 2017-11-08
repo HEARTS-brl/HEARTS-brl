@@ -1,0 +1,7 @@
+<launch>
+    <arg name="input_topic" default="/xtion/rgb/image_raw/compressed" />
+    <arg name="output_path" default="$(find hearts_camera_saver)/data" />
+    <param name="input_topic" value="$(arg input_topic)" />
+    <param name="output_path" value="$(arg output_path)" />
+    <node name="hearts_camera_saver" pkg="hearts_camera_saver" type="save_cam_images.py" output="screen" />
+</launch>
