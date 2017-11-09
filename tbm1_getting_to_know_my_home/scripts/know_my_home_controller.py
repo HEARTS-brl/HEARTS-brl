@@ -20,16 +20,16 @@ import rospy
 import time
 from std_msgs.msg import String
 from std_msgs.msg import Empty
-from geometry_msgs.msg import Pose2D, Twist
+from geometry_msgs.msg import Pose2D, Twist, PoseStamped
 
 class Controller():
     def __init__(self):
         
         # Publishers - sends out goal locations, movement/turns, and speech
         self.pub_task = rospy.Publisher('hearts/controller/task', String, queue_size=10)
-        self.pubGoal = rospy.Publisher('/hearts/navigation/goal', PoseStamped, queue_size=10)
+        self.pubGoal = rospy.Publisher('hearts/navigation/goal/location', String, queue_size=10)
         self.pub_talk = rospy.Publisher('/hearts/tts', String, queue_size = 10)
-        self.pub_pic = rospy.Publisher('/hearts/picture', String queue_size = 10)
+        self.pub_pic = rospy.Publisher('/hearts/camera/snapshot', String, queue_size = 10)
         
         #self.pub_move = rospy.Publisher('/hearts/controller/move', Twist, queue_size = 10)        
         self.pub_move = rospy.Publisher('/turtle1/cmd_vel', Twist, queue_size = 10)
@@ -37,6 +37,8 @@ class Controller():
         # Subscribers - must listen for speech commands, location
         #rospy.Subscriber("hearts/navigation/goal/location", String, self.locGoal_callback)
         rospy.Subscriber("/hearts/stt", String, self.hearCommand_callback)
+
+        self.outfolder = rospy.get_param('output_folder')
         
         self.objects = ['can','bottle','cup']
         self.furniture = ['couch','bed','chair']
@@ -57,7 +59,8 @@ class Controller():
             valid_command = True
             verb = words[0]
             subject = words[1:]
-        else:
+        else:        #self.pub_move = rospy.Publisher('/hearts/controller/move', Twist, queue_size = 10)        
+
             valid_command=False
             self.pub_talk.publish("Invalid command please try again")
             return
@@ -84,11 +87,12 @@ class Controller():
             line1 = self.linewriter('type',[thing_id,'door'])
             line2 = self.linewriter('connects',[thing_id,room1,room2])
             line3 = self.linewriter('isOpen',[thing_id,status])
+            to_write = [line1,line2,line3]
 
         if subject[1] in self.objects: #[color] [object] in [room] on [furniture]
             thing_id = 'object_1' #TODO add matching to IDs
             position_string = '[1, 2, 0]' #TODO get actual position
-            #TODO request save picture with thing_ID name
+            self.pub_pic.publish(subject[1]+'.jpg')
             color = subject[0]
             item = subject[1]
             room = subject[3]
@@ -99,13 +103,22 @@ class Controller():
             line4 = self.linewriter('position ',[thing_id, position_string])
             line5 = self.linewriter('color',[thing_id, color])
             line6 = self.linewriter('picture',[thing_id,thing_id+'.jpg'])
+            to_write = [line1,line2,line3,line4,line5,line6]
+
         if subject[0] in self.furniture: # [couch, bed, chair, lamp (furniture)] in [room]
             thing_id = 'furniture_1' # TODO matching IDs
             furniture = subject[0]
             room = subject[-1]
             line1 = self.linewriter('type',[thing_id,furniture]) 
             line2 = self.linewriter('in',[thing_id,room])
+            to_write = [line1,line2]
+
         #TODO write lines to text file
+        f = open(self.outfolder+'sementic_map.txt','w+')
+        for line in to_write:
+            f.write(line+'\n')
+        f.close()
+
 
     def linewriter(self, descriptor, options_list):
         text = descriptor + '('
