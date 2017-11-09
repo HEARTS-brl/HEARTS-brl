@@ -56,7 +56,7 @@ class Location():
             json.dump(updatedLocations, json_file)
 
 
-    def jsonCheck():
+    def jsonCheck(self):
         if os.path.isfile(self.PATH) and os.access(self.PATH, os.R_OK):
             # checks if file exists
             print ("File exists and is readable")
@@ -64,7 +64,7 @@ class Location():
         else:
             return 0
 
-
+    """
     def recordLocation_callback(self, data):
 
 
@@ -106,7 +106,7 @@ class Location():
                 LocationsCurrent = p
         
         self.write_dict(LocationsCurrent)
-
+    """
 
     def goToLocation_callback(self, data):
 
