@@ -1,5 +1,21 @@
 #!/usr/bin/env python
+'''
+Rooms:
+    kitchen, bedroom, living room, dining room, hallway
+Furniture:
+    bed, table lamps, couch, armchairs, chairs, tables, shelves,
+Objects:
+    mirror, pillows, books, cups, bowls, plates
 
+commands:
+    MOVE [forward, backward]
+    TURN [left, right]
+    GO to the [kitchen, bedroom, living room, dining room, hallway (room)]
+    HERE is the [room]
+    SEE the [open, closed] door BETWEEN the [room] and the [room]
+    SEE the [couch, bed, chair, lamp (furniture)] in the [room]
+    SEE the [color] [coke, biscuits (object)] in the [room] on the [furniture]
+'''
 import rospy
 import time
 from std_msgs.msg import String
@@ -11,70 +27,130 @@ class Controller():
         
         # Publishers - sends out goal locations, movement/turns, and speech
         self.pub_task = rospy.Publisher('hearts/controller/task', String, queue_size=10)
-        #self.pubGoal = rospy.Publisher('/hearts/navigation/goal', PoseStamped, queue_size=10)
+        self.pubGoal = rospy.Publisher('/hearts/navigation/goal', PoseStamped, queue_size=10)
         self.pub_talk = rospy.Publisher('/hearts/tts', String, queue_size = 10)
+        self.pub_pic = rospy.Publisher('/hearts/picture', String queue_size = 10)
         
-        self.pub_move = rospy.Publisher('/hearts/controller/move', Twist, queue_size = 10)
+        #self.pub_move = rospy.Publisher('/hearts/controller/move', Twist, queue_size = 10)        
+        self.pub_move = rospy.Publisher('/turtle1/cmd_vel', Twist, queue_size = 10)
 
         # Subscribers - must listen for speech commands, location
         #rospy.Subscriber("hearts/navigation/goal/location", String, self.locGoal_callback)
         rospy.Subscriber("/hearts/stt", String, self.hearCommand_callback)
         
-        self.items = ['thing1','thing2','etc']
+        self.objects = ['can','bottle','cup']
+        self.furniture = ['couch','bed','chair']
+        self.rooms = ['kitchen', 'bedroom', 'living room', 'dining room', 'hallway']
         self.tbm1_commands_dict = {
             "move": ["forward", "backward"],
             "turn": ["right", "left"],
-            "go": ["kitchen", "bedroom", "living", "dining", "family", "room"],
+            "go": self.rooms,
             "look": ["up", "down", "right", "left"],
-            "see": self.items,
-            "changed": self.items,
-            "stop": []}
+            "here": [],
+            "see": self.objects,}
 
-        self.loop()
-
-    def loop(self):
-            while not rospy.is_shutdown():
-                t = Twist()
-                ### insert intended values for movements here to fed to navigation here ###
-                t.linear.x = 1.1
-                t.linear.y = 2.2
-                t.linear.z = 3.3
-                t.angular.x = 1.1
-                t.angular.y = 2.2
-                t.angular.z = 3.3
-
-                self.pub_move.publish(t)
-                rospy.sleep(1)
-
-
-          
-
-        
-    def hearCommand_callback(self, data):
-        s = data
-        words = s.split(' ')
-        global verb
-        global subject
+    def hearCommand_callback(self,data):
+        w = data.split(' ')
+        words = [x for x in w if x!='the']
         possible_verbs = self.tbm1_commands_dict.keys()
-        to_remove = ['to','the']
-        #verb = ''
-        #subject = ''
-        for command in possible_verbs:
-            if command in words:
-                valid_command = True
-                verb = command
-                for r in to_remove:
-                    if r in words:
-                        words.remove(word)
-                
-                subject = " ".join(words)
-            else:
-                valid_command = False
+        if words[0] in possible_verbs:
+            valid_command = True
+            verb = words[0]
+            subject = words[1:]
+        else:
+            valid_command=False
+            self.pub_talk.publish("Invalid command please try again")
+            return
+        if verb == "move" or verb =="turn":
+            self.handle_moves(verb,subject)
+        elif verb == "go":
+            self.handle_destinations(subject)
+        elif verb == "look":
+            self.handle_camera_direction(subject)
+        elif verb == "see":
+            self.handle_picture_taking(subject)
+
         print('original',s)
         print('verb',verb)
-        print('subject',subject)
+        print('subject',subject)        
         return 
+
+    def handle_picture_taking(self,subject):
+        if 'between' in subject: #Door option: [open, closed] door BETWEEN [room] and [room]
+            thing_id = 'door_1' #TODO add matching to IDs
+            status = subject[0]
+            room1 = subject[-3]
+            room2 = subject[-1]
+            line1 = self.linewriter('type',[thing_id,'door'])
+            line2 = self.linewriter('connects',[thing_id,room1,room2])
+            line3 = self.linewriter('isOpen',[thing_id,status])
+
+        if subject[1] in self.objects: #[color] [object] in [room] on [furniture]
+            thing_id = 'object_1' #TODO add matching to IDs
+            position_string = '[1, 2, 0]' #TODO get actual position
+            #TODO request save picture with thing_ID name
+            color = subject[0]
+            item = subject[1]
+            room = subject[3]
+            furniture = subject[5]
+            line1 = self.linewriter('type',[thing_id, item])
+            line2 = self.linewriter('in',[thing_id, room])
+            line3 = self.linewriter('on',[thing_id, furniture])
+            line4 = self.linewriter('position ',[thing_id, position_string])
+            line5 = self.linewriter('color',[thing_id, color])
+            line6 = self.linewriter('picture',[thing_id,thing_id+'.jpg'])
+        if subject[0] in self.furniture: # [couch, bed, chair, lamp (furniture)] in [room]
+            thing_id = 'furniture_1' # TODO matching IDs
+            furniture = subject[0]
+            room = subject[-1]
+            line1 = self.linewriter('type',[thing_id,furniture]) 
+            line2 = self.linewriter('in',[thing_id,room])
+        #TODO write lines to text file
+
+    def linewriter(self, descriptor, options_list):
+        text = descriptor + '('
+        for option in options_list:
+            text = text+option+', '
+        text = text[:-1]+').'
+        return(text)
+
+
+
+
+    def handle_camera_direction(self,subject):
+        print('this feature is not supported yet')
+        return
+
+    def handle_destinations(self,subject):
+        destination_list = [x for x in subject if x!="to"]
+        destination = ' '.join(destination_list)
+        self.pubGoal.publish(destination)
+        return
+
+    def handle_moves(self,verb,subject):
+        if(verb == 'move' and subject == 'forward'):
+            self.send_directions(2,0)
+        elif(verb=='move' and subject == 'backward'):
+            self.send_directions(-2,0)
+        elif(verb == 'turn' and subject == 'left'):
+            self.send_directions(0,2)
+        elif(verb == 'turn' and subject == 'right'):
+            self.send_directions(0,-2)
+          
+    def send_directions(self,straight,turn):
+            t = Twist()
+            ### insert intended values for movements here to fed to navigation here ###
+            t.linear.x = straight
+            t.linear.y = 0
+            t.linear.z = 0
+            t.angular.x = 0
+            t.angular.y = 0
+            t.angular.z = turn
+
+            self.pub_move.publish(t)
+            rospy.sleep(1)
         
+
 
 
 if __name__ == '__main__':
