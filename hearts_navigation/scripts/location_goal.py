@@ -16,12 +16,12 @@ import os
 class Location():
     def __init__(self):
 
+        self.PATH = rospy.get_param('locations_json')
         # Load the location data
         self.jsonCheck()
         self.load_dict()
-        self.write_dict()
+        #self.write_dict()
 
-        self.PATH = rospy.get_param('locations_json')
 
        
         # Set up publishers
@@ -64,12 +64,12 @@ class Location():
         else:
             return 0
 
-    """
+
     def recordLocation_callback(self, data):
 
 
         p = {
-            "location_name": data
+            data: 
                 {
                 "header": {
                     "seq": 0,
@@ -106,7 +106,7 @@ class Location():
                 LocationsCurrent = p
         
         self.write_dict(LocationsCurrent)
-    """
+
 
     def goToLocation_callback(self, data):
 

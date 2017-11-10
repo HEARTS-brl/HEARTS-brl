@@ -20,7 +20,7 @@ import rospy
 import time
 from std_msgs.msg import String
 from std_msgs.msg import Empty
-from geometry_msgs.msg import Pose2D, Twist, PoseStamped
+from geometry_msgs.msg import Pose2D, Pose, Twist, PoseStamped
 
 class Controller():
     def __init__(self):
@@ -29,20 +29,19 @@ class Controller():
         self.pub_task = rospy.Publisher('hearts/controller/task', String, queue_size=10)
         self.pubGoal = rospy.Publisher('hearts/navigation/goal/location', String, queue_size=10)
         self.pub_talk = rospy.Publisher('/hearts/tts', String, queue_size = 10)
-<<<<<<< HEAD
         self.pub_pic = rospy.Publisher('/hearts/camera/snapshot', String, queue_size = 10)
-=======
         self.pub_pic = rospy.Publisher('/hearts/picture', String, queue_size = 10)
->>>>>>> 105c1178871e2a6afc721ccbffe4ec93760f8294
         
         #self.pub_move = rospy.Publisher('/hearts/controller/move', Twist, queue_size = 10)        
         self.pub_move = rospy.Publisher('/turtle1/cmd_vel', Twist, queue_size = 10)
 
         # Subscribers - must listen for speech commands, location
         #rospy.Subscriber("hearts/navigation/goal/location", String, self.locGoal_callback)
+        rospy.Subscriber("move_base_simple/current_pose", Pose, self.currentPose_callback)
+        #rospy.Subscriber("hearts/navigation/pose/location", String, self.current_pose)
         rospy.Subscriber("/hearts/stt", String, self.hearCommand_callback)
 
-        self.outfolder = rospy.get_param('output_folder')
+        self.outfolder = rospy.get_param('output_path')
         
         self.objects = ['can','bottle','cup']
         self.furniture = ['couch','bed','chair']
@@ -56,8 +55,13 @@ class Controller():
             "see": self.objects,}
 
     def hearCommand_callback(self,data):
-        w = data.split(' ')
-        words = [x for x in w if x!='the']
+        rospy.loginfo('Heard a command')
+        raw = str(data)
+        text = raw.split('~')[0]
+        speech = text.split(':')[1]
+        words = speech.split(' ')[1:]
+        rospy.loginfo(speech)
+        words = [x for x in words if x!='the']
         possible_verbs = self.tbm1_commands_dict.keys()
         if words[0] in possible_verbs:
             valid_command = True
@@ -77,12 +81,13 @@ class Controller():
         elif verb == "see":
             self.handle_picture_taking(subject)
 
-        print('original',s)
+        print('original',speech)
         print('verb',verb)
         print('subject',subject)        
         return 
 
     def handle_picture_taking(self,subject):
+        rospy.loginfo('Seen something')
         if 'between' in subject: #Door option: [open, closed] door BETWEEN [room] and [room]
             thing_id = 'door_1' #TODO add matching to IDs
             status = subject[0]
@@ -139,34 +144,51 @@ class Controller():
         return
 
     def handle_destinations(self,subject):
+        rospy.loginfo('Heard a destination')
         destination_list = [x for x in subject if x!="to"]
         destination = ' '.join(destination_list)
         self.pubGoal.publish(destination)
         return
 
     def handle_moves(self,verb,subject):
-        if(verb == 'move' and subject == 'forward'):
+        rospy.loginfo('Moving')
+        rospy.loginfo(verb)
+        rospy.loginfo(subject[0])
+        if(verb == 'move' and subject[0] == 'forward'):
             self.send_directions(2,0)
-        elif(verb=='move' and subject == 'backward'):
+        elif(verb=='move' and subject[0] == 'backward'):
             self.send_directions(-2,0)
-        elif(verb == 'turn' and subject == 'left'):
+        elif(verb == 'turn' and subject[0] == 'left'):
             self.send_directions(0,2)
-        elif(verb == 'turn' and subject == 'right'):
+        elif(verb == 'turn' and subject[0] == 'right'):
             self.send_directions(0,-2)
           
     def send_directions(self,straight,turn):
-            t = Twist()
-            ### insert intended values for movements here to fed to navigation here ###
-            t.linear.x = straight
-            t.linear.y = 0
-            t.linear.z = 0
-            t.angular.x = 0
-            t.angular.y = 0
-            t.angular.z = turn
+        rospy.loginfo('Sending out a direction')
+        t = Twist()
+        ### insert intended values for movements here to fed to navigation here ###
+        t.linear.x = straight
+        t.linear.y = 0
+        t.linear.z = 0
+        t.angular.x = 0
+        t.angular.y = 0
+        t.angular.z = turn
 
-            self.pub_move.publish(t)
-            rospy.sleep(1)
-        
+        self.pub_move.publish(t)
+        rospy.sleep(1)
+    
+    def object_position(self,):
+        ####Read in base position
+        currentpose = self.current_pose
+
+        ####Calculate approximate object position
+        #object_position = currentpose + position
+
+
+    def currentPose_callback(self, data):
+        self.current_pose = data
+        return
+
 
 
 
