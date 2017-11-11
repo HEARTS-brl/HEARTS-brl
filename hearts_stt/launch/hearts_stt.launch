@@ -19,5 +19,5 @@
     <param name='SR_GCP_KEYWORDSFILE' value="$(arg SR_GCP_KEYWORDSFILE)" />
     <param name="listen" value="$(arg listen)" />
     
-    <node name='stt' pkg='hearts_stt' output='screen' type='stt.py' />
+    <node name='stt' pkg='hearts_stt' output='screen' type='stt.py' args="$(arg listen)" />
 </launch>

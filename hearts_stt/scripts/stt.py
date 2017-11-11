@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# Filename: s2t.py
+# Filename: stt.py (pevious to brl-hearts was s2t.py)
 # Created: 07 May 2017
 # Author : Alex Sleat followed by Derek Ripper
 # Purpose: 1: capture audio by microphone
@@ -11,6 +11,11 @@
 #             - Test Harness mode  (driven by th.py)
 ################################################################################
 # Updates:
+# 11 Nov 2017 Derek - Fixed minor bugs after Zeke's code restucturing (big tidy up)
+#                     when running as a listening only code now genrates a clean string in ros topic
+#
+# ?? Nov 2017 Zeke - restructured code as a proper class set up due to excessive organic growth!
+#
 # 25 Oct 2017 Derek - update to read Google_cloud keywords/phrases from a text file
 #
 # 20 Oct 2017 Derek - Tidy up code so that TH & Microphone params can be set
@@ -38,7 +43,7 @@ from std_msgs.msg import String
 #import pocketsphinx
 import speech_recognition as sr   # sudo pip install SpeechRecognition && sudo apt-get install python-pyaudio
 import tag_topics         as TT
-import gcp_keywords     as gcpk # google cloud platform preferred keyword/sphrases - only used by GCP speech recognition
+import gcp_keywords_r     as gcpk # google cloud platform preferred keyword/sphrases - only used by GCP speech recognition
 import gcp_credentials    as gcpc # google cloud platform credentials to access GCP speech recognition
 
 import wave, array, os            # used by mono_to_stereo()
@@ -55,7 +60,7 @@ class SpeechRecognizer():
         self.IBM_PASSWORD = "uAzeboVUvhuP"
           
         self.audio_sources = [ 'mic', 'file' ]
-        self.speech_recognition_engines = [ 'google', 'ibm', 'sphinx', 'google cloud' ]   
+        self.speech_recognition_engines = [ 'google', 'ibm', 'sphinx', 'google_cloud' ]   
         self.r = sr.Recognizer()        
                     
     def set_audio_source(self, audio_source):
@@ -73,10 +78,14 @@ class SpeechRecognizer():
     def wait(self):
 
         if len(wait4mic) > 0 :
-            print('\n*** Press the "ENTER" key to start listening ***')
+            print('\n************************************************')
+            print(  '*** Press the "ENTER" key to start listening ***')
+            print(  '************************************************\n')
             char = raw_input()
         else:
-            print('\n*** Continuous Listening Mode ***')
+            print('\n************************************************')
+            print(  '******     Continuous Listening Mode      ******')
+            print(  '************************************************\n')
         
     def init_mic(self):
         self.m = sr.Microphone(device_index = None, sample_rate = 41000)
@@ -148,13 +157,14 @@ class SpeechRecognizer():
                 text = self.recognize_google_cloud(audio)
         except sr.UnknownValueError:
             print("speech recognition engine could not understand audio")
+            text = 'BAD_RECOGNITION'
         except sr.RequestError as e:
             print("could not request results from speech recognition engine: {0}".format(e))
         except TypeError:
-            print("****** S2T returned a None Type -- Cannot understand so continue...")
+            print("****** STT returned a None Type -- Cannot understand so continue...")
             text = 'BAD_RECOGNITION'
         except Exception as e:
-            print ("S2T exception e: ")
+            print ("STT exception e: ")
             print(e)
         except:
             print("unknown error")  
@@ -256,7 +266,9 @@ def cmdlineargs():
         arg1 = sys.argv[1]
 
     return arg1.upper()
-
+#
+#################################################################################################
+#
 if __name__ == "__main__":
     
     pub = rospy.Publisher("/hearts/stt", String, queue_size = 10)
@@ -268,7 +280,7 @@ if __name__ == "__main__":
     wav_out_folder_path = rospy.get_param("SR_ERL_DATAPATHOUT")
     speech_recognition_engine = rospy.get_param("SR_speechrec_engine")
     run_mode = rospy.get_param("SR_TH")
-                            
+    print("*** speech_recognition_engine: "+speech_recognition_engine)               
     speech_recognizer = SpeechRecognizer()    
     
     if not speech_recognition_engine in speech_recognizer.speech_recognition_engines:
@@ -282,36 +294,48 @@ if __name__ == "__main__":
         rospy.loginfo(rospy.get_name() + ": audio source is wav file")
         speech_recognizer.set_audio_source("file")
         rospy.Subscriber("Wav_FileIn",String, callback)
+
     else:
         rospy.loginfo(rospy.get_name() + ": audio source is microphone")
         speech_recognizer.set_audio_source("mic")
         passes = 0
         rate = rospy.Rate(1)
         while not rospy.is_shutdown():
-            audio = speech_recognizer.get_audio_mic(energy_threshold, pause_threshold, dynamic_energy_threshold)
-            
-            wav_out_file_path = wav_out_folder_path + "fb_mic_phase_speech_audio_" + str(passes) + ".wav"
+           
+           audio = speech_recognizer.get_audio_mic(energy_threshold, pause_threshold, dynamic_energy_threshold) 
+           text  = speech_recognizer.recognize(audio)
+           passes +=  1
+           if not text is None: 
+               text = text.strip()
+               # provide break out of stt routine
+               if text == "stop recording":
+                       print("\n***** User command to STOP RECORDING issued *****")
+                       print("*****    Use CTRL-C to kill ROS Node \n")
+                       quit() 
 
-            with open(wav_out_file_path, "wb") as f:
-                f.write(audio.get_wav_data())
-                f.close()
+               # ERL Competition mode for spoken phrase recognition 
+               #    (ie wait on ENTER key pressto start recording )
+               if len( wait4mic ) !=0: 
             
-            # convert recorded .wav file to stereo if needed
-            mono_to_stereo(wav_out_file_path)
-            
-            text = speech_recognizer.recognize(audio)
-            
-            if not text is None:
-                rospy.loginfo(rospy.get_name() + ": Transcribed text is:\n" + text +
-                "\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")  
-                
-                if text.strip() == "stop recording":
-                    print("\n***** User command to STOP RECORDING issued *****")
-                    print("*****    Use CTRL-C to kill ROS Node \n")
-                    quit()
+                   wav_out_file_path = wav_out_folder_path + "fb_mic_phase_speech_audio_" + str(passes) + ".wav"
 
-                pub.publish(text + "~" + wav_out_file_path) 
-            rate.sleep()
-            passes = passes + 1
+                   with open(wav_out_file_path, "wb") as f:
+                       f.write(audio.get_wav_data())
+                       f.close()
+            
+                   # convert recorded .wav file to stereo if needed
+                   mono_to_stereo(wav_out_file_path)           
+               
+                   rospy.loginfo(rospy.get_name() + ": Transcribed text is:\n" + text +
+                   "\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")                  
+                   # this form is needed by t2cfr.py to build ERL results.txt file
+                   pub.publish(text + "~" + wav_out_file_path) 
+
+               # just pure clean text published for continuous listening mode
+               else:
+                   pub.publish(text) 
+
+
+        rate.sleep()
 
 rospy.spin()   
