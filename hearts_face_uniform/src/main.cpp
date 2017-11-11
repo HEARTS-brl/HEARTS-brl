@@ -26,7 +26,8 @@ CascadeClassifier face_cascade;
 
 static const std::string OPENCV_WINDOW = "Image window";
 
-static const std::string PATH = "/home/turtlebot/workspace/src/main/face_uniform/";
+// TODO: as ros param
+static const std::string PATH = "/home/turtlebot/tb_ws/src/brl-hearts/hearts_face_uniform/";
 
 // where the registered data are stored. You can change this directory
 std::string DATA_PATH = PATH + "data/";
