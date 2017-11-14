@@ -1,0 +1,5 @@
+<launch>
+  <node name="hearts_face_uniform_reg" pkg="hearts_face_uniform_reg" type="hearts_face_uniform_reg" output="screen" />
+  <remap from="/ipcam/front_door/snapshot" to="/roah_ipcam/image"/>
+  <include file="$(find brl_ipcam)/launch/brl_ipcam.launch" />
+</launch>
