@@ -23,7 +23,7 @@ def gcp_keywords_r():
            preferred_phrases = fh.read().splitlines()         
     else:
          preferred_phrases =[]
-         print("ERROR - NO GCP KEYWORDS!")
+         print("*** WARNING - NO GCP KEYWORDS!")
 
-    print (preferred_phrases)
+    print ("*** Number of GCP preferred_phrases found: "+str(len(preferred_phrases)))
     return preferred_phrases

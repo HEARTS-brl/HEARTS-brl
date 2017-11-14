@@ -11,6 +11,8 @@
 #             - Test Harness mode  (driven by th.py)
 ################################################################################
 # Updates:
+# 12 Nov 2017 Derek - Removed 2 bugs relating 'only' to "TH" mode, from the code restructure
+#
 # 11 Nov 2017 Derek - Fixed minor bugs after Zeke's code restucturing (big tidy up)
 #                     when running as a listening only code now genrates a clean string in ros topic
 #
@@ -168,11 +170,13 @@ class SpeechRecognizer():
             print(e)
         except:
             print("unknown error")  
-                    
+        print("\n") # make screen more readable            
         if not text is None:    
             # correctly print unicode characters to standard output
+            
             if str is bytes:  # this version of Python (Python 2)
                 print("Py2-You said: {}".format(text).encode("utf-8"))
+                print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n")
             else:  # (Python 3+)
                 print("py3-You said: {}".format(text))
         
@@ -194,7 +198,8 @@ class SpeechRecognizer():
             return self.r.listen(source)
             
     def get_audio_file(self, energy_threshold, pause_threshold, file):
-        with sr.WavFile(file) as source:        
+        if (run_mode == 'TH'):  index, barefile = o_tt.get_key(file)
+        with sr.WavFile(barefile) as source:        
             self.r.energy_threshold = energy_threshold
             self.r.pause_threshold = pause_threshold   # Default is 0.8 secs
 
@@ -203,9 +208,9 @@ class SpeechRecognizer():
 def callback(data):
     wav_out_file_path = data.data
     rospy.loginfo(rospy.get_name() + ": Received file: %s", wav_out_file_path)
-    audio = self.get_audio_file(energy_threshold, pause_threshold, wav_out_file_path)
+    audio = speech_recognizer.get_audio_file(energy_threshold, pause_threshold, wav_out_file_path)
     index, wav_out_file_path = o_tt.get_key(wav_out_file_path)
-    text = speech_recognizer.recognize(audio)
+    text  = speech_recognizer.recognize(audio)
     
     if not text is None:
         rospy.loginfo(rospy.get_name() + ": Transcribed text is:\n" + text +
@@ -249,7 +254,7 @@ def mono_to_stereo(inputfile):
         os.remove(tempinput)
     else:
         # file aready in stereo
-        print("\nRecorded Wav file is in stereo already")
+        print("\nRecorded Wav file is in stereo already - No conversion performed.")
         ifile.close() 
 
 def cmdlineargs():
@@ -280,7 +285,8 @@ if __name__ == "__main__":
     wav_out_folder_path = rospy.get_param("SR_ERL_DATAPATHOUT")
     speech_recognition_engine = rospy.get_param("SR_speechrec_engine")
     run_mode = rospy.get_param("SR_TH")
-    print("*** speech_recognition_engine: "+speech_recognition_engine)               
+    print("*** speech_recognition_engine: " + speech_recognition_engine)  
+    print("*** Energy threshold         : " + str(energy_threshold))             
     speech_recognizer = SpeechRecognizer()    
     
     if not speech_recognition_engine in speech_recognizer.speech_recognition_engines:

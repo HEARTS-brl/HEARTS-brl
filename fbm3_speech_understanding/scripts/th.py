@@ -2,10 +2,17 @@
 # Filename: th.py
 # Created: 07 May 2017
 # Author : Derek Ripper
-# Purpose: To read the ground_truth.csv file and run speec2text (S2T.py) in
+# Purpose: To read the ground_truth.csv file and run speech2text (stt.py) in
 #          test harness mode for all contained wav files.
 ################################################################################
 # Updates:
+# 13 Nov 2017 Derek - updated changed TOPIC name from Text_4_CFR to hearts/stt
+#                   - variable added for "ground truth" delimeter.
+#                     This enables us to use the ERL so called  goldStandard files
+#                     to drive the "TH" mode.
+#                   - Removed small amounts of obsolete code and some message to screen
+#                     improvements    
+#                     
 # 24 Oct 2017 Derek - changed  delimiter in ground truth file to the unix pipe "|"
 #                     This circumvented a problem with losing the first quote mark.
 #                     Hence we can now use teh ERL groundtruth file (goldStandard in 
@@ -50,6 +57,7 @@ class th:
     def __init__(self):    
         rospy.init_node("TH_Driver",anonymous=True)
         self.run_mode= rospy.get_param("SR_TH")
+        self.delimiter =  rospy.get_param("SR_GROUNDTRUTHDELIM")
        
         self.txt_cnt = 0
         self.cfr_cnt = 0
@@ -59,16 +67,16 @@ class th:
 
     def listeners(self):
         # set up subscriber for returned TOPIC  
-        self.sub1 = rospy.Subscriber("Text_4_CFR", String, self.callback1)
+        self.sub1 = rospy.Subscriber("hearts/stt", String, self.callback1)
         
         # set up subscriber for returned TOPIC  
         self.sub2 = rospy.Subscriber("CFR_Out",    String, self.callback2)
     
-    def callback1(self,data): # process Text_4_CFR topic
+    def callback1(self,data): # process hearts/stt topic
         self.txt_cnt += 1
         phrase, wavname = data.data.split('~')
         o_tt.store_result(2, phrase.strip())
-        rospy.loginfo(rospy.get_name()+": Frm  S2T data.data is: "+data.data) 
+        rospy.loginfo(rospy.get_name()+": Frm  hearts/stt data.data is: "+data.data) 
 
     def callback2(self,data): # process CFR_out topic
         self.cfr_cnt += 1
@@ -81,20 +89,18 @@ class th:
     def bld_csv_file(self, path):
         tempcsvfile = self.DATAPATHOUT+"ERL_audio_input_data.csv"
         fh = open(tempcsvfile,'wb')
-        csvwrite = csv.writer(fh,delimiter=',',quotechar='"')
-        print("path: "+path)
+        csvwrite = csv.writer(fh,delimiter='|',quotechar='"')
         for entry in os.listdir(path):
             if entry.endswith(".wav"):
                row = [path+entry,"NO_TRAN","NO_CFR"]
-               csvwrite.writerow(row)
-
+               csvwrite.writerow(row)     
         return  tempcsvfile
 
 
 # Speech to Text engine -- select from google, ibm or sphinx
 # This is now set within the ROS launch file
     def loop_wavfiles(self): 
-        self.DATAPATHOUT = rospy.get_param('SR_DATAPATHOUT')
+        self.DATAPATHOUT = rospy.get_param('SR_BRL_DATAPATHOUT')
         GROUNDTRUTH = rospy.get_param('SR_GROUNDTRUTH')
         ERLAUDIOPATH= rospy.get_param('SR_ERL_AUDIO_DIR')
         BRLAUDIOPATH= rospy.get_param('SR_BRL_AUDIO_DIR')
@@ -102,16 +108,20 @@ class th:
         #check if ERL-SR competition audio path has been set
         if ERLAUDIOPATH == '':
             filein = GROUNDTRUTH
+            print("ground truth file: "+ filein)
+            csvdelimter=self.delimiter
         else:
-            # scan audio files and build temp csv file in TH format
-            # same format as geound_truth.cav file
+            # scan ERL audio files and build temp csv file in TH format
+            # same format as ground_truth.cav file
             filein = o_th.bld_csv_file(ERLAUDIOPATH)
+           
             # negate AUDIOPATH as used in BRL mode only
             BRLAUDIOPATH=''
+            csvdelimter="|"
 
         with open(filein, mode='r') as csvinputfile:
 
-            csvreader = csv.reader(csvinputfile, delimiter='|')
+            csvreader = csv.reader(csvinputfile, delimiter=csvdelimter)
             len_csv = sum(1 for row in csvreader)
             rospy.loginfo(rospy.get_name()+": No of rows in GROUNDTRUTH file: "\
                           +str(len_csv))
@@ -144,39 +154,31 @@ class th:
                               " True CFR is: "+trueCFR+"\n")
        
                
-        rospy.loginfo(rospy.get_name()+": All Done, total file count = " \
+        rospy.loginfo(rospy.get_name()+" : Total audio files found = " \
                       +str(filecnt))
-        # Don't exit python code until the callbacs have processed for all the returned Topic data
+        # Don't exit python code until the callbacks have been processed for
+        # all the returned Topic data
         toggle = True 
         while toggle:
-            if self.txt_cnt == len_csv and self.cfr_cnt == len_csv : 
-                print("\n***** All "+str(len_csv)+" topics processed in Test harness *****")
-                toggle = False  
+           if self.txt_cnt == len_csv and self.cfr_cnt == len_csv : 
+               print("\n***** "+str(len_csv)+" audio files have been processed in Test harness mode")
+               toggle = False  
                            
-        #wrte ALL collected results to file
+        #write ALL collected results to file
         o_tt.write_results_to_file(self.DATAPATHOUT+'TH_Speech_recognition_results.txt')
-
+   
         print("*****    Use CTRL-C to kill ROS Node \n")
+
+##################################
+##### end of class "th" definition
+##################################
 
 o_th = th()  
 
-def main():
-
-
- 
+def main(): 
     o_listen= o_th.listeners()
     rospy.sleep(5)
     o_th.loop_wavfiles()
-
-
-    while not rospy.is_shutdown():
-
-        try:
-           pass #  rospy.spin()
-        except KeyboardInterupt:
-            print("Shutting down node: TH node")
-
- 
 
 if __name__ == '__main__':
     main()	
