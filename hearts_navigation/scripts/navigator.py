@@ -8,7 +8,6 @@ from std_msgs.msg import String
 from std_msgs.msg import UInt8
 #from roah_rsb_comm_ros import BenchmarkState
 
-
 class Navigator():
 
     def __init__(self):
@@ -27,7 +26,7 @@ class Navigator():
 
         rospy.Subscriber('hearts/navigation/goal', Pose2D, self.goalCallback)
         rospy.Subscriber('hearts/navigation/stop', String, self.stopCallback)
-
+        
     def goalCallback(self, data):
 
         rospy.loginfo("Navigator: goal Callback")

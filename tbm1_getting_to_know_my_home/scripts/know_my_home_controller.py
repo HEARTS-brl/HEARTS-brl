@@ -26,6 +26,7 @@ from turtlesim.msg import Pose
 from math import cos, sin
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from rospy.rostime import Duration
+from move_base_msgs.msg import MoveBaseActionFeedback
 
 class Controller():
     def __init__(self):
@@ -46,9 +47,9 @@ class Controller():
         #rospy.Subscriber("/turtle1/pose", Pose, self.currentPose_callback)
         #rospy.Subscriber("hearts/navigation/pose/location", String, self.current_pose)
         
-        rospy.Subscriber("move_base_simple/current_pose", Pose, self.currentPose_callback)
         rospy.Subscriber("/hearts/stt", String, self.hearCommand_callback)
-
+        rospy.Subscriber('/move_base/feedback', MoveBaseActionFeedback, self.current_pose_callback)
+    
         self.outfolder = rospy.get_param('output_path')
         
         self.objects = ['can','bottle','cup','pillow','kettle']
@@ -225,10 +226,11 @@ class Controller():
         return(l)
 
 
-    def currentPose_callback(self, data):
-        self.current_pose = data
+    def current_pose_callback(self, data):
+        self.current_pose = data.feedback.base_position
         self.current_pose.x = round(self.current_pose.x,4)
         self.current_pose.y = round(self.current_pose.y,4)
+        self.current_pose.theta = round(self.current_pose.theta,4)
         return
 
 
