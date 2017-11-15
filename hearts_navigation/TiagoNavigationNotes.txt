@@ -1,3 +1,10 @@
+
+
+The configurations have been saved so when rviz (see below - "To use rviz") is launched you will be able to see the robot and visualise the /map topic. In the case that rviz launched without the above then "Add" the RobotModel and the Map. 
+
+
+
+
 MODES:
 
 Mapping mode:
@@ -25,4 +32,7 @@ Select Map(to navigate)
 *Localisation and path planning automatically started on boot up
 
 To use rviz:
-	rosrun rviz rviz -d 'rospack find tiago_2dnav' /config/rviz/navigation.rviz
+    rosrun rviz rviz -d `rospack find tiago_2dnav`/config/rviz/navigation.rviz
+
+	UPDATE - to ensure it runs with the appropriate configuration then run:
+	rosrun rviz rviz -d /home/turtlebot/tb_ws/src/deps/tiago_navigation/tiago_2dnav/config/rviz/navigation_public_sim.rviz

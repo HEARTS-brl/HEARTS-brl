@@ -1,0 +1,8 @@
+<launch>
+	<arg name="map_name" default="map_1" />
+    <node name="set_nav_mode" pkg="rosservice" type="rosservice" args="call /pal_navigation_sm 'input: LOC'" output="screen" />
+    
+    <node name="change_map" pkg="rosservice" type="rosservice" args="call /pal_map_manager/change_map 'input: $(arg map_name)'" output="screen" />
+
+    <node name="rviz" pkg="rviz" type="rviz" args="/home/turtlebot/tb_ws/src/deps/tiago_navigation/tiago_2dnav/config/rviz/navigation_public_sim.rviz" required="true" />
+</launch>
