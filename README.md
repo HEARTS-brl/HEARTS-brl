@@ -18,3 +18,7 @@ http://tiago-25c:8080/
 _remote access_
 ssh pal@tiago-25c
 scp [-r] pal@tiago-25c:<remote> <local>
+
+
+_for stopping the head movement_
+head_manager
