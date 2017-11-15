@@ -54,7 +54,7 @@ class Controller():
         
         self.objects = ['can','bottle','cup','pillow','kettle']
         self.furniture = ['couch','bed','chair','table']
-        self.rooms = ['kitchen', 'bedroom', 'living room', 'dining room', 'hallway']
+        self.rooms = ['kitchen', 'bedroom', 'living_room', 'dining_room', 'hallway']
         self.tbm1_commands_dict = {
             "move": ["forward", "backward"],
             "turn": ["right", "left"],
@@ -75,6 +75,10 @@ class Controller():
         words = speech.split(' ')[1:]
         rospy.loginfo(speech)
         words = [x for x in words if x!='the']
+        for w in range(len(words)):
+            if words[w] in ["room","table","chair","cabinet"] :
+                words[w] = words[w-1]+'_'+words[w]
+                words.pop(w-1)
         possible_verbs = self.tbm1_commands_dict.keys()
         if words[0] in possible_verbs:
             valid_command = True
@@ -172,7 +176,7 @@ class Controller():
         if subject[0] == 'right':
             self.head_lr = self.head_lr - .2
         rospy.loginfo(self.head_ud)
-        point1.positions = [self.head_lr, self.head_ud]
+        point1.positions = [self.head_ud, self.head_lr]
         command.points = [point1]
         self.pub_head.publish(command)
         return
