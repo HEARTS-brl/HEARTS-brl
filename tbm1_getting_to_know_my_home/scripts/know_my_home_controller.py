@@ -11,7 +11,8 @@ commands:
     MOVE [forward, backward]
     TURN [left, right]
     GO to the [kitchen, bedroom, living room, dining room, hallway (room)]
-    HERE is the [room]
+    ##HERE is the [room]##
+    LOOK [Up, Down, Left, Right]
     SEE the [open, closed] door BETWEEN the [room] and the [room]
     SEE the [couch, bed, chair, lamp (furniture)] in the [room]
     SEE the [color] [coke, biscuits (object)] in the [room] on the [furniture]
@@ -21,30 +22,36 @@ import time
 from std_msgs.msg import String
 from std_msgs.msg import Empty
 from geometry_msgs.msg import Pose2D, Pose, Twist, PoseStamped
+from turtlesim.msg import Pose
+from math import cos, sin
+from trajectory_msgs.msg import JointTrajectory
 
 class Controller():
     def __init__(self):
         
-        # Publishers - sends out goal locations, movement/turns, and speech
+        ### Publishers - sends out goal locations, movement/turns, and speech
+        #self.pub_move = rospy.Publisher('/turtle1/cmd_vel', Twist, queue_size = 10)
         #self.pub_task = rospy.Publisher('hearts/controller/task', String, queue_size=10)
+        #self.pub_pic = rospy.Publisher('/hearts/picture', String, queue_size = 10)
+        
         self.pubGoal = rospy.Publisher('hearts/navigation/goal/location', String, queue_size=10)
         self.pub_talk = rospy.Publisher('/hearts/tts', String, queue_size = 10)
         self.pub_pic = rospy.Publisher('/hearts/camera/snapshot', String, queue_size = 10)
-        self.pub_pic = rospy.Publisher('/hearts/picture', String, queue_size = 10)
-        
-        self.pub_move = rospy.Publisher('/mobile_base_controller/cmd_vel', Twist, queue_size = 10)        
-        #self.pub_move = rospy.Publisher('/turtle1/cmd_vel', Twist, queue_size = 10)
-
-        # Subscribers - must listen for speech commands, location
+        self.pub_head = rospy.Publisher('/head_controller/command',JointTrajectory, queue_size = 10)
+        self.pub_move = rospy.Publisher('/hearts/controller/move', Twist, queue_size = 10)  
+              
+        ### Subscribers - must listen for speech commands, location
         #rospy.Subscriber("hearts/navigation/goal/location", String, self.locGoal_callback)
-        rospy.Subscriber("move_base_simple/current_pose", Pose, self.currentPose_callback)
+        #rospy.Subscriber("/turtle1/pose", Pose, self.currentPose_callback)
         #rospy.Subscriber("hearts/navigation/pose/location", String, self.current_pose)
+        
+        rospy.Subscriber("move_base_simple/current_pose", Pose, self.currentPose_callback)
         rospy.Subscriber("/hearts/stt", String, self.hearCommand_callback)
 
         self.outfolder = rospy.get_param('output_path')
         
-        self.objects = ['can','bottle','cup']
-        self.furniture = ['couch','bed','chair']
+        self.objects = ['can','bottle','cup','pillow','kettle']
+        self.furniture = ['couch','bed','chair','table']
         self.rooms = ['kitchen', 'bedroom', 'living room', 'dining room', 'hallway']
         self.tbm1_commands_dict = {
             "move": ["forward", "backward"],
@@ -53,6 +60,10 @@ class Controller():
             "look": ["up", "down", "right", "left"],
             "here": [],
             "see": self.objects,}
+            
+            
+        self.head_lr = 0
+        self.head_ud = 0
 
     def hearCommand_callback(self,data):
         rospy.loginfo('Heard a command')
@@ -67,6 +78,7 @@ class Controller():
             valid_command = True
             verb = words[0]
             subject = words[1:]
+            #TODO parse rooms into single words (e.g. dining room into dining_room)
         else:        #self.pub_move = rospy.Publisher('/hearts/controller/move', Twist, queue_size = 10)        
 
             valid_command=False
@@ -79,11 +91,9 @@ class Controller():
         elif verb == "look":
             self.handle_camera_direction(subject)
         elif verb == "see":
-            self.handle_picture_taking(subject)
-
-        print('original',speech)
-        print('verb',verb)
-        print('subject',subject)        
+            self.handle_picture_taking(subject) 
+        elif verb = "look":
+            self.handle_camera_direction(subject)      
         return 
 
     def handle_picture_taking(self,subject):
@@ -98,9 +108,9 @@ class Controller():
             line3 = self.linewriter('isOpen',[thing_id,status])
             to_write = [line1,line2,line3]
 
-        if subject[1] in self.objects: #[color] [object] in [room] on [furniture]
+        elif subject[1] in self.objects: #[color] [object] in [room] on [furniture]
             thing_id = 'object_1' #TODO add matching to IDs
-            position_string = '[1, 2, 0]' #TODO get actual position
+            position_string = self.object_position() #TODO get actual position
             self.pub_pic.publish(subject[1]+'.jpg')
             color = subject[0]
             item = subject[1]
@@ -114,16 +124,17 @@ class Controller():
             line6 = self.linewriter('picture',[thing_id,thing_id+'.jpg'])
             to_write = [line1,line2,line3,line4,line5,line6]
 
-        if subject[0] in self.furniture: # [couch, bed, chair, lamp (furniture)] in [room]
+        elif subject[0] in self.furniture: # [couch, bed, chair, lamp (furniture)] in [room]
             thing_id = 'furniture_1' # TODO matching IDs
             furniture = subject[0]
             room = subject[-1]
             line1 = self.linewriter('type',[thing_id,furniture]) 
             line2 = self.linewriter('in',[thing_id,room])
             to_write = [line1,line2]
-
-        #TODO write lines to text file
-        f = open(self.outfolder+'sementic_map.txt','w+')
+        else:
+            self.pub_talk.publish("Invalid noun please try again")
+            return
+        f = open(self.outfolder+'sementic_map.txt','a+')
         for line in to_write:
             f.write(line+'\n')
         f.close()
@@ -140,7 +151,20 @@ class Controller():
 
 
     def handle_camera_direction(self,subject):
-        print('this feature is not supported yet')
+        command = JointTrajectory()
+        command.joint_names = ["head_2_joint","head_1_joint"]
+        command.velocities = [0,0]
+        command.time_from_start = [2,0]
+        if subject == 'up':
+            self.head_ud = self.head_ud + .2
+        if subject == 'down':
+            self.head_ud = self.head_ud - .2
+        if subject == 'left':
+            self.head_lr = self.head_lr + .2
+        if subject == 'right':
+            self.head_lr = self.head_lr - .2
+        command.positions = [self.head_lr, self.head_ud]
+        self.pub_head.publish(command)
         return
 
     def handle_destinations(self,subject):
@@ -155,13 +179,13 @@ class Controller():
         rospy.loginfo(verb)
         rospy.loginfo(subject[0])
         if(verb == 'move' and subject[0] == 'forward'):
-            self.send_directions(2,0)
+            self.send_directions(.1,0)
         elif(verb=='move' and subject[0] == 'backward'):
-            self.send_directions(-2,0)
+            self.send_directions(-.1,0)
         elif(verb == 'turn' and subject[0] == 'left'):
-            self.send_directions(0,2)
+            self.send_directions(0,.5)
         elif(verb == 'turn' and subject[0] == 'right'):
-            self.send_directions(0,-2)
+            self.send_directions(0,-.5)
           
     def send_directions(self,straight,turn):
         rospy.loginfo('Sending out a direction')
@@ -177,16 +201,25 @@ class Controller():
         self.pub_move.publish(t)
         rospy.sleep(1)
     
-    def object_position(self,):
+    def object_position(self):
         ####Read in base position
-        currentpose = self.current_pose
-
+        d = 1 #distance from object
+        x = self.current_pose.x
+        y = self.current_pose.y
+        t = self.current_pose.theta
+        x2 = round(x + d*cos(t),2)
+        y2 = round(y + d*sin(t),2)
+        z2 = .5
+        l = '['+str(x2)+','+str(y2)+','+str(z2)+']'
         ####Calculate approximate object position
         #object_position = currentpose + position
+        return(l)
 
 
     def currentPose_callback(self, data):
         self.current_pose = data
+        self.current_pose.x = round(self.current_pose.x,4)
+        self.current_pose.y = round(self.current_pose.y,4)
         return
 
 
