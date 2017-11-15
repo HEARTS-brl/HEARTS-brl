@@ -1,6 +1,8 @@
 <launch>
-    <node name="set_nav_mode" pkg="rosservice" type="rosservice" args="call /pal_navigation_sm 'input: LOC'" output="screen" />
-    <node name="hearts_avoider" pkg="hearts_navigation" type="avoider.py" output="screen" />
+    <arg name="map_name" default="map_1" />
+    <param name="locations_json" value="$(find hearts_navigation)/data/locations.json" />
+    <node name="localization" pkg="hearts_navigation" type="localization.bash" args="$(arg map_name)" output="screen" />
+    <!-- <node name="hearts_avoider" pkg="hearts_navigation" type="avoider.py" output="screen" /> -->
     <node name="hearts_navigator" pkg="hearts_navigation" type="navigator.py" output="screen" />
     <node name="hearts_location_goal" pkg="hearts_navigation" type="location_goal.py" output="screen" />
     <include file="$(find hearts_navigation)/launch/logger.launch">
