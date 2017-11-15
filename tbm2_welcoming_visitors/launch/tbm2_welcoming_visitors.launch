@@ -3,7 +3,9 @@
   <include file="$(find brl_ipcam)/launch/brl_ipcam.launch" />
   <include file="$(find hearts_face_uniform)/launch/hearts_face_uniform.launch" />
   <include file="$(find hearts_tts)/launch/hearts_tts.launch" />
-  <include file="$(find hearts_navigation)/launch/hearts_navigation_navigate.launch" />
+  <include file="$(find hearts_navigation)/launch/hearts_navigation_navigate.launch">
+    <arg name="map_name" value="map_1" />
+  </include>
   <node pkg="roah_rsbb_comm_ros" type="comm" name="roah_rsbb_comm" respawn="true">
     <param name="team_name" type="string" value="Hearts" />
     <param name="robot_name" type="string" value="Tiago" />
