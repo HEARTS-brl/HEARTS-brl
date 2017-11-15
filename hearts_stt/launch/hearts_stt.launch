@@ -9,7 +9,7 @@
     <arg name="SR_ENERGY_THRESHOLD" default="1000" />
     <!-- keywords for google -->
     <arg name="SR_GCP_KEYWORDSFILE" default="$(find hearts_stt)/data_in/CFR/gcp_keywords_vb.txt" />
-    <!-- Used in microphone mode: default is to listen continuously="", or to wait on keystoke="listen" -->
+    <!-- Used in microphone mode: default is to listen continuously  ="", or to wait on keystoke  ="listen" -->
     <arg name="listen" default="" />
     
     <param name="SR_speechrec_engine" value="$(arg SR_speechrec_engine)" />

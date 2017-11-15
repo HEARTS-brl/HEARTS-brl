@@ -1,12 +1,20 @@
 <launch>
-    <param name='SR_DATAPATHOUT' value='/home/turtlebot/Documents/BRL_speech_results/' />
-    <param name='SR_VERBSFILE' value='/home/turtlebot/tb_ws/src/hearts/speech_recognition/scripts/TrainingDatasetVerbs.csv' />
+    <!-- name of $USER's catkin workspace  --> 
+    <arg name="WORKSPACE" value="catkin_ws"   />
+
+     <!-- ERL COMPETITION USB memory stick ID - Location of .wav files and destination for the results.txt file --> 
+    <arg name="ERL_USB_MEM" value="BCA3-57E7" />
+
+    <param name='SR_BRL_DATAPATHOUT' value='/home/$(env USER)/Documents/BRL_speech_results/' />
+    <param name='SR_VERBSFILE'   value='/home/$(env USER)/$(arg WORKSPACE)/src/hearts/speech_recognition/scripts/TrainingDatasetVerbs.csv' />
+
     <node name='SR_T2CFR' pkg='fbm3_speech_understanding' type='t2cfr.py' output='screen' />
+
     <include file="$(find hearts_stt)/launch/hearts_stt.launch">
         <arg name="SR_speechrec_engine" value="google_cloud" />
         <arg name="SR_TH" value="" />
-        <arg name="SR_GCP_KEYWORDSFILE" value="/home/turtlebot/tb_ws/src/brl-hearts/hearts_stt/data_in/CFR/gcp_keywords_vb.txt" />
-        <arg name="SR_ERL_DATAPATHOUT" value="/home/turtlebot/Documents/ERL_speech_results/" />
+        <arg name="SR_GCP_KEYWORDSFILE" value="/home/$(env USER)/$(arg WORKSPACE)/src/brl-hearts/hearts_stt/data_in/CFR/Barcelona_2017_all_dicts.txt" />
+        <arg name="SR_ERL_DATAPATHOUT" value="/media/$(env USER)/$(arg ERL_USB_MEM)/" />
         <arg name="SR_ENERGY_THRESHOLD" value="1500" />
         <arg name="listen" value="listen" />
     </include>
