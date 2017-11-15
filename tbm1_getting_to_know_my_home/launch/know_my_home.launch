@@ -7,4 +7,5 @@
   <node name="nav_goal_pub" pkg="hearts_navigation" type="navigator.py" />
   <include file="$(find hearts_camera_saver)/launch/hearts_camera_saver.launch"/>
     <param name="output_path" value="$(find tbm1_getting_to_know_my_home)/output/" />
+  <node name="localization" pkg="hearts_navigation" type="localization.bash" args="map_1" output="screen" />
 </launch>
