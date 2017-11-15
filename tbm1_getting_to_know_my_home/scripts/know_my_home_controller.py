@@ -66,6 +66,7 @@ class Controller():
             
         self.head_lr = 0.0
         self.head_ud = 0.0
+        self.handle_camera_direction(['center'])
 
     def hearCommand_callback(self,data):
         rospy.loginfo('Heard a command')
@@ -76,7 +77,7 @@ class Controller():
         rospy.loginfo(speech)
         words = [x for x in words if x!='the']
         for w in range(len(words)):
-            if words[w] in ["room","table","chair","cabinet"] :
+            if words[w] in ["room","chair","cabinet"] :
                 words[w] = words[w-1]+'_'+words[w]
                 words.pop(w-1)
         possible_verbs = self.tbm1_commands_dict.keys()
@@ -115,6 +116,9 @@ class Controller():
             to_write = [line1,line2,line3]
 
         elif subject[1] in self.objects: #[color] [object] in [room] on [furniture]
+            if len(subject)<5:
+                self.pub_talk.publish("Invalid command please try again")
+            rospy.loginfo(subject)
             thing_id = 'object_1' #TODO add matching to IDs
             position_string = self.object_position() #TODO get actual position
             self.pub_pic.publish(subject[1]+'.jpg')
@@ -127,7 +131,7 @@ class Controller():
             line3 = self.linewriter('on',[thing_id, furniture])
             line4 = self.linewriter('position ',[thing_id, position_string])
             line5 = self.linewriter('color',[thing_id, color])
-            line6 = self.linewriter('picture',[thing_id,thing_id+'.jpg'])
+            line6 = self.linewriter('picture',[thing_id,subject[1]+'.jpg'])
             to_write = [line1,line2,line3,line4,line5,line6]
 
         elif subject[0] in self.furniture: # [couch, bed, chair, lamp (furniture)] in [room]
@@ -175,6 +179,7 @@ class Controller():
             self.head_lr = self.head_lr + .2
         if subject[0] == 'right':
             self.head_lr = self.head_lr - .2
+                    
         rospy.loginfo(self.head_ud)
         point1.positions = [self.head_ud, self.head_lr]
         command.points = [point1]
@@ -192,14 +197,21 @@ class Controller():
         rospy.loginfo('Moving')
         rospy.loginfo(verb)
         rospy.loginfo(subject[0])
+        if len(subject)>1:
+            if subject[1] == "more":
+                multiplier = 2
+            if subject[1] == "less":
+                multiplier = .5
+        else:
+            multiplier = 1
         if(verb == 'move' and subject[0] == 'forward'):
-            self.send_directions(.1,0)
+            self.send_directions(.2*multiplier,0)
         elif(verb=='move' and subject[0] == 'backward'):
-            self.send_directions(-.1,0)
+            self.send_directions(-.2*multiplier,0)
         elif(verb == 'turn' and subject[0] == 'left'):
-            self.send_directions(0,.5)
+            self.send_directions(0,1.0*multiplier)
         elif(verb == 'turn' and subject[0] == 'right'):
-            self.send_directions(0,-.5)
+            self.send_directions(0,-1.0*multiplier)
           
     def send_directions(self,straight,turn):
         rospy.loginfo('Sending out a direction')
@@ -218,9 +230,9 @@ class Controller():
     def object_position(self):
         ####Read in base position
         d = 1 #distance from object
-        x = self.current_pose.x
-        y = self.current_pose.y
-        t = self.current_pose.theta
+        x = self.current_pose.position.x
+        y = self.current_pose.position.y
+        t = self.current_pose.orientation.w
         x2 = round(x + d*cos(t),2)
         y2 = round(y + d*sin(t),2)
         z2 = .5
@@ -231,10 +243,8 @@ class Controller():
 
 
     def current_pose_callback(self, data):
-        self.current_pose = data.feedback.base_position
-        self.current_pose.x = round(self.current_pose.x,4)
-        self.current_pose.y = round(self.current_pose.y,4)
-        self.current_pose.theta = round(self.current_pose.theta,4)
+        self.current_pose = data.feedback.base_position.pose
+
         return
 
 

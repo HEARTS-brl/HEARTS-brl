@@ -7,11 +7,13 @@
   </include>
   <param name="locations_json" type="string" value="$(find hearts_navigation)/data/locations.json" />
   <param name="output_path" value="$(find tbm1_getting_to_know_my_home)/output/" />
+  <include file="$(find hearts_camera_saver)/launch/hearts_camera_saver.launch">
+    <arg name="output_path" value="$(find tbm1_getting_to_know_my_home)/output/" />
+  </include>
   <!-- 
     <node name="location_goal" pkg="hearts_navigation" type="location_goal.py" />
       <param name="locations_json" type="string" value="$(find hearts_navigation)/data/locations.json" />
     <node name="nav_goal_pub" pkg="hearts_navigation" type="navigator.py" />
-    <include file="$(find hearts_camera_saver)/launch/hearts_camera_saver.launch"/>
       <param name="output_path" value="$(find tbm1_getting_to_know_my_home)/output/" />
     <node name="localization" pkg="hearts_navigation" type="localization.bash" args="map_1" output="screen" /> 
   -->
