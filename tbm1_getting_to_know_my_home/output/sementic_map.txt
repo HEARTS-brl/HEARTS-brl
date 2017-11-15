@@ -1,3 +1,6 @@
 type(door_1, door,).
 connects(door_1, kitchen, hallway,).
 isOpen(door_1, closed,).
+type(door_1, door,).
+connects(door_1, kitchen, hallway,).
+isOpen(door_1, closed,).

@@ -24,7 +24,8 @@ from std_msgs.msg import Empty
 from geometry_msgs.msg import Pose2D, Pose, Twist, PoseStamped
 from turtlesim.msg import Pose
 from math import cos, sin
-from trajectory_msgs.msg import JointTrajectory
+from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
+from rospy.rostime import Duration
 
 class Controller():
     def __init__(self):
@@ -38,7 +39,7 @@ class Controller():
         self.pub_talk = rospy.Publisher('/hearts/tts', String, queue_size = 10)
         self.pub_pic = rospy.Publisher('/hearts/camera/snapshot', String, queue_size = 10)
         self.pub_head = rospy.Publisher('/head_controller/command',JointTrajectory, queue_size = 10)
-        self.pub_move = rospy.Publisher('/hearts/controller/move', Twist, queue_size = 10)  
+        self.pub_move = rospy.Publisher('/mobile_base_controller/cmd_vel', Twist, queue_size = 10)  
               
         ### Subscribers - must listen for speech commands, location
         #rospy.Subscriber("hearts/navigation/goal/location", String, self.locGoal_callback)
@@ -62,8 +63,8 @@ class Controller():
             "see": self.objects,}
             
             
-        self.head_lr = 0
-        self.head_ud = 0
+        self.head_lr = 0.0
+        self.head_ud = 0.0
 
     def hearCommand_callback(self,data):
         rospy.loginfo('Heard a command')
@@ -92,7 +93,7 @@ class Controller():
             self.handle_camera_direction(subject)
         elif verb == "see":
             self.handle_picture_taking(subject) 
-        elif verb = "look":
+        elif verb == "look":
             self.handle_camera_direction(subject)      
         return 
 
@@ -153,17 +154,25 @@ class Controller():
     def handle_camera_direction(self,subject):
         command = JointTrajectory()
         command.joint_names = ["head_2_joint","head_1_joint"]
-        command.velocities = [0,0]
-        command.time_from_start = [2,0]
-        if subject == 'up':
+        point1 = JointTrajectoryPoint()
+        #point2 = JointTrajectoryPoint()
+        
+        point1.velocities = [0.0,0.0]
+        #point2.velocities = [0]
+        
+        point1.time_from_start = Duration(2.0,0.0)
+        rospy.loginfo(subject)
+        if subject[0] == 'up':
             self.head_ud = self.head_ud + .2
-        if subject == 'down':
+        if subject[0] == 'down':
             self.head_ud = self.head_ud - .2
-        if subject == 'left':
+        if subject[0] == 'left':
             self.head_lr = self.head_lr + .2
-        if subject == 'right':
+        if subject[0] == 'right':
             self.head_lr = self.head_lr - .2
-        command.positions = [self.head_lr, self.head_ud]
+        rospy.loginfo(self.head_ud)
+        point1.positions = [self.head_lr, self.head_ud]
+        command.points = [point1]
         self.pub_head.publish(command)
         return
 
