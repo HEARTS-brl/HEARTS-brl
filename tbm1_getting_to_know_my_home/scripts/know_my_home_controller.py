@@ -26,14 +26,14 @@ class Controller():
     def __init__(self):
         
         # Publishers - sends out goal locations, movement/turns, and speech
-        self.pub_task = rospy.Publisher('hearts/controller/task', String, queue_size=10)
+        #self.pub_task = rospy.Publisher('hearts/controller/task', String, queue_size=10)
         self.pubGoal = rospy.Publisher('hearts/navigation/goal/location', String, queue_size=10)
         self.pub_talk = rospy.Publisher('/hearts/tts', String, queue_size = 10)
         self.pub_pic = rospy.Publisher('/hearts/camera/snapshot', String, queue_size = 10)
         self.pub_pic = rospy.Publisher('/hearts/picture', String, queue_size = 10)
         
-        #self.pub_move = rospy.Publisher('/hearts/controller/move', Twist, queue_size = 10)        
-        self.pub_move = rospy.Publisher('/turtle1/cmd_vel', Twist, queue_size = 10)
+        self.pub_move = rospy.Publisher('/mobile_base_controller/cmd_vel', Twist, queue_size = 10)        
+        #self.pub_move = rospy.Publisher('/turtle1/cmd_vel', Twist, queue_size = 10)
 
         # Subscribers - must listen for speech commands, location
         #rospy.Subscriber("hearts/navigation/goal/location", String, self.locGoal_callback)
