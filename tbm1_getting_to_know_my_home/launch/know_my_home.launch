@@ -1,5 +1,6 @@
 <launch>
-  <node name="know_my_home" pkg="tbm1_getting_to_know_my_home" type="know_my_home_controller.py" output="screen" launch-prefix="$(find tbm1_getting_to_know_my_home)/launch/head_cont" />
+<!--  <node name="know_my_home" pkg="tbm1_getting_to_know_my_home" type="know_my_home_controller.py" output="screen" launch-prefix="$(find tbm1_getting_to_know_my_home)/launch/head_cont" -->
+  <node name="know_my_home" pkg="tbm1_getting_to_know_my_home" type="know_my_home_controller.py" output="screen" />
   <include file="$(find hearts_stt)/launch/hearts_stt.launch"/>
   <include file="$(find hearts_tts)/launch/hearts_tts.launch"/>
   <include file="$(find hearts_navigation)/launch/hearts_navigation_navigate.launch">
