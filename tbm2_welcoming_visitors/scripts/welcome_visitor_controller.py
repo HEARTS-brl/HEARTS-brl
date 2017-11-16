@@ -20,24 +20,24 @@ from roah_rsbb_comm_ros.msg import TabletState
 
 class Controller():
     def __init__(self):
-        self.pub_task = rospy.Publisher('hearts/controller/task', String, queue_size=10)
-        self.pub_location_goal = rospy.Publisher('hearts/nav/location/goal', String, queue_size=10)
+        #self.pub_task = rospy.Publisher('hearts/controller/task', String, queue_size=10)
+        self.pub_location_goal = rospy.Publisher('/hearts/navigation/goal/location', String, queue_size=10)
         self.detect_faces = False        
-        self.soundhandle = SoundClient()
 
         # subscribers
         rospy.Subscriber("hearts/face/user",           String, self.face_callback)
-        rospy.Subscriber("hearts/voice/cmd",           String, self.voice_callback)
-        rospy.Subscriber("hearts/nav/location/result", String, self.location_result_callback)
+        #rospy.Subscriber("hearts/voice/cmd",           String, self.voice_callback)
+        rospy.Subscriber("/hearts/navigation/status", String, self.location_result_callback)
         #rospy.Subscriber("roah_devices/state",        DevicesState, self.state_callback)
         rospy.Subscriber("roah_rsbb/benchmark/state", BenchmarkState, self.benchmark_state_callback)
         rospy.Subscriber("roah_rsbb/benchmark",        Benchmark, self.benchmark_callback)
         #rospy.Subscriber("roah_rsbb/benchmark",        String, self.benchmark_callback)
         rospy.Subscriber("roah_rsbb/devices/bell",     Empty, self.bell_callback)
-        rospy.Subscriber("hearts/front_door/leaving",     Empty, self.leaving_callback)
+        #rospy.Subscriber("hearts/front_door/leaving",     Empty, self.leaving_callback)
 
+        self.tts_pub = rospy.Publisher("/hearts/tts", String, queue_size=10)
         self.location_result = ""
-        self.leaving = False
+        #self.leaving = False
 
         #self.loop()
 
@@ -61,12 +61,12 @@ class Controller():
                 self.process_face_unrecognized()             
                 self.detect_faces = False  
            
-    def voice_callback(self, data):
-        rospy.loginfo("voice_callback: " + data.data)
-        self.current_voice = data.data
+    #def voice_callback(self, data):
+    #    rospy.loginfo("voice_callback: " + data.data)
+    #    self.current_voice = data.data
  
-    def location_result_callback(self, data):
-        rospy.loginfo("location_result_callback") 
+    #def location_result_callback(self, data):
+    #    rospy.loginfo("location_result_callback") 
   
 #   def state_callback(self, data):
 #        rospy.loginfo("state_callback")
@@ -82,8 +82,8 @@ class Controller():
     def benchmark_callback(self, data):
         rospy.loginfo("benchmark_callback")
  
-    def leaving_callback(self, data):
-        self.leaving = True
+    #def leaving_callback(self, data):
+    #    self.leaving = True
 
     def bell_callback(self, data):
         rospy.loginfo("bell_callback")
@@ -101,7 +101,7 @@ class Controller():
     def say(self, text):
         rospy.loginfo("saying \"" + text + "\"")
         rospy.sleep(1)
-        self.soundhandle.say(text)
+        self.tts_pub.publish(text)
         rospy.sleep(5)
         
     def move_to(self, location):
@@ -114,10 +114,10 @@ class Controller():
         
         return self.location_result == "Success"
         
-    def wait_until_left(self):
-        while self.leaving == False:
-            rospy.sleep(1)
-        self.leaving = False
+    #def wait_until_left(self):
+    #    while self.leaving == False:
+    #        rospy.sleep(1)
+    #    self.leaving = False
 
     def loop(self):
 
@@ -247,7 +247,7 @@ class Controller():
         self.say("I will wait here until you are done")
     
         # 8. wait until doctor exits the bedroom
-        self.wait_until_left()
+        rospy.sleep(5)
 
         # 9. move to the kitchen
         if self.move_to("kitchen") == False:

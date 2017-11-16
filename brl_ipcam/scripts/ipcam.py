@@ -126,7 +126,7 @@ class ipCamera(object):
             # cv2.imshow("hello", img)
             # cv2.waitKey(1)
             try:
-                if img.any():
+                if not img is None and img.any():
                     self.image_pub.publish(
                         self.bridge.cv2_to_imgmsg(img, "bgr8"))
             except CvBridgeError as e:

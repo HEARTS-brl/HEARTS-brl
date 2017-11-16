@@ -123,7 +123,7 @@ public:
     }
 
     Mat frame = cv_ptr->image;
-    cout << "rows_"<<frame.rows << " and cols_"<<frame.cols << endl;
+    //cout << "rows_"<<frame.rows << " and cols_"<<frame.cols << endl;
     std::vector<Rect> faces;
     Mat frame_gray;
 
