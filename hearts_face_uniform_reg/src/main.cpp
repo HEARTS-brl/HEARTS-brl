@@ -108,7 +108,7 @@ private:
 		Mat frame_gray;
 
 		cvtColor(frame, frame_gray, COLOR_BGR2GRAY);
-		equalizeHist(frame_gray, frame_gray);
+		//equalizeHist(frame_gray, frame_gray);
 		
 		cout << "## 1 ##";
 		
@@ -117,7 +117,7 @@ private:
         //-- Detect faces
         face_cascade.detectMultiScale(frame_gray, faces, 1.2, 4, 0 | CASCADE_SCALE_IMAGE, Size(MIN_FACE_SIZE, MIN_FACE_SIZE));
 		
-		cout << "## 2 ##";
+		cout << "## 2 ## - faces: " << faces.size();
 		
         if ((faces.size() > 3) || (faces.size() < 1))
         {
@@ -141,18 +141,14 @@ private:
 
         cout << "## 4 ##";
         
-		Rect largestFaceBox = faces[largestIndex];
-
 		Mat oneFace = frame_gray(faces[largestIndex]);
-		
-        rectangle(frame, largestFaceBox, GREEN);
-		Point posText(largestFaceBox.x, max(1, largestFaceBox.y - 10));
 		
 		stringstream ss1;
         ss1 << (CAPTURE_NUM - frames.size());
         string remain = ss1.str();
       
-		putText(frame, "Capturing images - " + remain + " remaining...", posText, FONT_HERSHEY_COMPLEX, 1.2, GREEN, 2, 8); // displaying recognised names
+		cout << "Capturing images - " << remain << " remaining...";
+		
 		imshow(window_name, frame);
 		
 		if (frames.size() < CAPTURE_NUM)

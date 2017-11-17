@@ -8,7 +8,6 @@ from std_msgs.msg import String
 from std_msgs.msg import UInt8
 #from roah_rsb_comm_ros import BenchmarkState
 
-
 class Navigator():
 
     def __init__(self):
@@ -22,11 +21,12 @@ class Navigator():
         self.pubStatus = rospy.Publisher('/hearts/navigation/status', String, queue_size=1)
         self.pubPose = rospy.Publisher('/hearts/navigation/current', String, queue_size=1)
 
+        self.previous_state = ""
         rospy.Subscriber('move_base/status', GoalStatusArray, self.StatusCallback)   # Get status of plan
 
         rospy.Subscriber('hearts/navigation/goal', Pose2D, self.goalCallback)
         rospy.Subscriber('hearts/navigation/stop', String, self.stopCallback)
-
+        
     def goalCallback(self, data):
 
         rospy.loginfo("Navigator: goal Callback")
@@ -53,40 +53,33 @@ class Navigator():
             self.pubGoal.publish(t)
             self.isNavigating = True
 
-
     def stopCallback(self, data):
 
         if(data.data):
             rospy.loginfo("Navigator: Stop Callback")
 
-    # Getting status of navigation and relaying it
     def StatusCallback(self, data):
-
-        rospy.loginfo("Navigator: Status Callback")
-
         length_status = len(data.status_list)
+
         if length_status > 0:
             status = data.status_list[length_status-1].status
             rospy.loginfo('status: ' + str(status))
-
-            poseString = ("(" + str(self.currentGoal.x) + "," +
-                                str(self.currentGoal.y) + "," +
-                                str(self.currentGoal.theta) + ")")
-            # Check the status of the navigation:
-            if (status == 4 or status == 5 or status == 9):
-                self.pubStatus.publish("Failed: " + str(status))
+            
+            if status == 4 or status == 5 or status == 9:
+                status_msg = 'Fail'
                 self.isNavigating = False
-            elif(status == 3):
-                self.pubStatus.publish("Reached: " + poseString)
-                # Clear current goal
+            elif status==3:
+                status_msg = 'Success'
                 self.lastGoal = self.currentGoal
                 self.currentGoal = Pose2D()
                 self.isNavigating = False
             else:
-                self.pubStatus.publish("Active: " + poseString)
+                status_msg = 'Active'
                 self.isNavigating = True
 
-
+            if self.previous_state != status_msg: 
+                self.pubStatus.publish(status_msg)
+                self.previous_state = status_msg
 
 if __name__ == '__main__':
 	rospy.init_node('Navigator', anonymous=True)

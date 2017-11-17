@@ -1,0 +1,9 @@
+<launch>
+
+	<node name="set_nav_mode" pkg="rosservice" type="rosservice" args="call /pal_navigation_sm 'input: MAP'" output="screen" />
+    <node name="rviz" pkg="rviz" type="rviz" args="/home/turtlebot/tb_ws/src/deps/tiago_navigation/tiago_2dnav/config/rviz/navigation_public_sim.rviz" required="true" />
+
+</launch>
+
+
+

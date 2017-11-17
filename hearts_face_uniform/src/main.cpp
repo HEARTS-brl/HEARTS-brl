@@ -82,7 +82,7 @@ public:
       std::string imagePath = DATA_PATH + str + ".jpg";
 
       Mat image = imread(imagePath, 0);
-      Size imgsize(300,300);
+      Size imgsize(200,200);
       Mat imgSmall;
       resize(image,imgSmall,imgsize);
       images.push_back(imgSmall);
@@ -123,12 +123,12 @@ public:
     }
 
     Mat frame = cv_ptr->image;
-    cout << "rows_"<<frame.rows << " and cols_"<<frame.cols << endl;
+    //cout << "rows_"<<frame.rows << " and cols_"<<frame.cols << endl;
     std::vector<Rect> faces;
     Mat frame_gray;
 
     cvtColor(frame, frame_gray, COLOR_BGR2GRAY);
-    equalizeHist(frame_gray, frame_gray);
+    //equalizeHist(frame_gray, frame_gray);
 
     //-- Detect faces
     face_cascade.detectMultiScale(frame_gray, faces, 1.2, 4, 0 | CASCADE_SCALE_IMAGE, Size(50, 50)); // this is face detection, MIN_FACE_SIZE
@@ -161,7 +161,7 @@ public:
     double confidence;
     Mat oneFace = frame_gray(faces[largestIndex]);
     Mat oneFaceSmall;
-    Size imgsize(300,300);
+    Size imgsize(200,200);
     resize(oneFace, oneFaceSmall, imgsize);
     model_->predict(oneFaceSmall, label, confidence);
 
