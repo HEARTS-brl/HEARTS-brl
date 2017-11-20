@@ -1,6 +1,44 @@
-type(door_1, door,).
-connects(door_1, kitchen, hallway,).
-isOpen(door_1, closed,).
-type(door_1, door,).
-connects(door_1, kitchen, hallway,).
-isOpen(door_1, closed,).
+type(wardrobe, wardrobe).
+in(wardrobe, bedroom).
+type(couch, couch).
+in(couch, hallway).
+type(couch, couch).
+in(couch, bedroom).
+type(bookshelf, bookshelf).
+in(bookshelf, kitchen).
+type(door_entrance, door).
+connects(door_entrance, hallway, outside).
+isOpen(door_entrance, false).
+type(chair, chair).
+in(chair, hallway).
+type(arm_chair, arm_chair).
+in(arm_chair, living_room).
+type(side_table, side_table).
+in(side_table, kitchen).
+type(coffee_table, coffee_table).
+in(coffee_table, dining_room).
+type(TV_table, TV_table).
+in(TV_table, bedroom).
+type(kitchen_table, kitchen_table).
+in(kitchen_table, hallway).
+type(dining_table, dining_table).
+in(dining_table, kitchen).
+type(kitchen_cabinet, kitchen_cabinet).
+in(kitchen_cabinet, living_room).
+type(couch, couch).
+in(couch, dining_room).
+type(bookshelf, bookshelf).
+in(bookshelf, bedroom).
+type(night_stand, night_stand).
+in(night_stand, hallway).
+type(bed, bed).
+in(bed, dining_room).
+type(wardrobe, wardrobe).
+in(wardrobe, bedroom).
+type(plant, plant).
+in(plant, kitchen).
+type(door_bedroom, door).
+connects(door_bedroom, bedroom, living_room).
+isOpen(door_bedroom, false).
+type(nightstand, nightstand).
+in(nightstand, bedroom).

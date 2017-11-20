@@ -52,9 +52,12 @@ class Controller():
     
         self.outfolder = rospy.get_param('output_path')
         
-        self.objects = ['coke','water','juice','apple','lemon','rice','pringles','kleenex','sponge','soap','cup','glass','whiteboard']
-        self.categories = {'drink':['coke','water','juice'],'food':[['apple','lemon','rice','pringles'],'cleaning stuff':['kleenex','sponge','soap','whiteboard'],'container':['cup','glass']}
-        self.furniture = ['chair','arm','side','coffee','tv','kitchen','dining','couch','bookshelf','nightstand','bed','wardrobe','plant']
+        self.objects = ['Coke','water','juice','apple','lemon','rice','Pringles','Kleenex','sponge','soap','cup','glass','whiteboard']
+        self.categories = {'drink':['Coke','water','juice'],
+        'food':['apple','lemon','rice','Pringles'],
+        'cleaning stuff':['Kleenex','sponge','soap','whiteboard'],
+        'container':['cup','glass']}
+        self.furniture = ['chair','armchair','side','coffee','TV','kitchen','dining','couch','bookshelf','nightstand','night','bed','wardrobe','plant']
         self.rooms = ['kitchen', 'bedroom', 'living_room', 'dining_room', 'hallway']
         self.doors = ['bedroom', 'entrance']
         self.tbm1_commands_dict = {
@@ -81,10 +84,10 @@ class Controller():
         words = speech.split(' ')[1:]
         rospy.loginfo(speech)
         words = [x for x in words if x!='the']
-        for w in range(len(words)):
-            if words[w] in ["room","chair","cabinet"] :
-                words[w] = words[w-1]+'_'+words[w]
-                words.pop(w-1)
+        #for w in range(len(words)):
+        #    if words[w] in ["room","chair","cabinet"] :
+        #        words[w] = words[w-1]+'_'+words[w]
+        #        words.pop(w-1)
         possible_verbs = self.tbm1_commands_dict.keys()
         if words[0] in possible_verbs:
             valid_command = True
@@ -137,11 +140,14 @@ class Controller():
             if len(subject)<5:
                 self.pub_talk.publish("Invalid command please try again")
             thing_id = subject[0] #TODO add matching to IDs
+            if thing_id == 'whiteboard':
+                thing_id = 'whiteboard cleaner'
             position_string = self.object_position() #TODO get actual position
             self.pub_pic.publish(subject[0]+'.jpg')
             for k in self.categories.keys():
                 if subject[0] in self.categories[k]:
                     item = k
+            
             if subject[3] == 'room':
                 room = subject[2]+'_'+subject[3]
                 subject.pop(3)
@@ -151,6 +157,10 @@ class Controller():
                 furniture = subject[4]+'_'+subject[5]
             else:
                 furniture = subject[4]
+            if furniture == 'armchair':
+                furniture = 'arm_chair'
+            if furniture == 'night' or furniture == 'night_stand':
+                furniture = 'nightstand'
             line1 = self.linewriter('type',[thing_id, item])
             line2 = self.linewriter('in',[thing_id, room])
             line3 = self.linewriter('on',[thing_id, furniture])
@@ -168,6 +178,10 @@ class Controller():
                 room = subject[2]+'_'+subject[3]
             else:
                 room = subject[2]
+            if thing_id == 'armchair':
+                thing_id = 'arm_chair'
+            if thing_id == 'night' or thing_id == 'night_stand':
+                thing_id = 'nightstand'
             line1 = self.linewriter('type',[thing_id,thing_id]) 
             line2 = self.linewriter('in',[thing_id,room])
             to_write = [line1,line2]
@@ -177,6 +191,7 @@ class Controller():
         f = open(self.outfolder+'sementic_map.txt','a+')
         for line in to_write:
             f.write(line+'\n')
+            rospy.loginfo(line)
         f.close()
 
 
@@ -184,7 +199,7 @@ class Controller():
         text = descriptor + '('
         for option in options_list:
             text = text+option+', '
-        text = text[:-1]+').'
+        text = text[:-2]+').'
         return(text)
 
 
