@@ -1,18 +1,28 @@
 <launch>
-  <remap from="/ipcam/front_door/snapshot" to="/roah_ipcam/image"/>
-  <include file="$(find brl_ipcam)/launch/brl_ipcam.launch" />
-  <include file="$(find hearts_face_uniform)/launch/hearts_face_uniform.launch" />
+  <!-- BRL IP camera setup -->
+  <!-- <remap from="/ipcam/front_door/snapshot" to="/roah_ipcam/image"/> -->
+  <!-- <include file="$(find brl_ipcam)/launch/brl_ipcam.launch" /> -->
+  
+  <!-- PAL Robotics IP camera setup -->
+  <remap from="/image_raw/compressed" to="/roah_ipcam/image"/>
+  <node name="axis_driver" pkg="axis_camera" type="axis.py">
+    <param name="hostname" value="192.168.1.90" />
+    <param name="username" value="hearts" />
+    <param name="password" value="hearts_erl_2_pal" />
+  </node> 
+  
+  <!-- <include file="$(find hearts_face_uniform)/launch/hearts_face_uniform.launch" />
   <include file="$(find hearts_tts)/launch/hearts_tts.launch" />
   <include file="$(find hearts_navigation)/launch/hearts_navigation_navigate.launch">
-    <arg name="map_name" value="map_1" />
+    <arg name="map_name" value="map_pal3" />
   </include>
   <node pkg="roah_rsbb_comm_ros" type="comm" name="roah_rsbb_comm" respawn="true">
     <param name="team_name" type="string" value="Hearts" />
     <param name="robot_name" type="string" value="Tiago" />
-    <param name="rsbb_key" type="string" value="FJnz6hJX" />
-    <param name="rsbb_host" type="string" value="192.168.0.107" />
+    <param name="rsbb_key" type="string" value="FJ6LaZOM" />
+    <param name="rsbb_host" type="string" value="192.168.1.20" />
   </node>
-  <node name="welcome_visitor_controller" pkg="tbm2_welcoming_visitors" type="welcome_visitor_controller.py" output="screen" />
+  <node name="welcome_visitor_controller" pkg="tbm2_welcoming_visitors" type="welcome_visitor_controller.py" output="screen" /> -->
   
   <!-- <node name="webcam_publisher" pkg="hearts_webcam" type="hearts_webcam" output="screen" args="1" /> -->
   <!--  -->
