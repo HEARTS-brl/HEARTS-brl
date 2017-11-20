@@ -23,3 +23,8 @@ scp -r pal@tiago-25c:/home/pal/.pal/tiago_maps/configurations/<map_name>/ /home/
 
 _for stopping the head movement_
 head_manager
+
+
+how to make for computers with issues with face recognition
+catkin_make --pkg fbm1_object_perception fbm2_navigation hearts_camera_saver hearts_navigation hearts_test_package tbm1_getting_to_know_my_home tbm2_welcoming_visitors brl_ipcam fbm3_speech_understanding hearts_stt hearts_tts python_support_library roah_rsbb_comm_ros hearts_face_uniform hearts_webcam speech_recognition
+
