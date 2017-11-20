@@ -11,6 +11,8 @@
 #             - Test Harness mode  (driven by th.py)
 ################################################################################
 # Updates:
+# 20 Nov 2017 Derek - add ros log info for verbal instruction feedback
+#
 # 15 Nov 2017 Derek - Moved wait statement to just before "record" statement. This now avoids
 #                     losing gteh first word of an utterrance.
 #
@@ -312,6 +314,7 @@ if __name__ == "__main__":
         while not rospy.is_shutdown():
            
            audio = speech_recognizer.get_audio_mic(energy_threshold, pause_threshold, dynamic_energy_threshold) 
+           rospy.loginfo("SPEECH HEARD: ")
            text  = speech_recognizer.recognize(audio)
            passes +=  1
            if not text is None: 
