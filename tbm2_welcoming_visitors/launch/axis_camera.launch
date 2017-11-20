@@ -1,0 +1,7 @@
+<launch>
+    <node name="axis_driver" pkg="axis_camera" type="axis.py">
+        <param name="hostname" value="192.168.1.90" />
+        <param name="username" value="hearts" />
+        <param name="password" value="hearts_erl_2_pal" />
+    </node> 
+</launch>
