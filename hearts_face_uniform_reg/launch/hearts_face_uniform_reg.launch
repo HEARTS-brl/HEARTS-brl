@@ -1,5 +1,13 @@
 <launch>
   <node name="hearts_face_uniform_reg" pkg="hearts_face_uniform_reg" type="hearts_face_uniform_reg" output="screen" />
-  <remap from="/ipcam/front_door/snapshot" to="/roah_ipcam/image"/>
-  <include file="$(find brl_ipcam)/launch/brl_ipcam.launch" />
+  <!-- BRL IP camera setup -->
+  <!-- <remap from="/ipcam/front_door/snapshot" to="/roah_ipcam/image"/> -->
+  <!-- <include file="$(find brl_ipcam)/launch/brl_ipcam.launch" /> -->
+  
+  <!-- PAL Robotics IP camera setup -->
+  <include file="$(find roah_ipcam)/launch/roah_ipcam.launch">
+    <arg name="ip" value="192.168.1.90"/>
+    <arg name="user" value="hearts"/>
+    <arg name="password" value="hearts_erl_2_pal"/>
+  </include>
 </launch>

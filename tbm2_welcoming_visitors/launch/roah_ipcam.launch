@@ -1,0 +1,7 @@
+<launch>
+    <include file="$(find roah_ipcam)/launch/roah_ipcam.launch">
+        <arg name="ip" value="192.168.1.90"/>
+        <arg name="user" value="hearts"/>
+        <arg name="password" value="hearts_erl_2_pal"/>
+    </include>
+</launch>

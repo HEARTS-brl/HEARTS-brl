@@ -82,8 +82,8 @@ class Controller():
         self.head_lr = 0.0
         self.head_ud = 0.0
         self.head_move_step_size = .15
-        self.turn_step_size = 2
-        self.move_step_size = 1
+        self.turn_step_size = .8
+        self.move_step_size = .5
         self.handle_camera_direction(['center'])
 
     def benchmark_state_callback(self, data):
@@ -278,7 +278,7 @@ class Controller():
         #rospy.loginfo(subject[1])
         if len(subject)>1:
             if subject[1] == "more":
-                multiplier = 3
+                multiplier = 5
             if subject[1] == "less":
                 multiplier = 1
         else:

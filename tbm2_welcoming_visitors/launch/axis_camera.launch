@@ -1,4 +1,5 @@
 <launch>
+    <remap from="/image_raw/compressed" to="/roah_ipcam/image/compressed"/>
     <node name="axis_driver" pkg="axis_camera" type="axis.py">
         <param name="hostname" value="192.168.1.90" />
         <param name="username" value="hearts" />
