@@ -28,6 +28,7 @@ from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from rospy.rostime import Duration
 from move_base_msgs.msg import MoveBaseActionFeedback
 from roah_rsbb_comm_ros.msg import Benchmark, BenchmarkState
+import std_srvs.srv
 
 class Controller():
     def __init__(self):
@@ -44,6 +45,7 @@ class Controller():
         self.pub_move = rospy.Publisher('/mobile_base_controller/cmd_vel', Twist, queue_size = 10)  
         self.pub_dummy = rospy.Publisher('/move_base/feedback', MoveBaseActionFeedback, queue_size = 10)
         
+        self.pub_bench_message = rospy.Publisher('roah_rsbb/messages_saved', String, queue_size = 10)
               
         ### Subscribers - must listen for speech commands, location
         #rospy.Subscriber("hearts/navigation/goal/location", String, self.locGoal_callback)
@@ -52,6 +54,11 @@ class Controller():
         
         rospy.Subscriber("/hearts/stt", String, self.hearCommand_callback)
         rospy.Subscriber('/move_base/feedback', MoveBaseActionFeedback, self.current_pose_callback)
+        rospy.Subscriber("roah_rsbb/benchmark/state", BenchmarkState, self.benchmark_state_callback)
+        #rospy.Subscriber("roah_rsbb/benchmark", Benchmark, self.benchmark_callback)
+        
+        self.prepare = rospy.ServiceProxy('/roah_rsbb/end_prepare', std_srvs.srv.Empty)
+        self.execute = rospy.ServiceProxy('/roah_rsbb/end_execute', std_srvs.srv.Empty)
     
         self.outfolder = rospy.get_param('output_path')
         
@@ -78,6 +85,22 @@ class Controller():
         self.turn_step_size = 2
         self.move_step_size = 1
         self.handle_camera_direction(['center'])
+
+    def benchmark_state_callback(self, data):
+                     
+        if data.benchmark_state == BenchmarkState.STOP:
+            rospy.loginfo("STOP")
+        elif data.benchmark_state == BenchmarkState.PREPARE:
+            rospy.loginfo("PREPARE")
+            try:
+                time.sleep(5)
+                self.prepare()
+            except:
+                rospy.loginfo("Failed to reply PREPARE")
+        elif data.benchmark_state == BenchmarkState.EXECUTE:
+            rospy.loginfo("EXECUTE")
+            self.pub_bench_message.publish("Starting")
+
 
     def hearCommand_callback(self,data):
         rospy.loginfo('Heard a command')
@@ -111,7 +134,9 @@ class Controller():
         elif verb == "see":
             self.handle_picture_taking(subject) 
         elif verb == "look":
-            self.handle_camera_direction(subject)      
+            self.handle_camera_direction(subject)    
+        elif verb == "end":
+            self.execute()
         return 
 
     #SEE the [bedroom, front] door is [open, closed]
