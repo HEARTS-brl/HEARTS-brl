@@ -15,18 +15,17 @@ class Controller():
     def __init__(self):
 
 
-    #Publishers
-    self.pub_bench_message = rospy.Publisher('roah_rsbb/messages_saved', String, queue_size = 10)
-    
-    
-    #Subscribers
-    rospy.Subscriber('/move_base/feedback', MoveBaseActionFeedback, self.current_pose_callback)
-    rospy.Subscriber("roah_rsbb/benchmark/state", BenchmarkState, self.benchmark_state_callback)
-    #rospy.Subscriber("roah_rsbb/benchmark", Benchmark, self.benchmark_callback)
+        #Publishers#
+        self.pub_bench_message = rospy.Publisher('roah_rsbb/messages_saved', String, queue_size = 10)
+
+        #Subscribers
+        rospy.Subscriber('/move_base/feedback', MoveBaseActionFeedback, self.current_pose_callback)
+        rospy.Subscriber("roah_rsbb/benchmark/state", BenchmarkState, self.benchmark_state_callback)
+        #rospy.Subscriber("roah_rsbb/benchmark", Benchmark, self.benchmark_callback)
     
         
-    self.prepare = rospy.ServiceProxy('/roah_rsbb/end_prepare', std_srvs.srv.Empty)
-    self.execute = rospy.ServiceProxy('/roah_rsbb/end_execute', std_srvs.srv.Empty)
+        self.prepare = rospy.ServiceProxy('/roah_rsbb/end_prepare', std_srvs.srv.Empty)
+        self.execute = rospy.ServiceProxy('/roah_rsbb/end_execute', std_srvs.srv.Empty)
     
     
     def benchmark_state_callback(self, data):
@@ -46,13 +45,14 @@ class Controller():
             
             
     def execute_command(self):
+        pass
        
 
 
 
 
-if __name__ == '__main__':
-    rospy.init_node('hearts_test', anonymous=True)
-    rospy.loginfo("hearts test controller has started")
-    controller = Controller()
-    rospy.spin()
+    if __name__ == '__main__':
+        rospy.init_node('hearts_test', anonymous=True)
+        rospy.loginfo("hearts test controller has started")
+        controller = Controller()
+        rospy.spin()

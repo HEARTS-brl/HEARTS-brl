@@ -1,0 +1,9 @@
+<launch>
+  <node name="hearts_test" pkg="hearts_test_package" type="hearts_test_controller.py" output="screen" />
+  <node pkg="roah_rsbb_comm_ros" type="comm" name="roah_rsbb_comm" respawn="true">
+    <param name="team_name" type="string" value="Hearts" />
+    <param name="robot_name" type="string" value="Tiago" />
+    <param name="rsbb_key" type="string" value="FJ6LazOM" />
+    <param name="rsbb_host" type="string" value="192.168.1.140" />
+  </node>
+</launch>
