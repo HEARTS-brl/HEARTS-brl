@@ -11,6 +11,9 @@
 #             - Test Harness mode  (driven by th.py)
 ################################################################################
 # Updates:
+# 15 Nov 2017 Derek - Moved wait statement to just before "record" statement. This now avoids
+#                     losing gteh first word of an utterrance.
+#
 # 12 Nov 2017 Derek - Removed 2 bugs relating 'only' to "TH" mode, from the code restructure
 #
 # 11 Nov 2017 Derek - Fixed minor bugs after Zeke's code restucturing (big tidy up)
@@ -185,15 +188,15 @@ class SpeechRecognizer():
     def get_audio_mic(self, energy_threshold, pause_threshold, dynamic_energy_threshold):
         print("Speech engine is: " + self.speech_recognition_engine)
         print("Energy threshold: " + str(energy_threshold))
-
-        self.wait() 
-        print("*** Say something now!")
         
         with self.m as source:
             self.r.adjust_for_ambient_noise(source)
             self.r.dynamic_energy_threshold = dynamic_energy_threshold # default is "True"
             self.r.energy_threshold = energy_threshold
             self.r.pause_threshold = pause_threshold   # Default is 0.8 secs
+            
+            self.wait() 
+            print("*** Say something now!")
             
             return self.r.listen(source)
             

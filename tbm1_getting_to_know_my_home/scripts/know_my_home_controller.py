@@ -27,6 +27,8 @@ from math import cos, sin
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from rospy.rostime import Duration
 from move_base_msgs.msg import MoveBaseActionFeedback
+from roah_rsbb_comm_ros.msg import Benchmark, BenchmarkState
+import std_srvs.srv
 
 class Controller():
     def __init__(self):
@@ -41,6 +43,9 @@ class Controller():
         self.pub_pic = rospy.Publisher('/hearts/camera/snapshot', String, queue_size = 10)
         self.pub_head = rospy.Publisher('/head_controller/command',JointTrajectory, queue_size = 10)
         self.pub_move = rospy.Publisher('/mobile_base_controller/cmd_vel', Twist, queue_size = 10)  
+        self.pub_dummy = rospy.Publisher('/move_base/feedback', MoveBaseActionFeedback, queue_size = 10)
+        
+        self.pub_bench_message = rospy.Publisher('roah_rsbb/messages_saved', String, queue_size = 10)
               
         ### Subscribers - must listen for speech commands, location
         #rospy.Subscriber("hearts/navigation/goal/location", String, self.locGoal_callback)
@@ -49,12 +54,22 @@ class Controller():
         
         rospy.Subscriber("/hearts/stt", String, self.hearCommand_callback)
         rospy.Subscriber('/move_base/feedback', MoveBaseActionFeedback, self.current_pose_callback)
+        rospy.Subscriber("roah_rsbb/benchmark/state", BenchmarkState, self.benchmark_state_callback)
+        #rospy.Subscriber("roah_rsbb/benchmark", Benchmark, self.benchmark_callback)
+        
+        self.prepare = rospy.ServiceProxy('/roah_rsbb/end_prepare', std_srvs.srv.Empty)
+        self.execute = rospy.ServiceProxy('/roah_rsbb/end_execute', std_srvs.srv.Empty)
     
         self.outfolder = rospy.get_param('output_path')
         
-        self.objects = ['can','bottle','cup','pillow','kettle']
-        self.furniture = ['couch','bed','chair','table']
+        self.objects = ['Coke','water','juice','apple','lemon','rice','Pringles','Kleenex','sponge','soap','cup','glass','whiteboard']
+        self.categories = {'drink':['Coke','water','juice'],
+        'food':['apple','lemon','rice','Pringles'],
+        'cleaning stuff':['Kleenex','sponge','soap','whiteboard'],
+        'container':['cup','glass']}
+        self.furniture = ['chair','armchair','side','coffee','TV','kitchen','dining','couch','bookshelf','nightstand','night','bed','wardrobe','plant']
         self.rooms = ['kitchen', 'bedroom', 'living_room', 'dining_room', 'hallway']
+        self.doors = ['bedroom', 'entrance']
         self.tbm1_commands_dict = {
             "move": ["forward", "backward"],
             "turn": ["right", "left"],
@@ -63,10 +78,29 @@ class Controller():
             "here": [],
             "see": self.objects,}
             
-            
+        # Movement Parameters
         self.head_lr = 0.0
         self.head_ud = 0.0
+        self.head_move_step_size = .15
+        self.turn_step_size = 2
+        self.move_step_size = 1
         self.handle_camera_direction(['center'])
+
+    def benchmark_state_callback(self, data):
+                     
+        if data.benchmark_state == BenchmarkState.STOP:
+            rospy.loginfo("STOP")
+        elif data.benchmark_state == BenchmarkState.PREPARE:
+            rospy.loginfo("PREPARE")
+            try:
+                time.sleep(5)
+                self.prepare()
+            except:
+                rospy.loginfo("Failed to reply PREPARE")
+        elif data.benchmark_state == BenchmarkState.EXECUTE:
+            rospy.loginfo("EXECUTE")
+            self.pub_bench_message.publish("Starting")
+
 
     def hearCommand_callback(self,data):
         rospy.loginfo('Heard a command')
@@ -76,10 +110,10 @@ class Controller():
         words = speech.split(' ')[1:]
         rospy.loginfo(speech)
         words = [x for x in words if x!='the']
-        for w in range(len(words)):
-            if words[w] in ["room","chair","cabinet"] :
-                words[w] = words[w-1]+'_'+words[w]
-                words.pop(w-1)
+        #for w in range(len(words)):
+        #    if words[w] in ["room","chair","cabinet"] :
+        #        words[w] = words[w-1]+'_'+words[w]
+        #        words.pop(w-1)
         possible_verbs = self.tbm1_commands_dict.keys()
         if words[0] in possible_verbs:
             valid_command = True
@@ -100,45 +134,88 @@ class Controller():
         elif verb == "see":
             self.handle_picture_taking(subject) 
         elif verb == "look":
-            self.handle_camera_direction(subject)      
+            self.handle_camera_direction(subject)    
+        elif verb == "end":
+            self.execute()
         return 
 
+    #SEE the [bedroom, front] door is [open, closed]
+    #SEE the [couch, bed, chair, lamp (furniture)] in the [room]
+    #SEE the [coke, biscuits (object)] in the [room] on the [furniture]
+
     def handle_picture_taking(self,subject):
+        thingy = MoveBaseActionFeedback()
+        thingy.feedback.base_position.pose.position.x = 2.0
+        thingy.feedback.base_position.pose.position.y = 2.0
+        thingy.feedback.base_position.pose.orientation.w = 1.0
+        self.pub_dummy.publish(thingy)
         rospy.loginfo('Seen something')
-        if 'between' in subject: #Door option: [open, closed] door BETWEEN [room] and [room]
-            thing_id = 'door_1' #TODO add matching to IDs
-            status = subject[0]
-            room1 = subject[-3]
-            room2 = subject[-1]
+        rospy.loginfo(subject)
+        if 'door' in subject: #Door option: [open, closed] door BETWEEN [room] and [room]
+            if 'open' in subject:
+                open_status = 'true'
+            else:
+                open_status = 'false'
+            if 'bedroom' in subject:
+                thing_id = 'door_bedroom'
+                room1 = 'bedroom'
+                room2 = 'living_room'
+            else: 
+                thing_id = 'door_entrance'
+                room1 = 'hallway'
+                room2 = 'outside'
             line1 = self.linewriter('type',[thing_id,'door'])
             line2 = self.linewriter('connects',[thing_id,room1,room2])
-            line3 = self.linewriter('isOpen',[thing_id,status])
+            line3 = self.linewriter('isOpen',[thing_id,open_status])
             to_write = [line1,line2,line3]
 
-        elif subject[1] in self.objects: #[color] [object] in [room] on [furniture]
+        elif subject[0] in self.objects: #[object] in [room] on [furniture]
             if len(subject)<5:
                 self.pub_talk.publish("Invalid command please try again")
-            rospy.loginfo(subject)
-            thing_id = 'object_1' #TODO add matching to IDs
+            thing_id = subject[0] #TODO add matching to IDs
+            if thing_id == 'whiteboard':
+                thing_id = 'whiteboard cleaner'
             position_string = self.object_position() #TODO get actual position
-            self.pub_pic.publish(subject[1]+'.jpg')
-            color = subject[0]
-            item = subject[1]
-            room = subject[3]
-            furniture = subject[5]
+            self.pub_pic.publish(subject[0]+'.jpg')
+            for k in self.categories.keys():
+                if subject[0] in self.categories[k]:
+                    item = k
+            
+            if subject[3] == 'room':
+                room = subject[2]+'_'+subject[3]
+                subject.pop(3)
+            else:
+                room = subject[2]
+            if len(subject)==6:
+                furniture = subject[4]+'_'+subject[5]
+            else:
+                furniture = subject[4]
+            if furniture == 'armchair':
+                furniture = 'arm_chair'
+            if furniture == 'night' or furniture == 'night_stand':
+                furniture = 'nightstand'
             line1 = self.linewriter('type',[thing_id, item])
             line2 = self.linewriter('in',[thing_id, room])
             line3 = self.linewriter('on',[thing_id, furniture])
             line4 = self.linewriter('position ',[thing_id, position_string])
-            line5 = self.linewriter('color',[thing_id, color])
-            line6 = self.linewriter('picture',[thing_id,subject[1]+'.jpg'])
-            to_write = [line1,line2,line3,line4,line5,line6]
+            line6 = self.linewriter('picture',[thing_id,thing_id+'.jpg'])
+            to_write = [line1,line2,line3,line4,line6]
 
         elif subject[0] in self.furniture: # [couch, bed, chair, lamp (furniture)] in [room]
-            thing_id = 'furniture_1' # TODO matching IDs
-            furniture = subject[0]
-            room = subject[-1]
-            line1 = self.linewriter('type',[thing_id,furniture]) 
+            if subject[1]=='in':
+                thing_id = subject[0]
+            else:
+                thing_id = subject[0]+'_'+subject[1]
+                subject.pop(1)
+            if len(subject)==4:
+                room = subject[2]+'_'+subject[3]
+            else:
+                room = subject[2]
+            if thing_id == 'armchair':
+                thing_id = 'arm_chair'
+            if thing_id == 'night' or thing_id == 'night_stand':
+                thing_id = 'nightstand'
+            line1 = self.linewriter('type',[thing_id,thing_id]) 
             line2 = self.linewriter('in',[thing_id,room])
             to_write = [line1,line2]
         else:
@@ -147,6 +224,7 @@ class Controller():
         f = open(self.outfolder+'sementic_map.txt','a+')
         for line in to_write:
             f.write(line+'\n')
+            rospy.loginfo(line)
         f.close()
 
 
@@ -154,7 +232,7 @@ class Controller():
         text = descriptor + '('
         for option in options_list:
             text = text+option+', '
-        text = text[:-1]+').'
+        text = text[:-2]+').'
         return(text)
 
 
@@ -172,13 +250,13 @@ class Controller():
         point1.time_from_start = Duration(2.0,0.0)
         rospy.loginfo(subject)
         if subject[0] == 'up':
-            self.head_ud = self.head_ud + .2
+            self.head_ud = self.head_ud + self.head_move_step_size
         if subject[0] == 'down':
-            self.head_ud = self.head_ud - .2
+            self.head_ud = self.head_ud - self.head_move_step_size
         if subject[0] == 'left':
-            self.head_lr = self.head_lr + .2
+            self.head_lr = self.head_lr + self.head_move_step_size
         if subject[0] == 'right':
-            self.head_lr = self.head_lr - .2
+            self.head_lr = self.head_lr - self.head_move_step_size
                     
         rospy.loginfo(self.head_ud)
         point1.positions = [self.head_ud, self.head_lr]
@@ -197,21 +275,22 @@ class Controller():
         rospy.loginfo('Moving')
         rospy.loginfo(verb)
         rospy.loginfo(subject[0])
+        rospy.loginfo(subject[1])
         if len(subject)>1:
             if subject[1] == "more":
-                multiplier = 2
+                multiplier = 3
             if subject[1] == "less":
                 multiplier = .5
         else:
             multiplier = 1
         if(verb == 'move' and subject[0] == 'forward'):
-            self.send_directions(.2*multiplier,0)
+            self.send_directions(self.move_step_size*multiplier,0)
         elif(verb=='move' and subject[0] == 'backward'):
-            self.send_directions(-.2*multiplier,0)
+            self.send_directions(-1*self.move_step_size*multiplier,0)
         elif(verb == 'turn' and subject[0] == 'left'):
-            self.send_directions(0,1.0*multiplier)
+            self.send_directions(0,self.turn_step_size*multiplier)
         elif(verb == 'turn' and subject[0] == 'right'):
-            self.send_directions(0,-1.0*multiplier)
+            self.send_directions(0,-1*self.turn_step_size*multiplier)
           
     def send_directions(self,straight,turn):
         rospy.loginfo('Sending out a direction')
