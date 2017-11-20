@@ -275,22 +275,24 @@ class Controller():
         rospy.loginfo('Moving')
         rospy.loginfo(verb)
         rospy.loginfo(subject[0])
-        rospy.loginfo(subject[1])
+        #rospy.loginfo(subject[1])
         if len(subject)>1:
             if subject[1] == "more":
                 multiplier = 3
             if subject[1] == "less":
-                multiplier = .5
+                multiplier = 1
         else:
-            multiplier = 1
-        if(verb == 'move' and subject[0] == 'forward'):
-            self.send_directions(self.move_step_size*multiplier,0)
-        elif(verb=='move' and subject[0] == 'backward'):
-            self.send_directions(-1*self.move_step_size*multiplier,0)
-        elif(verb == 'turn' and subject[0] == 'left'):
-            self.send_directions(0,self.turn_step_size*multiplier)
-        elif(verb == 'turn' and subject[0] == 'right'):
-            self.send_directions(0,-1*self.turn_step_size*multiplier)
+            multiplier = 2
+        rospy.loginfo(multiplier)
+        for i in range(multiplier):
+            if(verb == 'move' and subject[0] == 'forward'):
+                self.send_directions(self.move_step_size,0)
+            elif(verb=='move' and subject[0] == 'backward'):
+                self.send_directions(-1*self.move_step_size,0)
+            elif(verb == 'turn' and subject[0] == 'left'):
+                self.send_directions(0,self.turn_step_size)
+            elif(verb == 'turn' and subject[0] == 'right'):
+                self.send_directions(0,-1*self.turn_step_size)
           
     def send_directions(self,straight,turn):
         rospy.loginfo('Sending out a direction')

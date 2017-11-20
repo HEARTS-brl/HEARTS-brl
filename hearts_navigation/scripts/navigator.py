@@ -63,7 +63,6 @@ class Navigator():
 
         if length_status > 0:
             status = data.status_list[length_status-1].status
-            rospy.loginfo('status: ' + str(status))
             
             if status == 4 or status == 5 or status == 9:
                 status_msg = 'Fail'
@@ -80,6 +79,7 @@ class Navigator():
             if self.previous_state != status_msg: 
                 self.pubStatus.publish(status_msg)
                 self.previous_state = status_msg
+                rospy.loginfo('status: ' + str(status))
 
 if __name__ == '__main__':
 	rospy.init_node('Navigator', anonymous=True)
