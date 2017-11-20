@@ -42,3 +42,8 @@ connects(door_bedroom, bedroom, living_room).
 isOpen(door_bedroom, false).
 type(nightstand, nightstand).
 in(nightstand, bedroom).
+type(cup, container).
+in(cup, kitchen).
+on(cup, table).
+position (cup, [2.54,2.84,0.5]).
+picture(cup, cup.jpg).

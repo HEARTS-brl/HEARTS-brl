@@ -27,6 +27,7 @@ from math import cos, sin
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from rospy.rostime import Duration
 from move_base_msgs.msg import MoveBaseActionFeedback
+from roah_rsbb_comm_ros.msg import Benchmark, BenchmarkState
 
 class Controller():
     def __init__(self):
@@ -41,6 +42,8 @@ class Controller():
         self.pub_pic = rospy.Publisher('/hearts/camera/snapshot', String, queue_size = 10)
         self.pub_head = rospy.Publisher('/head_controller/command',JointTrajectory, queue_size = 10)
         self.pub_move = rospy.Publisher('/mobile_base_controller/cmd_vel', Twist, queue_size = 10)  
+        self.pub_dummy = rospy.Publisher('/move_base/feedback', MoveBaseActionFeedback, queue_size = 10)
+        
               
         ### Subscribers - must listen for speech commands, location
         #rospy.Subscriber("hearts/navigation/goal/location", String, self.locGoal_callback)
@@ -116,6 +119,11 @@ class Controller():
     #SEE the [coke, biscuits (object)] in the [room] on the [furniture]
 
     def handle_picture_taking(self,subject):
+        thingy = MoveBaseActionFeedback()
+        thingy.feedback.base_position.pose.position.x = 2.0
+        thingy.feedback.base_position.pose.position.y = 2.0
+        thingy.feedback.base_position.pose.orientation.w = 1.0
+        self.pub_dummy.publish(thingy)
         rospy.loginfo('Seen something')
         rospy.loginfo(subject)
         if 'door' in subject: #Door option: [open, closed] door BETWEEN [room] and [room]
