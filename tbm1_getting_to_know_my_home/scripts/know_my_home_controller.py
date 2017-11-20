@@ -52,9 +52,11 @@ class Controller():
     
         self.outfolder = rospy.get_param('output_path')
         
-        self.objects = ['can','bottle','cup','pillow','kettle']
-        self.furniture = ['couch','bed','chair','table']
+        self.objects = ['coke','water','juice','apple','lemon','rice','pringles','kleenex','sponge','soap','cup','glass','whiteboard']
+        self.categories = {'drink':['coke','water','juice'],'food':[['apple','lemon','rice','pringles'],'cleaning stuff':['kleenex','sponge','soap','whiteboard'],'container':['cup','glass']}
+        self.furniture = ['chair','arm','side','coffee','tv','kitchen','dining','couch','bookshelf','nightstand','bed','wardrobe','plant']
         self.rooms = ['kitchen', 'bedroom', 'living_room', 'dining_room', 'hallway']
+        self.doors = ['bedroom', 'entrance']
         self.tbm1_commands_dict = {
             "move": ["forward", "backward"],
             "turn": ["right", "left"],
@@ -106,42 +108,67 @@ class Controller():
             self.handle_camera_direction(subject)      
         return 
 
+    #SEE the [bedroom, front] door is [open, closed]
+    #SEE the [couch, bed, chair, lamp (furniture)] in the [room]
+    #SEE the [coke, biscuits (object)] in the [room] on the [furniture]
+
     def handle_picture_taking(self,subject):
         rospy.loginfo('Seen something')
-        if 'between' in subject: #Door option: [open, closed] door BETWEEN [room] and [room]
-            thing_id = 'door_1' #TODO add matching to IDs
-            status = subject[0]
-            room1 = subject[-3]
-            room2 = subject[-1]
+        rospy.loginfo(subject)
+        if 'door' in subject: #Door option: [open, closed] door BETWEEN [room] and [room]
+            if 'open' in subject:
+                open_status = 'true'
+            else:
+                open_status = 'false'
+            if 'bedroom' in subject:
+                thing_id = 'door_bedroom'
+                room1 = 'bedroom'
+                room2 = 'living_room'
+            else: 
+                thing_id = 'door_entrance'
+                room1 = 'hallway'
+                room2 = 'outside'
             line1 = self.linewriter('type',[thing_id,'door'])
             line2 = self.linewriter('connects',[thing_id,room1,room2])
-            line3 = self.linewriter('isOpen',[thing_id,status])
+            line3 = self.linewriter('isOpen',[thing_id,open_status])
             to_write = [line1,line2,line3]
 
-        elif subject[1] in self.objects: #[color] [object] in [room] on [furniture]
+        elif subject[0] in self.objects: #[object] in [room] on [furniture]
             if len(subject)<5:
                 self.pub_talk.publish("Invalid command please try again")
-            rospy.loginfo(subject)
-            thing_id = 'object_1' #TODO add matching to IDs
+            thing_id = subject[0] #TODO add matching to IDs
             position_string = self.object_position() #TODO get actual position
-            self.pub_pic.publish(subject[1]+'.jpg')
-            color = subject[0]
-            item = subject[1]
-            room = subject[3]
-            furniture = subject[5]
+            self.pub_pic.publish(subject[0]+'.jpg')
+            for k in self.categories.keys():
+                if subject[0] in self.categories[k]:
+                    item = k
+            if subject[3] == 'room':
+                room = subject[2]+'_'+subject[3]
+                subject.pop(3)
+            else:
+                room = subject[2]
+            if len(subject)==6:
+                furniture = subject[4]+'_'+subject[5]
+            else:
+                furniture = subject[4]
             line1 = self.linewriter('type',[thing_id, item])
             line2 = self.linewriter('in',[thing_id, room])
             line3 = self.linewriter('on',[thing_id, furniture])
             line4 = self.linewriter('position ',[thing_id, position_string])
-            line5 = self.linewriter('color',[thing_id, color])
-            line6 = self.linewriter('picture',[thing_id,subject[1]+'.jpg'])
-            to_write = [line1,line2,line3,line4,line5,line6]
+            line6 = self.linewriter('picture',[thing_id,thing_id+'.jpg'])
+            to_write = [line1,line2,line3,line4,line6]
 
         elif subject[0] in self.furniture: # [couch, bed, chair, lamp (furniture)] in [room]
-            thing_id = 'furniture_1' # TODO matching IDs
-            furniture = subject[0]
-            room = subject[-1]
-            line1 = self.linewriter('type',[thing_id,furniture]) 
+            if subject[1]=='in':
+                thing_id = subject[0]
+            else:
+                thing_id = subject[0]+'_'+subject[1]
+                subject.pop(1)
+            if len(subject)==4:
+                room = subject[2]+'_'+subject[3]
+            else:
+                room = subject[2]
+            line1 = self.linewriter('type',[thing_id,thing_id]) 
             line2 = self.linewriter('in',[thing_id,room])
             to_write = [line1,line2]
         else:
