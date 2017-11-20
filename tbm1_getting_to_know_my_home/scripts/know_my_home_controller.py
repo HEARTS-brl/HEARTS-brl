@@ -63,9 +63,12 @@ class Controller():
             "here": [],
             "see": self.objects,}
             
-            
+        # Movement Parameters
         self.head_lr = 0.0
         self.head_ud = 0.0
+        self.head_move_step_size = .15
+        self.turn_step_size = 2
+        self.move_step_size = 1
         self.handle_camera_direction(['center'])
 
     def hearCommand_callback(self,data):
@@ -172,13 +175,13 @@ class Controller():
         point1.time_from_start = Duration(2.0,0.0)
         rospy.loginfo(subject)
         if subject[0] == 'up':
-            self.head_ud = self.head_ud + .2
+            self.head_ud = self.head_ud + self.head_move_step_size
         if subject[0] == 'down':
-            self.head_ud = self.head_ud - .2
+            self.head_ud = self.head_ud - self.head_move_step_size
         if subject[0] == 'left':
-            self.head_lr = self.head_lr + .2
+            self.head_lr = self.head_lr + self.head_move_step_size
         if subject[0] == 'right':
-            self.head_lr = self.head_lr - .2
+            self.head_lr = self.head_lr - self.head_move_step_size
                     
         rospy.loginfo(self.head_ud)
         point1.positions = [self.head_ud, self.head_lr]
@@ -197,21 +200,22 @@ class Controller():
         rospy.loginfo('Moving')
         rospy.loginfo(verb)
         rospy.loginfo(subject[0])
+        rospy.loginfo(subject[1])
         if len(subject)>1:
             if subject[1] == "more":
-                multiplier = 2
+                multiplier = 3
             if subject[1] == "less":
                 multiplier = .5
         else:
             multiplier = 1
         if(verb == 'move' and subject[0] == 'forward'):
-            self.send_directions(.2*multiplier,0)
+            self.send_directions(self.move_step_size*multiplier,0)
         elif(verb=='move' and subject[0] == 'backward'):
-            self.send_directions(-.2*multiplier,0)
+            self.send_directions(-1*self.move_step_size*multiplier,0)
         elif(verb == 'turn' and subject[0] == 'left'):
-            self.send_directions(0,1.0*multiplier)
+            self.send_directions(0,self.turn_step_size*multiplier)
         elif(verb == 'turn' and subject[0] == 'right'):
-            self.send_directions(0,-1.0*multiplier)
+            self.send_directions(0,-1*self.turn_step_size*multiplier)
           
     def send_directions(self,straight,turn):
         rospy.loginfo('Sending out a direction')
