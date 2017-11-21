@@ -8,3 +8,5 @@ in(cup, kitchen).
 on(cup, couch).
 position (cup, [2.54,2.84,0.5]).
 picture(cup, cup.jpg).
+type(chair, chair).
+in(chair, hallway).

@@ -82,8 +82,8 @@ class Controller():
         self.head_lr = 0.0
         self.head_ud = 0.0
         self.head_move_step_size = .15
-        self.turn_step_size = .8
-        self.move_step_size = .5
+        self.turn_step_size = 0.2
+        self.move_step_size = 0.2
         self.handle_camera_direction(['center'])
 
     def benchmark_state_callback(self, data):
@@ -278,13 +278,17 @@ class Controller():
         #rospy.loginfo(subject[1])
         if len(subject)>1:
             if subject[1] == "more":
-                multiplier = 5
-            if subject[1] == "less":
-                multiplier = 1
+                distance = 5
+            elif subject[1] == "less":
+                distance = 1
+            else:
+                distance = 1
         else:
-            multiplier = 2
-        rospy.loginfo(multiplier)
-        for i in range(multiplier):
+            distance = 2
+        rospy.loginfo(distance)
+        d=0
+        t0 = rospy.get_time()
+        while(d<distance):
             if(verb == 'move' and subject[0] == 'forward'):
                 self.send_directions(self.move_step_size,0)
             elif(verb=='move' and subject[0] == 'backward'):
@@ -293,6 +297,7 @@ class Controller():
                 self.send_directions(0,self.turn_step_size)
             elif(verb == 'turn' and subject[0] == 'right'):
                 self.send_directions(0,-1*self.turn_step_size)
+            d = rospy.get_time()-t0
           
     def send_directions(self,straight,turn):
         rospy.loginfo('Sending out a direction')
@@ -306,7 +311,7 @@ class Controller():
         t.angular.z = turn
 
         self.pub_move.publish(t)
-        rospy.sleep(1)
+        rospy.sleep(0.01)
     
     def object_position(self):
         ####Read in base position
