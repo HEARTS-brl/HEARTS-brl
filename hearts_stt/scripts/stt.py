@@ -57,6 +57,7 @@ import wave, array, os            # used by mono_to_stereo()
 
 
 o_tt=TT.tag_topics()
+global_bool = False
 
 class SpeechRecognizer():
         
@@ -223,6 +224,14 @@ def callback(data):
         text = o_tt.add_key(index, text)
         pub.publish(text + '~' + wav_out_file_path) 
 
+def callback2(data):
+    text = data.data
+    l = text.split(' ')
+    global_bool = True
+    for range(len(l)):
+        rospy.wait(.5)
+    global_bool = False
+        
 def mono_to_stereo(inputfile):
 # Author: Derek Ripper
 # Date  : 02 Aug 2017 
@@ -307,45 +316,50 @@ if __name__ == "__main__":
         rospy.Subscriber("Wav_FileIn",String, callback)
 
     else:
+        rospy.Subscriber("/hearts/tts",String, callback2)
         rospy.loginfo(rospy.get_name() + ": audio source is microphone")
         speech_recognizer.set_audio_source("mic")
         passes = 0
         rate = rospy.Rate(1)
         while not rospy.is_shutdown():
-           
-           audio = speech_recognizer.get_audio_mic(energy_threshold, pause_threshold, dynamic_energy_threshold) 
-           rospy.loginfo("SPEECH HEARD: ")
-           text  = speech_recognizer.recognize(audio)
-           passes +=  1
-           if not text is None: 
-               text = text.strip()
-               # provide break out of stt routine
-               if text == "stop recording":
-                       print("\n***** User command to STOP RECORDING issued *****")
-                       print("*****    Use CTRL-C to kill ROS Node \n")
-                       quit() 
+           if global_bool:
+                rospy.wait(.5)
+           else:
+               audio = speech_recognizer.get_audio_mic(energy_threshold, pause_threshold, dynamic_energy_threshold) 
+               rospy.loginfo("SPEECH HEARD.....: ")
+               text  = speech_recognizer.recognize(audio)
+               passes +=  1
+               if not text is None: 
+                   text = text.strip()
+                   # provide break out of stt routine
+                   if text == "stop recording":
+                           print("\n***** User command to STOP RECORDING issued *****")
+                           print("*****    Use CTRL-C to kill ROS Node \n")
+                           quit() 
 
-               # ERL Competition mode for spoken phrase recognition 
-               #    (ie wait on ENTER key pressto start recording )
-               if len( wait4mic ) !=0: 
-            
-                   wav_out_file_path = wav_out_folder_path + "fb_mic_phase_speech_audio_" + str(passes) + ".wav"
+                   # ERL Competition mode for spoken phrase recognition 
+                   #    (ie wait on ENTER key pressto start recording )
+                   if len( wait4mic ) !=0: 
+                
+                       wav_out_file_path = wav_out_folder_path + "fb_mic_phase_speech_audio_" + str(passes) + ".wav"
 
-                   with open(wav_out_file_path, "wb") as f:
-                       f.write(audio.get_wav_data())
-                       f.close()
-            
-                   # convert recorded .wav file to stereo if needed
-                   mono_to_stereo(wav_out_file_path)           
-               
-                   rospy.loginfo(rospy.get_name() + ": Transcribed text is:\n" + text +
-                   "\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")                  
-                   # this form is needed by t2cfr.py to build ERL results.txt file
-                   pub.publish(text + "~" + wav_out_file_path) 
+                       with open(wav_out_file_path, "wb") as f:
+                           f.write(audio.get_wav_data())
+                           f.close()
+                
+                       # convert recorded .wav file to stereo if needed
+                       mono_to_stereo(wav_out_file_path)           
+                   
+                       rospy.loginfo(rospy.get_name() + ": Transcribed text is:\n" + text +
+                       "\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")                  
+                       # this form is needed by t2cfr.py to build ERL results.txt file
+                       pub.publish(text + "~" + wav_out_file_path) 
 
-               # just pure clean text published for continuous listening mode
-               else:
-                   pub.publish(text) 
+                   # just pure clean text published for continuous listening mode
+                   else:
+                       pub.publish(text) 
+                       # added in Barcelona - wait on topic "/hearts/tts/ before continuing
+                       
 
 
         rate.sleep()
