@@ -153,7 +153,7 @@ class Controller():
         self.say("Please follow me")
 
         # 6. move to kitchen
-        if self.move_to("kitchen table") == False:
+        if self.move_to("kitchen") == False:
             self.say("I am unable to move to the kitchen")
             return
 
@@ -198,7 +198,7 @@ class Controller():
         self.say("Please follow me")
 
         # 6. move to kitchen
-        if self.move_to("kitchen table") == False:
+        if self.move_to("kitchen") == False:
             self.say("I am unable to move to the kitchen")
             return
 
@@ -255,7 +255,7 @@ class Controller():
         rospy.sleep(5)
 
         # 9. move to the kitchen
-        if self.move_to("kitchen table") == False:
+        if self.move_to("kitchen") == False:
             self.say("I am unable to move to the kitchen")
             return
 

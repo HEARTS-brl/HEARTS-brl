@@ -44,8 +44,6 @@ class Controller():
         self.pub_head = rospy.Publisher('/head_controller/command',JointTrajectory, queue_size = 10)
         self.pub_move = rospy.Publisher('/mobile_base_controller/cmd_vel', Twist, queue_size = 10)  
         self.pub_dummy = rospy.Publisher('/move_base/feedback', MoveBaseActionFeedback, queue_size = 10)
-        
-        self.pub_bench_message = rospy.Publisher('roah_rsbb/messages_saved', String, queue_size = 10)
               
         ### Subscribers - must listen for speech commands, location
         #rospy.Subscriber("hearts/navigation/goal/location", String, self.locGoal_callback)
@@ -99,7 +97,6 @@ class Controller():
                 rospy.loginfo("Failed to reply PREPARE")
         elif data.benchmark_state == BenchmarkState.EXECUTE:
             rospy.loginfo("EXECUTE")
-            self.pub_bench_message.publish("Starting")
 
 
     def hearCommand_callback(self,data):
