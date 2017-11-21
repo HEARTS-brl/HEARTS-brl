@@ -11,9 +11,6 @@ import std_srvs.srv
 
 class Controller():
     def __init__(self):
-        #Publishers#
-        self.pub_bench_message = rospy.Publisher('roah_rsbb/messages_saved', String, queue_size = 10)
-
         #Subscribers
         rospy.Subscriber("roah_rsbb/benchmark/state", BenchmarkState, self.benchmark_state_callback)
     
@@ -26,10 +23,8 @@ class Controller():
                      
         if data.benchmark_state == BenchmarkState.STOP:
             rospy.loginfo("STOP")
-            self.pub_bench_message.publish("Stopping")
         elif data.benchmark_state == BenchmarkState.PREPARE:
             rospy.loginfo("PREPARE")
-            self.pub_bench_message.publish("Preparing")
             try:
                 time.sleep(5)
                 self.prepare()
@@ -37,7 +32,6 @@ class Controller():
                 rospy.loginfo("Failed to reply PREPARE")
         elif data.benchmark_state == BenchmarkState.EXECUTE:
             rospy.loginfo("EXECUTE")
-            self.pub_bench_message.publish("Starting")
             
 if __name__ == '__main__':
      rospy.init_node('hearts_test', anonymous=True)

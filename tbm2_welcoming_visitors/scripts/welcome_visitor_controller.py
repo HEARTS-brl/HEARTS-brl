@@ -16,6 +16,7 @@ import std_srvs.srv
 
 class Controller():
     def __init__(self):
+        self.prepare = rospy.ServiceProxy('/roah_rsbb/end_prepare', std_srvs.srv.Empty)
         #self.pub_task = rospy.Publisher('hearts/controller/task', String, queue_size=10)
         self.pub_location_goal = rospy.Publisher('/hearts/navigation/goal/location', String, queue_size=10)
         self.detect_faces = False        
@@ -70,10 +71,8 @@ class Controller():
     def benchmark_state_callback(self, data):
         if data.benchmark_state == BenchmarkState.STOP:
             rospy.loginfo("STOP")
-            self.pub_bench_message.publish("Stopping")
         elif data.benchmark_state == BenchmarkState.PREPARE:
             rospy.loginfo("PREPARE")
-            self.pub_bench_message.publish("Preparing")
             try:
                 time.sleep(5)
                 self.prepare()
@@ -81,7 +80,6 @@ class Controller():
                 rospy.loginfo("Failed to reply PREPARE")
         elif data.benchmark_state == BenchmarkState.EXECUTE:
             rospy.loginfo("EXECUTE")
-            self.pub_bench_message.publish("Starting")
 
     def benchmark_callback(self, data):
         rospy.loginfo("benchmark_callback")
