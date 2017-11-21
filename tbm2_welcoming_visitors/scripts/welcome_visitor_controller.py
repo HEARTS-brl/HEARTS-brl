@@ -5,14 +5,10 @@
 
 import rospy
 import time
-from std_msgs.msg import String
-#from roah_devices.msg import DevicesState
-from sound_play.libsoundplay import SoundClient
-from roah_rsbb_comm_ros.msg import Benchmark, BenchmarkState
-from std_msgs.msg import Empty
-from roah_rsbb_comm_ros.msg import DevicesState
+from std_msgs.msg import Empty, String
 from geometry_msgs.msg import Pose2D
-from roah_rsbb_comm_ros.msg import TabletState
+from roah_rsbb_comm_ros.msg import Benchmark, BenchmarkState, DevicesState, TabletState
+import std_srvs.srv
 
 # activation: doorbell press detected
 # notification:
@@ -20,6 +16,7 @@ from roah_rsbb_comm_ros.msg import TabletState
 
 class Controller():
     def __init__(self):
+        self.prepare = rospy.ServiceProxy('/roah_rsbb/end_prepare', std_srvs.srv.Empty)
         #self.pub_task = rospy.Publisher('hearts/controller/task', String, queue_size=10)
         self.pub_location_goal = rospy.Publisher('/hearts/navigation/goal/location', String, queue_size=10)
         self.detect_faces = False        
@@ -72,12 +69,17 @@ class Controller():
 #        rospy.loginfo("state_callback")
 
     def benchmark_state_callback(self, data):
-         if data.benchmark_state == BenchmarkState.STOP:
-             rospy.loginfo("benchmark_state_callback: STOP")
-         elif data.benchmark_state == BenchmarkState.PREPARE:
-             rospy.loginfo("benchmark_state_callback: PREPARE")
-         elif data.benchmark_state == BenchmarkState.EXECUTE:
-             rospy.loginfo("benchmark_state_callback: EXECUTE")
+        if data.benchmark_state == BenchmarkState.STOP:
+            rospy.loginfo("STOP")
+        elif data.benchmark_state == BenchmarkState.PREPARE:
+            rospy.loginfo("PREPARE")
+            try:
+                time.sleep(5)
+                self.prepare()
+            except:
+                rospy.loginfo("Failed to reply PREPARE")
+        elif data.benchmark_state == BenchmarkState.EXECUTE:
+            rospy.loginfo("EXECUTE")
 
     def benchmark_callback(self, data):
         rospy.loginfo("benchmark_callback")
@@ -87,6 +89,9 @@ class Controller():
 
     def bell_callback(self, data):
         rospy.loginfo("bell_callback")
+        time.sleep(2)
+        self.say("welcome! please look towards the camera so that I can recognise you")
+        
         if self.detect_faces == False:
             # bell pressed, detect face
             self.detect_faces = True
@@ -134,7 +139,7 @@ class Controller():
         self.say("Hello, I am coming to get the post mail")        
 
         # 2. move to front door        
-	if self.move_to("front door") == False:
+	if self.move_to("hallway") == False:
             self.say("I am unable to move to the front door")
             return
         
@@ -163,7 +168,7 @@ class Controller():
         self.say("Please follow me")
 
         # 10. move to front door
-        if self.move_to("front door") == False:
+        if self.move_to("hallway") == False:
             self.say("I am unable to move to the kitchen")
             return
 
@@ -171,7 +176,7 @@ class Controller():
         self.say("Goodbye!")
 
         # 12. return to base
-        if self.move_to("base") == False:
+        if self.move_to("dining room corner") == False:
             self.say("I am unable to move to the base")
             return
 
@@ -180,7 +185,7 @@ class Controller():
         self.say("Hello, I am coming to get the breakfast")
         
         # 2. move to front door
-        if self.move_to("front door") == False:
+        if self.move_to("hallway") == False:
             self.say("I am unable to move to the front door")
         
         # 3. speak to the deliman, request him to open the door: "I am here, please open the door"
@@ -208,7 +213,7 @@ class Controller():
         self.say("Please follow me")
 
         # 10. move to front door
-        if self.move_to("front door") == False:
+        if self.move_to("hallway") == False:
             self.say("I am unable to move to the front door")
             return
 
@@ -216,7 +221,7 @@ class Controller():
         self.say("Goodbye!")
 
         # 12. return to base
-        if self.move_to("base") == False:
+        if self.move_to("dining room corner") == False:
             self.say("I am unable to move to the base")
             return
 
@@ -225,7 +230,7 @@ class Controller():
         self.say("Hi Dr. Kimble, I am coming to open the door")
 
         # 2. move to front door
-        if self.move_to("front door") == False:
+        if self.move_to("hallway") == False:
             self.say("I am unable to move to the front door")
             return
 
@@ -258,7 +263,7 @@ class Controller():
         self.say("Please follow me")
 
         # 11. move to front door
-        if self.move_to("front door") == False:
+        if self.move_to("hallway") == False:
             self.say("I am unable to move to the front door")
             return
 
@@ -266,7 +271,7 @@ class Controller():
         self.say("Goodbye!")
 
         # 13. return to base
-        if self.move_to("base") == False:
+        if self.move_to("dining room corner") == False:
             self.say("I am unable to move to the base")
             return
 

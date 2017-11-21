@@ -1,6 +1,6 @@
 <launch>
     <!-- set speech to Text engine -->
-    <arg name="SR_speechrec_engine" default="google_cloud" />
+    <arg name="SR_speechrec_engine" default="google" />
     <!-- determines whether audio is supplied from microphone ('') or audio file ('TH') -->
     <arg name="SR_TH" default="" />
     <!-- used to generate wav files e.g. wav out path -->

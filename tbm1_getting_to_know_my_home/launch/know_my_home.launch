@@ -10,6 +10,7 @@
   <param name="output_path" value="$(find tbm1_getting_to_know_my_home)/output/" />
   <include file="$(find hearts_camera_saver)/launch/hearts_camera_saver.launch">
     <arg name="output_path" value="$(find tbm1_getting_to_know_my_home)/output/" />
+    <arg name="show_feed" value="true" />
   </include>
   <!-- 
     <node name="location_goal" pkg="hearts_navigation" type="location_goal.py" />

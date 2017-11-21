@@ -1,3 +1,16 @@
 <launch>
+  <arg name="data_path" default="/home/turtlebot/tb_ws/src/brl-hearts/hearts_face_uniform/data/" />
+  <arg name="face_cascade_path" default="/home/turtlebot/tb_ws/src/brl-hearts/hearts_face_uniform/src/haarcascade_frontalface_alt2.xml" />
+  <param name="data_path" value="$(arg data_path)" />
+  <param name="face_cascade_path" value="$(arg face_cascade_path)" />  
   <node name="hearts_face_uniform" pkg="hearts_face_uniform" type="hearts_face_uniform" output="screen" />
+  <!-- BRL IP camera setup -->
+  <!-- <remap from="/ipcam/front_door/snapshot" to="/roah_ipcam/image"/> -->
+  <!-- <include file="$(find brl_ipcam)/launch/brl_ipcam.launch" /> -->
+  <!-- PAL Robotics IP camera setup -->
+  <include file="$(find roah_ipcam)/launch/roah_ipcam.launch">
+    <arg name="ip" value="192.168.1.90"/>
+    <arg name="user" value="hearts"/>
+    <arg name="password" value="hearts_erl_2_pal"/>
+  </include>
 </launch>

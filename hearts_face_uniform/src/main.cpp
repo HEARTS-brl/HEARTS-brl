@@ -26,13 +26,10 @@ CascadeClassifier face_cascade;
 
 static const std::string OPENCV_WINDOW = "Image window";
 
-// TODO: as ros param
-static const std::string PATH = "/home/turtlebot/tb_ws/src/brl-hearts/hearts_face_uniform/";
-
 // where the registered data are stored. You can change this directory
-std::string DATA_PATH = PATH + "data/";
+static const std::string DATA_PATH_PARAMETER = "data_path";
 
-std::string face_cascade_name = PATH + "src/haarcascade_frontalface_alt2.xml";
+static const std::string FACE_CASCADE_PATH_PARAMETER = "face_cascade_path";
 
 class ImageConverter
 {
@@ -64,6 +61,15 @@ public:
     // Subscrive to input video feed and publish output video feed
     //image_sub_ = it_.subscribe("/devices/front_door/image", 1, 
     //  &ImageConverter::imageCb, this);
+    
+    string dataPath;
+    if (!nh_.getParam(DATA_PATH_PARAMETER, dataPath))
+        cout << "FAILED TO GET PARAMETER: " << DATA_PATH_PARAMETER << " " << dataPath << endl;
+    
+    string faceCascadePath;
+    if (!nh_.getParam(FACE_CASCADE_PATH_PARAMETER, faceCascadePath))
+        cout << "FAILED TO GET PARAMETER: " << FACE_CASCADE_PATH_PARAMETER << endl;
+    
     image_sub_ = it_.subscribe("/roah_ipcam/image", 1, 
       &ImageConverter::imageCb, this);
     image_pub_ = it_.advertise("/image_converter/output_video", 1);
@@ -79,14 +85,22 @@ public:
       stringstream ss;
       ss << x;
       std::string str = ss.str();
-      std::string imagePath = DATA_PATH + str + ".jpg";
+      std::string imagePath = dataPath + str + ".jpg";
+
+      cout << "loading " << imagePath << "..." << endl;
 
       Mat image = imread(imagePath, 0);
-      Size imgsize(200,200);
-      Mat imgSmall;
-      resize(image,imgSmall,imgsize);
-      images.push_back(imgSmall);
-      labels.push_back(subjectNum);
+      
+      if (image.size().area() == 0)
+          cout << "FAILED TO LOAD IMAGE" << endl;
+      else
+      {
+          Size imgsize(200,200);
+          Mat imgSmall;
+          resize(image,imgSmall,imgsize);
+          images.push_back(imgSmall);
+          labels.push_back(subjectNum);
+      }
     }
 
     // model_ = LBPHFaceRecognizer::create(); // face recogniser created
@@ -94,7 +108,7 @@ public:
     model_->train(images, labels); // train the model
 
     // Load the cascades
-    if (!face_cascade.load(face_cascade_name))
+    if (!face_cascade.load(faceCascadePath))
     { 
       printf("--(!)Error loading face cascade\n"); 
       return; 
@@ -250,22 +264,23 @@ public:
  
     Point posText1(faces[largestIndex].x, max(1, faces[largestIndex].y - 10));
 
-    cout << meanValR << endl << meanValG << endl << meanValB << endl << endl;
-    //cout << meanValHat << endl << meanValHatSmall << endl << endl;
-    //cout << meanValHat << endl << meanValHatSmall << endl << endl;
-    cout << "dev_" << avgSDVal << endl;
-
     // rules!!!: checking for white colour, checking for yellow-ish colour, checking for hat pattern, is the hat colour similar to the t-shirt colour
     std::string dispName;
    // if ((max(meanValR, meanValG) / min(meanValR, meanValG) < 1.2) && (max(meanValR, meanValB) / min(meanValR, meanValB) > 1.4) && (max(meanValG, meanValB) / min(meanValG, meanValB) > 1.3) && (avgSDVal < 30) && (meanValHat/meanValHatSmall < 0.8))
 
- if ((max(meanValR, meanValG) / min(meanValR, meanValG) < 1.2) && (max(meanValR, meanValB) / min(meanValR, meanValB) > 1.6) && (max(meanValG, meanValB) / min(meanValG, meanValB) > 1.6) && (avgSDVal < 30))
+    double rg = meanValR / meanValG;
+    double rb = meanValR / meanValB;
+    double gb = meanValG / meanValB;
+    
+    cout << rg << endl << rb << endl << gb << endl << endl;
+    
+    if ((rg > POSTMAN_RG_MIN) && (rg < POSTMAN_RG_MAX) && (rb > POSTMAN_RB_MIN) && (rb < POSTMAN_RB_MAX) && (gb > POSTMAN_GB_MIN && gb < POSTMAN_GB_MAX))
     {
       pub("postman");
       dispName = "POST MAN";
       putText(frame, dispName, posText1, FONT_HERSHEY_COMPLEX, 1.2, AMBER, 2, 8); // displaying recognised names
     }
-    else if ((max(meanValR, meanValG) / min(meanValR, meanValG) < 1.15) && (max(meanValR, meanValB) / min(meanValR, meanValB) < 1.15) && (avgSDVal<21))
+    else if ((rg > DELIMAN_RG_MIN) && (rg < DELIMAN_RG_MAX) && (rb > DELIMAN_RB_MIN) && (rb < DELIMAN_RB_MAX) && (gb > DELIMAN_GB_MIN) && (gb < DELIMAN_GB_MAX))
     {
       pub("deliman");
       dispName = "DELI MAN";
