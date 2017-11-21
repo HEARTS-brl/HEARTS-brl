@@ -3,11 +3,11 @@
     <arg name="WORKSPACE" value="catkin_ws"   />
 
      <!-- ERL COMPETITION USB memory stick ID - Location of .wav files and destination for the results.txt file --> 
-    <arg name="ERL_USB_MEM" value="BCA3-57E7" />
+    <arg name="ERL_USB_MEM" value="HEARTS" />
 
     <param name='SR_BRL_DATAPATHOUT' value='/home/$(env USER)/Documents/BRL_speech_results/' />
-    <param name='SR_VERBSFILE' value='/home/$(env USER)/$(arg WORKSPACE)/src/hearts/speech_recognition/scripts/TrainingDatasetVerbs.csv' />
-    <param name="SR_GROUNDTRUTHDELIM" value="," /> 
+    <param name='SR_VERBSFILE' value='/home/$(env USER)/$(arg WORKSPACE)/src/brl-hearts/fbm3_speech_understanding/data_in/TrainingDatasetVerbs.csv' />
+    <param name="SR_GROUNDTRUTHDELIM" value="|" /> 
     <param name='SR_GROUNDTRUTH' value='/home/$(env USER)/$(arg WORKSPACE)/src/brl-hearts/fbm3_speech_understanding/data_in/ERLx3_ground_truth.csv' />
 
     <!-- if SR_ERL_AUDIOPATH is defined then SR_BRL_AUDIO_DIR is ignored.  -->
