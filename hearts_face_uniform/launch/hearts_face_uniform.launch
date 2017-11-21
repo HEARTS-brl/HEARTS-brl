@@ -1,3 +1,7 @@
 <launch>
+  <arg name="data_path" default="/home/turtlebot/tb_ws/src/brl-hearts/hearts_face_uniform/data/" />
+  <arg name="face_cascade_path" default="/home/turtlebot/tb_ws/src/brl-hearts/hearts_face_uniform/src/haarcascade_frontalface_alt2.xml" />
+  <param name="data_path" value="$(arg data_path)" />
+  <param name="face_cascade_path" value="$(arg face_cascade_path)" />  
   <node name="hearts_face_uniform" pkg="hearts_face_uniform" type="hearts_face_uniform" output="screen" />
 </launch>
