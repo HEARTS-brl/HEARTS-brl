@@ -5,10 +5,8 @@ This is a test script for a test package, it makes sure that the node is communi
 
 import rospy
 import time
-from std_msgs.msg import String
-from std_msgs.msg import Empty
-from rospy.rostime import Duration
-from roah_rsbb_comm_ros.msg import Benchmark, BenchmarkState
+from std_msgs.msg import Empty, String
+from roah_rsbb_comm_ros.msg import BenchmarkState
 import std_srvs.srv
 
 class Controller():
@@ -17,11 +15,9 @@ class Controller():
         self.pub_bench_message = rospy.Publisher('roah_rsbb/messages_saved', String, queue_size = 10)
 
         #Subscribers
-        #rospy.Subscriber('/move_base/feedback', MoveBaseActionFeedback, self.current_pose_callback)
         rospy.Subscriber("roah_rsbb/benchmark/state", BenchmarkState, self.benchmark_state_callback)
-        #rospy.Subscriber("roah_rsbb/benchmark", Benchmark, self.benchmark_callback)
     
-        
+        #Services
         self.prepare = rospy.ServiceProxy('/roah_rsbb/end_prepare', std_srvs.srv.Empty)
         self.execute = rospy.ServiceProxy('/roah_rsbb/end_execute', std_srvs.srv.Empty)
     
@@ -42,17 +38,7 @@ class Controller():
         elif data.benchmark_state == BenchmarkState.EXECUTE:
             rospy.loginfo("EXECUTE")
             self.pub_bench_message.publish("Starting")
-   
-    def current_pose_callback(self):
-        pass         
             
-    def execute_command(self):
-        pass
-       
-
-
-
-
 if __name__ == '__main__':
      rospy.init_node('hearts_test', anonymous=True)
      rospy.loginfo("hearts test controller has started")

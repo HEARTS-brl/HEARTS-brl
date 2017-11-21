@@ -10,18 +10,24 @@
     <arg name="password" value="hearts_erl_2_pal"/>
   </include>
   
-  <!-- <include file="$(find hearts_face_uniform)/launch/hearts_face_uniform.launch" /> -->
-  <!-- <include file="$(find hearts_tts)/launch/hearts_tts.launch" /> -->
-  <!-- <include file="$(find hearts_navigation)/launch/hearts_navigation_navigate.launch"> -->
-  <!--   <arg name="map_name" value="map_pal3" /> -->
-  <!-- </include> -->
-  <!-- <node pkg="roah_rsbb_comm_ros" type="comm" name="roah_rsbb_comm" respawn="true"> -->
-  <!--   <param name="team_name" type="string" value="Hearts" /> -->
-  <!--   <param name="robot_name" type="string" value="Tiago" /> -->
-  <!--   <param name="rsbb_key" type="string" value="FJ6LaZOM" /> -->
-  <!--   <param name="rsbb_host" type="string" value="192.168.1.20" /> -->
-  <!-- </node> -->
-  <!-- <node name="welcome_visitor_controller" pkg="tbm2_welcoming_visitors" type="welcome_visitor_controller.py" output="screen" /> -->
+  <include file="$(find hearts_face_uniform)/launch/hearts_face_uniform.launch">
+    <!-- <arg name="data_path" value="/home/hearts/tb_ws/src/brl-hearts/hearts_face_uniform/data/" /> -->
+    <!-- <arg name="face_cascade_path" value="/home/hearts/tb_ws/src/brl-hearts/hearts_face_uniform/src/haarcascade_frontalface_alt2.xml" /> -->
+    <arg name="data_path" value="/home/turtlebot/tb_ws/src/brl-hearts/hearts_face_uniform/data/" />
+    <arg name="face_cascade_path" value="/home/turtlebot/tb_ws/src/brl-hearts/hearts_face_uniform/src/haarcascade_frontalface_alt2.xml" />
+  </include>
+  
+  <include file="$(find hearts_tts)/launch/hearts_tts.launch" />
+  include file="$(find hearts_navigation)/launch/hearts_navigation_navigate.launch">
+    <arg name="map_name" value="map_pal3" />
+  </include>
+  <node pkg="roah_rsbb_comm_ros" type="comm" name="roah_rsbb_comm" respawn="true">
+    <param name="team_name" type="string" value="Hearts" />
+    <param name="robot_name" type="string" value="Tiago" />
+    <param name="rsbb_key" type="string" value="FJ6LaZOM" />
+    <param name="rsbb_host" type="string" value="192.168.1.20" />
+  </node>
+  <node name="welcome_visitor_controller" pkg="tbm2_welcoming_visitors" type="welcome_visitor_controller.py" output="screen" />
   
   <!-- <node name="webcam_publisher" pkg="hearts_webcam" type="hearts_webcam" output="screen" args="1" /> -->
   <!--  -->
