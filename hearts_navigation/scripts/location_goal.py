@@ -117,12 +117,15 @@ class Location():
     # When a location is published, turn it in to a pose goal
     def locGoal_callback(self, data):
         print data.data
-        self.current_goal = data.data
+        
         pose = self.find_pose(data.data)
         if not pose is None:
+            self.current_goal = data.data
             self.pubGoal.publish(pose)
-
-
+        else 
+            self.current_goal = None
+            print "invalid goal location '" + data.data + "'"
+            
     # When a pose is published, convert it to a location value
     def currentPose_callback(self, data):
         print data.data
