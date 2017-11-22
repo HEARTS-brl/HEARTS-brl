@@ -1,0 +1,3 @@
+<launch>
+  <node name="obj_rec_1" pkg="hearts_obj_rec_1" type="obj_rec_1.py" output="screen" />
+</launch>

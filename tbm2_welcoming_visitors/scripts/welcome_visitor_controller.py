@@ -89,8 +89,14 @@ class Controller():
 
     def bell_callback(self, data):
         rospy.loginfo("bell_callback")
-        time.sleep(2)
-        self.say("welcome! please look towards the camera so that I can recognise you")
+        
+        self.say("I am coming")
+        
+        if self.move_to("hallway") == False:
+            self.say("I am unable to move to the front door")
+            return
+            
+        self.say("please look towards the camera so that I can recognise you")
         
         if self.detect_faces == False:
             # bell pressed, detect face
@@ -114,6 +120,8 @@ class Controller():
         msg = String()
         msg.data = location
         self.pub_location_goal.publish(msg)
+        
+        self.location_result = "Active"
         while self.location_result == "Active":
             rospy.sleep(1)
         
@@ -135,22 +143,15 @@ class Controller():
         self.location_result = data.data
 
     def process_face_postman(self):
-        # 1. speak to the postman: "Hello, I am coming to get the post mail." 
-        self.say("Hello, I am coming to get the post mail")        
-
-        # 2. move to front door        
-	if self.move_to("hallway") == False:
-            self.say("I am unable to move to the front door")
-            return
-        
+                
         # 3.b speak to the postman, request him to open the door:  "I am here, please open the door"
-        self.say("I am here, please open the door")
+        self.say("I will receive the post mail, please open the door")
  
         # 4. detect door is open
-        rospy.sleep(5)
+        rospy.sleep(3)
 
         # 5. speak to postman, instruct to follow robot: "Please follow me"
-        self.say("Please follow me")
+        self.say("Hello! Please follow me")
 
         # 6. move to kitchen
         if self.move_to("kitchen") == False:
@@ -162,18 +163,18 @@ class Controller():
 
         # 8. wait
         # TODO
-        rospy.sleep(10)
+        rospy.sleep(5)
 
         # 9. speak to postman, instruct to follow robot: "Please follow me"
         self.say("Please follow me")
 
         # 10. move to front door
-        if self.move_to("hallway") == False:
+        if self.move_to("entrance") == False:
             self.say("I am unable to move to the kitchen")
             return
 
         # 11. bid postman farewell
-        self.say("Goodbye!")
+        self.say("Thank you for visiting. Goodbye!")
 
         # 12. return to base
         if self.move_to("dining room corner") == False:
@@ -181,21 +182,15 @@ class Controller():
             return
 
     def process_face_deliman(self):
-        # 1. speak to the deliman: "Hello, I am coming to get the breakfast." 
-        self.say("Hello, I am coming to get the breakfast")
-        
-        # 2. move to front door
-        if self.move_to("hallway") == False:
-            self.say("I am unable to move to the front door")
         
         # 3. speak to the deliman, request him to open the door: "I am here, please open the door"
-        self.say("I am here, please open the door")
+        self.say("I will receive the breakfast, please open the door")
 
         # 4. detect door is open
-        rospy.sleep(5)
+        rospy.sleep(3)
 
         # 5. speak to the deliman, instruct to follow robot: "Please follow me"
-        self.say("Please follow me")
+        self.say("Hello! Please follow me")
 
         # 6. move to kitchen
         if self.move_to("kitchen") == False:
@@ -207,18 +202,18 @@ class Controller():
 # topic: /y/compressed
         # 8. wait
         # TODO
-        rospy.sleep(10)
+        rospy.sleep(5)
         
         # 9. speak to the deliman, instruct to follow robot: "Please follow me"
         self.say("Please follow me")
 
         # 10. move to front door
-        if self.move_to("hallway") == False:
+        if self.move_to("entrance") == False:
             self.say("I am unable to move to the front door")
             return
 
         # 11. bid deliman farewell
-        self.say("Goodbye!")
+        self.say("Thank you for visiting. Goodbye!")
 
         # 12. return to base
         if self.move_to("dining room corner") == False:
@@ -227,24 +222,16 @@ class Controller():
 
     def process_face_doctor(self):
         # 1. speak to the doctor, "Hi Dr. Kimble, I am coming to open the door."
-        self.say("Hi Dr. Kimble, I am coming to open the door")
-
-        # 2. move to front door
-        if self.move_to("hallway") == False:
-            self.say("I am unable to move to the front door")
-            return
-
-        # 3. speak to the doctor, request them to open the door: "I am here, please open the door"
-        self.say("I am here, please open the door")
+        self.say("Hello Dr. Kimble, please open the door")
 
         # 4. detect door is open
-        rospy.sleep(5)
+        rospy.sleep(3)
 
         # 5. speak to the doctor, instruct to follow robot: "Please follow me"
         self.say("Please follow me")
 
         # 6. move to bedroom
-        if self.move_to("bedroom") == False:
+        if self.move_to("bedroom right") == False:
             self.say("I am unable to move to the bedroom")
             return
 
@@ -263,12 +250,12 @@ class Controller():
         self.say("Please follow me")
 
         # 11. move to front door
-        if self.move_to("hallway") == False:
+        if self.move_to("entrance") == False:
             self.say("I am unable to move to the front door")
             return
 
         # 12. bid farewell
-        self.say("Goodbye!")
+        self.say("Thank you for visiting. Goodbye!")
 
         # 13. return to base
         if self.move_to("dining room corner") == False:
@@ -278,7 +265,10 @@ class Controller():
     def process_face_unrecognized(self):
         # 1. speak to visitor, "Sorry, I don't know you. I cannot open the door."
         self.say("Sorry, I don't know you. I cannot open the door")
-        return;
+        
+        if self.move_to("dining room corner") == False:
+            self.say("I am unable to move to the base")
+            return
 
 if __name__ == '__main__':
     rospy.init_node("task_controller", anonymous=True)
