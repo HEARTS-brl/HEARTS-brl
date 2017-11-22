@@ -34,8 +34,6 @@ class Navigator():
         # Make sure the robot isn't already trying to go somewhere
         if(self.isNavigating == True):
             rospy.loginfo("Navigator: currently navigating, can't continue at the moment.")
-            self.pubStatus.publish("busy")
-
         else:
             rospy.loginfo("Navigator: sending new goal pose")
 
@@ -61,7 +59,7 @@ class Navigator():
 
     def stopCallback(self, data):
 
-        if(data.data):
+        if (data.data):
             rospy.loginfo("Navigator: Stop Callback")
 
     def StatusCallback(self, data):
