@@ -46,8 +46,14 @@ class Navigator():
             t.header.frame_id = "/map"
             t.pose.position.x = data.x
             t.pose.position.y = data.y
-            t.pose.orientation.w = data.theta
-
+            #t.pose.orientation.w = data.theta
+            quaternion = tf.transformations.quaternion_from_euler(0, 0, data.theta)
+            t.pose.orientation.x = quaternion[0]
+            t.pose.orientation.y = quaternion[1]
+            t.pose.orientation.z = quaternion[2]
+            t.pose.orientation.w = quaternion[3]
+            # = createQuaternionMsgFromYaw(data.theta)
+            rospy.loginfo(str(data.x)+ str(data.y)+ str(data.theta))
             self.pubGoal.publish(t)
             self.isNavigating = True
 

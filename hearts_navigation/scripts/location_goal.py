@@ -122,7 +122,7 @@ class Location():
         if not pose is None:
             self.current_goal = data.data
             self.pubGoal.publish(pose)
-        else 
+        else:
             self.current_goal = None
             print "invalid goal location '" + data.data + "'"
             

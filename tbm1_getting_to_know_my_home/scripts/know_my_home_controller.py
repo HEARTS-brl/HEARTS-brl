@@ -44,8 +44,6 @@ class Controller():
         self.pub_head = rospy.Publisher('/head_controller/command',JointTrajectory, queue_size = 10)
         self.pub_move = rospy.Publisher('/mobile_base_controller/cmd_vel', Twist, queue_size = 10)  
         self.pub_dummy = rospy.Publisher('/move_base/feedback', MoveBaseActionFeedback, queue_size = 10)
-        
-        self.pub_bench_message = rospy.Publisher('roah_rsbb/messages_saved', String, queue_size = 10)
               
         ### Subscribers - must listen for speech commands, location
         #rospy.Subscriber("hearts/navigation/goal/location", String, self.locGoal_callback)
@@ -80,7 +78,7 @@ class Controller():
             
         # Movement Parameters
         self.head_lr = 0.0
-        self.head_ud = 0.0
+        self.head_ud = -0.5
         self.head_move_step_size = .15
         self.turn_step_size = 0.2
         self.move_step_size = 0.2
@@ -99,7 +97,6 @@ class Controller():
                 rospy.loginfo("Failed to reply PREPARE")
         elif data.benchmark_state == BenchmarkState.EXECUTE:
             rospy.loginfo("EXECUTE")
-            self.pub_bench_message.publish("Starting")
 
 
     def hearCommand_callback(self,data):
@@ -297,6 +294,9 @@ class Controller():
                 self.send_directions(0,self.turn_step_size)
             elif(verb == 'turn' and subject[0] == 'right'):
                 self.send_directions(0,-1*self.turn_step_size)
+            elif(verb == 'turn' and subject[0] == 'around'):
+                self.send_directions(0,-1*self.turn_step_size)
+                distance = 20
             d = rospy.get_time()-t0
           
     def send_directions(self,straight,turn):

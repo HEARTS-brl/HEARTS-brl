@@ -57,6 +57,7 @@ import wave, array, os            # used by mono_to_stereo()
 
 
 o_tt=TT.tag_topics()
+global_bool = False
 
 class SpeechRecognizer():
         
@@ -197,7 +198,8 @@ class SpeechRecognizer():
             self.r.energy_threshold = energy_threshold
             self.r.pause_threshold = pause_threshold   # Default is 0.8 secs
             
-            self.wait() 
+            self.wait()          
+            
             print("*** Say something now!")
             
             return self.r.listen(source)
@@ -223,6 +225,14 @@ def callback(data):
         text = o_tt.add_key(index, text)
         pub.publish(text + '~' + wav_out_file_path) 
 
+def callback2(data):
+    text = data.data
+    l = text.split(' ')
+    global_bool = True
+    for i in range(len(l)):
+        rospy.wait(.5)
+    global_bool = False
+        
 def mono_to_stereo(inputfile):
 # Author: Derek Ripper
 # Date  : 02 Aug 2017 
@@ -307,17 +317,17 @@ if __name__ == "__main__":
         rospy.Subscriber("Wav_FileIn",String, callback)
 
     else:
+        rospy.Subscriber("/hearts/tts",String, callback2)
         rospy.loginfo(rospy.get_name() + ": audio source is microphone")
         speech_recognizer.set_audio_source("mic")
         passes = 0
         rate = rospy.Rate(1)
         while not rospy.is_shutdown():
-           
            audio = speech_recognizer.get_audio_mic(energy_threshold, pause_threshold, dynamic_energy_threshold) 
-           rospy.loginfo("SPEECH HEARD: ")
+           rospy.loginfo("SPEECH HEARD.....: ")
            text  = speech_recognizer.recognize(audio)
            passes +=  1
-           if not text is None: 
+           if not text is None and not global_bool: 
                text = text.strip()
                # provide break out of stt routine
                if text == "stop recording":
@@ -346,6 +356,8 @@ if __name__ == "__main__":
                # just pure clean text published for continuous listening mode
                else:
                    pub.publish(text) 
+                   # added in Barcelona - wait on topic "/hearts/tts/ before continuing
+                   
 
 
         rate.sleep()
