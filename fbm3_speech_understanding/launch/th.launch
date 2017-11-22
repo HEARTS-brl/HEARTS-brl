@@ -1,6 +1,6 @@
 <launch>
     <!-- name of $USER's catkin workspace  --> 
-    <arg name="WORKSPACE" value="catkin_ws"   />
+    <arg name="WORKSPACE" value="tb_ws"   />
 
      <!-- ERL COMPETITION USB memory stick ID - Location of .wav files and destination for the results.txt file --> 
     <arg name="ERL_USB_MEM" value="HEARTS" />

@@ -1,0 +1,1 @@
+sudo ntpdate -u 192.168.1.20

@@ -227,11 +227,14 @@ def callback(data):
 
 def callback2(data):
     text = data.data
+    global global_bool
     l = text.split(' ')
     global_bool = True
+    rospy.loginfo("SPEAKING")
     for i in range(len(l)):
-        rospy.wait(.5)
+        rospy.sleep(1)
     global_bool = False
+    rospy.loginfo("DONE SPEAKING")
         
 def mono_to_stereo(inputfile):
 # Author: Derek Ripper
@@ -327,6 +330,10 @@ if __name__ == "__main__":
            rospy.loginfo("SPEECH HEARD.....: ")
            text  = speech_recognizer.recognize(audio)
            passes +=  1
+           if global_bool:
+               rospy.loginfo("Speaking")
+           if not global_bool:
+               rospy.loginfo("Not speaking")
            if not text is None and not global_bool: 
                text = text.strip()
                # provide break out of stt routine
