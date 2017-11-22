@@ -114,7 +114,7 @@ class Controller():
         msg = String()
         msg.data = location
         self.pub_location_goal.publish(msg)
-        while self.location_result != "Success" and self.location_result != "Failure":
+        while self.location_result == "Active":
             rospy.sleep(1)
         
         return self.location_result == "Success"
