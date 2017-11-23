@@ -13,7 +13,7 @@ p = rospy.Publisher('/scan_change', String, queue_size = 10)
 #Subscribers
 
 previous_scan = []
-threshold = 100
+threshold = 80
 #store last laser scan - ranges only?
 def call_back(data):
 	global previous_scan

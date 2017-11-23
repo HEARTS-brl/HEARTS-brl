@@ -17,10 +17,10 @@
 
 #define POSTMAN_RG_MIN 0.93
 #define POSTMAN_RG_MAX 1.03
-#define POSTMAN_RB_MIN 2.27
-#define POSTMAN_RB_MAX 2.47
-#define POSTMAN_GB_MIN 2.21
-#define POSTMAN_GB_MAX 2.41
+#define POSTMAN_RB_MIN 2.2
+#define POSTMAN_RB_MAX 2.6
+#define POSTMAN_GB_MIN 2.2
+#define POSTMAN_GB_MAX 2.6
 
 #define DELIMAN_RG_MIN 0.86
 #define DELIMAN_RG_MAX 0.96
@@ -29,4 +29,5 @@
 #define DELIMAN_GB_MIN 0.85
 #define DELIMAN_GB_MAX 0.95
 
+#define NOT_DOCTOR_COUNT 5
 #define UNKNOWN_COUNT 200
