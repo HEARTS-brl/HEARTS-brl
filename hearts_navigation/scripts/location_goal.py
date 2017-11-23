@@ -46,8 +46,11 @@ class Location():
     def load_dict(self):
         # todo: path as ros param
         json_name = rospy.get_param('locations_json')
+
         with open(json_name) as json_data:
             self.dict = json.load(json_data)
+            
+        rospy.loginfo("using locations file: " + json_name)
 
     def write_dict(self, updatedLocations):
         # todo: path as ros param

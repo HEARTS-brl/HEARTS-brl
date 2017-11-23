@@ -29,6 +29,7 @@ from rospy.rostime import Duration
 from move_base_msgs.msg import MoveBaseActionFeedback
 from roah_rsbb_comm_ros.msg import Benchmark, BenchmarkState
 import std_srvs.srv
+from navigation_camera_mgr_example import NavigationCameraMgr
 
 class Controller():
     def __init__(self):
@@ -75,7 +76,11 @@ class Controller():
             "look": ["up", "down", "right", "left"],
             "here": [],
             "see": self.objects,}
-            
+        
+        # Disable head manager
+        head_mgr = NavigationCameraMgr()
+        head_mgr.head_mgr_as("disable")
+        
         # Movement Parameters
         self.head_lr = 0.0
         self.head_ud = -0.5

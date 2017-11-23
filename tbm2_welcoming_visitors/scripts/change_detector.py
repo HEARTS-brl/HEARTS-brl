@@ -11,25 +11,31 @@ rospy.init_node("change_detector", anonymous=True)
 p = rospy.Publisher('/scan_change', String, queue_size = 10)
 
 #Subscribers
-rospy.Subscriber('/scan', LaserScan, call_back )
+
 previous_scan = []
 threshold = 100
 #store last laser scan - ranges only?
 def call_back(data):
+	global previous_scan
+	global current_scan
+	global threshold
 	current_scan = data.ranges
 	total = 0
 	if previous_scan == []:
-		continue
+		previous_scan = current_scan
+		return()
 	else:
 		for i in range(len(current_scan)):
 			d = abs(current_scan[i]-previous_scan[i])
 			total = total+d
-	rospy.loginfo(total)
+	#rospy.loginfo(total)
 	if total>threshold:
 		p.publish('yes')
 	else:
 		p.publish('no')
-
+	previous_scan = current_scan
+	return()
+rospy.Subscriber('/scan', LaserScan, call_back )
 
 
 rospy.spin()

@@ -46,7 +46,7 @@ class Controller():
 
     def wait_for_scan_changed(self):
         self.has_scan_changed = False
-        rospy.Subscriber("/scan_changed", String, self.scan_changed_callback)
+        rospy.Subscriber("/scan_change", String, self.scan_changed_callback)
         
         while not self.has_scan_changed:
             rospy.sleep(1)
@@ -258,7 +258,7 @@ class Controller():
             return
 
         # 7. speak to doctor, advise robot will wait
-        self.say("I will wait here until you are done")
+        self.say("I will wait here until you are done.")
     
         # 8. wait until doctor exits the bedroom
         rospy.sleep(5)
