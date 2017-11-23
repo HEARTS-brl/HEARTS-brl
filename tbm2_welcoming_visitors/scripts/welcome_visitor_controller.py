@@ -32,13 +32,27 @@ class Controller():
         #rospy.Subscriber("roah_rsbb/benchmark",        String, self.benchmark_callback)
         rospy.Subscriber("roah_rsbb/devices/bell",     Empty, self.bell_callback)
         #rospy.Subscriber("hearts/front_door/leaving",     Empty, self.leaving_callback)
-
+        
         self.tts_pub = rospy.Publisher("/hearts/tts", String, queue_size=10)
         self.location_result = ""
         #self.leaving = False
 
         #self.loop()
 
+        self.has_scan_changed = False
+
+    def scan_changed_callback(self, msg):
+        self.has_scan_changed = (msg.data == "yes")
+
+    def wait_for_scan_changed(self):
+        self.has_scan_changed = False
+        rospy.Subscriber("/scan_changed", String, self.scan_changed_callback)
+        
+        while not self.has_scan_changed:
+            rospy.sleep(1)
+           
+        # TODO: kill subscriber 
+    
     def face_callback(self, data):
         rospy.loginfo("face_callback: " + data.data)   
         if self.detect_faces == True: 
@@ -247,8 +261,8 @@ class Controller():
         self.say("I will wait here until you are done")
     
         # 8. wait until doctor exits the bedroom
-        # TODO: wait for doctor to leave!
         rospy.sleep(5)
+        self.wait_for_scan_changed()
 
         # 10. speak to the doctor, instruct to follow robot: "Please follow me"
         self.say("Please follow me")
