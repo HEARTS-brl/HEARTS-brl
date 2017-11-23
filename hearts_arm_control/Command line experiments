@@ -1,0 +1,60 @@
+
+### Start Position ### 
+
+header: 
+  seq: 4460
+  stamp: 
+    secs: 0
+    nsecs:         0
+  frame_id: ''
+joint_names: ['arm_1_joint', 'arm_2_joint', 'arm_3_joint', 'arm_4_joint', 'arm_5_joint', 'arm_6_joint', 'arm_7_joint']
+points: 
+  - 
+    positions: [0.02, -1.55079632679, -1.3869547492163998, 1.82150471153109, 0.1659516081911998, 0.062031853071599974, 2.07439510239]
+    velocities: []
+    accelerations: []
+    effort: []
+    time_from_start: 
+      secs: 1
+      nsecs:         0
+
+
+
+### End Postion ### 
+
+header: 
+  seq: 6700
+  stamp: 
+    secs: 0
+    nsecs:         0
+  frame_id: ''
+joint_names: ['arm_1_joint', 'arm_2_joint', 'arm_3_joint', 'arm_4_joint', 'arm_5_joint', 'arm_6_joint', 'arm_7_joint']
+points: 
+  - 
+    positions: [2.72889357189, -1.55079632679, -1.3869547492163998, 1.82150471153109, 0.1659516081911998, 0.062031853071599974, 2.07439510239]
+    velocities: []
+    accelerations: []
+    effort: []
+    time_from_start: 
+      secs: 1
+      nsecs:         0
+
+
+### Command line message to go to start position ### 
+rostopic pub /arm_controller/command trajectory_msgs/JointTrajectory "header: 
+  seq: 0
+  stamp: 
+    secs: 0
+    nsecs:         0
+  frame_id: ''
+joint_names: ['arm_1_joint', 'arm_2_joint', 'arm_3_joint', 'arm_4_joint', 'arm_5_joint', 'arm_6_joint', 'arm_7_joint']
+points: 
+  - 
+    positions: [2.02, -1.55079632679, -1.3869547492163998, 1.82150471153109, 0.1659516081911998, 0.062031853071599974, 2.07439510239]
+    velocities: []
+    accelerations: []
+    effort: []
+    time_from_start: {secs: 2, nsecs: 0}"
+
+
+
