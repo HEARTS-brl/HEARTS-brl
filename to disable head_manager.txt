@@ -1,0 +1,3 @@
+to stop a service, not that message type cannot be found:
+
+rosservice call /pal_startup_control/stop "app: 'head_manager'"

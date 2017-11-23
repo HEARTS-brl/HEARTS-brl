@@ -60,12 +60,12 @@ class Controller():
     
         self.outfolder = rospy.get_param('output_path')
         
-        self.objects = ['Coke','water','juice','apple','lemon','rice','Pringles','Kleenex','sponge','soap','cup','glass','whiteboard']
-        self.categories = {'drink':['Coke','water','juice'],
-        'food':['apple','lemon','rice','Pringles'],
-        'cleaning stuff':['Kleenex','sponge','soap','whiteboard'],
+        self.objects = ['coke','water','juice','apple','lemon','rice','pringles','kleenex','sponge','soap','cup','glass','whiteboard']
+        self.categories = {'drink':['coke','water','juice'],
+        'food':['apple','lemon','rice','pringles'],
+        'cleaning stuff':['kleenex','sponge','soap','whiteboard'],
         'container':['cup','glass']}
-        self.furniture = ['chair','armchair','side','coffee','TV','kitchen','dining','couch','bookshelf','nightstand','night','bed','wardrobe','plant']
+        self.furniture = ['arm','cabinet','table','chair','armchair','side','coffee','tv','kitchen','dining','couch','bookshelf','nightstand','night','bed','wardrobe','plant']
         self.rooms = ['kitchen', 'bedroom', 'living_room', 'dining_room', 'hallway']
         self.doors = ['bedroom', 'entrance']
         self.tbm1_commands_dict = {
@@ -102,7 +102,8 @@ class Controller():
     def hearCommand_callback(self,data):
         rospy.loginfo('Heard a command')
         raw = str(data)
-        text = raw.split('~')[0]
+        lower = raw.lower()
+        text = lower.split('~')[0]
         speech = text.split(':')[1]
         words = speech.split(' ')[1:]
         rospy.loginfo(speech)
@@ -168,7 +169,7 @@ class Controller():
 
         elif subject[0] in self.objects: #[object] in [room] on [furniture]
             if len(subject)<5:
-                self.pub_talk.publish("Invalid command please try again")
+                self.pub_talk.publish("Invalid object please try again")
             thing_id = subject[0] #TODO add matching to IDs
             if thing_id == 'whiteboard':
                 thing_id = 'whiteboard cleaner'
