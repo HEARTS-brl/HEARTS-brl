@@ -6,7 +6,7 @@
 import rospy
 import time
 from std_msgs.msg import Empty, String
-from geometry_msgs.msg import Pose2D
+from geometry_msgs.msg import Pose2D, Twist
 from roah_rsbb_comm_ros.msg import Benchmark, BenchmarkState, DevicesState, TabletState
 import std_srvs.srv
 
@@ -19,6 +19,7 @@ class Controller():
         self.prepare = rospy.ServiceProxy('/roah_rsbb/end_prepare', std_srvs.srv.Empty)
         #self.pub_task = rospy.Publisher('hearts/controller/task', String, queue_size=10)
         self.pub_location_goal = rospy.Publisher('/hearts/navigation/goal/location', String, queue_size=10)
+        self.pub_twist = rospy.Publisher('/mobile_base_controller/cmd_vel', Twist, queue_size=10) 
         self.detect_faces = False        
 
         # subscribers
@@ -92,7 +93,7 @@ class Controller():
         
         self.say("I am coming")
         
-        if self.move_to("hallway") == False:
+        if self.move_to("hallway", 3) == False:
             self.say("I am unable to move to the front door")
             return
             
@@ -115,8 +116,8 @@ class Controller():
         self.tts_pub.publish(text)
         rospy.sleep(5)
         
-    def move_to(self, location):
-        rospy.loginfo("moving to \"" + location + "\"")
+    def move_to(self, location, count):
+        rospy.loginfo("moving to \"" + location + "\" (" + str(count) + ")")
         msg = String()
         msg.data = location
         self.pub_location_goal.publish(msg)
@@ -125,6 +126,13 @@ class Controller():
         while self.location_result == "Active":
             rospy.sleep(1)
         
+        if self.location_result != "Success" and count > 0:
+            t = Twist()
+            t.angular.z = 1.0
+            self.pub_twist.publish(t)
+            rospy.sleep(1)
+            self.move_to(location, count - 1)
+            
         return self.location_result == "Success"
         
     #def wait_until_left(self):
@@ -154,7 +162,7 @@ class Controller():
         self.say("Hello! Please follow me")
 
         # 6. move to kitchen
-        if self.move_to("kitchen") == False:
+        if self.move_to("kitchen", 3) == False:
             self.say("I am unable to move to the kitchen")
             return
 
@@ -169,15 +177,15 @@ class Controller():
         self.say("Please follow me")
 
         # 10. move to front door
-        if self.move_to("entrance") == False:
-            self.say("I am unable to move to the kitchen")
+        if self.move_to("entrance", 3) == False:
+            self.say("I am unable to move to the front door")
             return
 
         # 11. bid postman farewell
         self.say("Thank you for visiting. Goodbye!")
 
         # 12. return to base
-        if self.move_to("dining room corner") == False:
+        if self.move_to("kitchen", 3) == False:
             self.say("I am unable to move to the base")
             return
 
@@ -193,7 +201,7 @@ class Controller():
         self.say("Hello! Please follow me")
 
         # 6. move to kitchen
-        if self.move_to("kitchen") == False:
+        if self.move_to("kitchen", 3) == False:
             self.say("I am unable to move to the kitchen")
             return
 
@@ -208,7 +216,7 @@ class Controller():
         self.say("Please follow me")
 
         # 10. move to front door
-        if self.move_to("entrance") == False:
+        if self.move_to("entrance", 3) == False:
             self.say("I am unable to move to the front door")
             return
 
@@ -216,7 +224,7 @@ class Controller():
         self.say("Thank you for visiting. Goodbye!")
 
         # 12. return to base
-        if self.move_to("dining room corner") == False:
+        if self.move_to("kitchen", 3) == False:
             self.say("I am unable to move to the base")
             return
 
@@ -231,7 +239,7 @@ class Controller():
         self.say("Please follow me")
 
         # 6. move to bedroom
-        if self.move_to("bedroom right") == False:
+        if self.move_to("outside bedroom", 3) == False:
             self.say("I am unable to move to the bedroom")
             return
 
@@ -239,18 +247,14 @@ class Controller():
         self.say("I will wait here until you are done")
     
         # 8. wait until doctor exits the bedroom
+        # TODO: wait for doctor to leave!
         rospy.sleep(5)
-
-        # 9. move to the kitchen
-        if self.move_to("kitchen") == False:
-            self.say("I am unable to move to the kitchen")
-            return
 
         # 10. speak to the doctor, instruct to follow robot: "Please follow me"
         self.say("Please follow me")
 
         # 11. move to front door
-        if self.move_to("entrance") == False:
+        if self.move_to("entrance", 3) == False:
             self.say("I am unable to move to the front door")
             return
 
@@ -258,7 +262,7 @@ class Controller():
         self.say("Thank you for visiting. Goodbye!")
 
         # 13. return to base
-        if self.move_to("dining room corner") == False:
+        if self.move_to("kitchen", 3) == False:
             self.say("I am unable to move to the base")
             return
 
@@ -266,7 +270,7 @@ class Controller():
         # 1. speak to visitor, "Sorry, I don't know you. I cannot open the door."
         self.say("Sorry, I don't know you. I cannot open the door")
         
-        if self.move_to("dining room corner") == False:
+        if self.move_to("kitchen", 3) == False:
             self.say("I am unable to move to the base")
             return
 

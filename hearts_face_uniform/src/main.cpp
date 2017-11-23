@@ -123,6 +123,8 @@ public:
   image_transport::Publisher image_pub_;
   }
 
+  int unknownCount;
+  
   void imageCb(const sensor_msgs::ImageConstPtr& msg)
   {
     cv_bridge::CvImagePtr cv_ptr;
@@ -276,19 +278,26 @@ public:
     
     if ((rg > POSTMAN_RG_MIN) && (rg < POSTMAN_RG_MAX) && (rb > POSTMAN_RB_MIN) && (rb < POSTMAN_RB_MAX) && (gb > POSTMAN_GB_MIN && gb < POSTMAN_GB_MAX))
     {
+      unknownCount = 0;
       pub("postman");
       dispName = "POST MAN";
       putText(frame, dispName, posText1, FONT_HERSHEY_COMPLEX, 1.2, AMBER, 2, 8); // displaying recognised names
     }
     else if ((rg > DELIMAN_RG_MIN) && (rg < DELIMAN_RG_MAX) && (rb > DELIMAN_RB_MIN) && (rb < DELIMAN_RB_MAX) && (gb > DELIMAN_GB_MIN) && (gb < DELIMAN_GB_MAX))
     {
+      unknownCount = 0;
       pub("deliman");
       dispName = "DELI MAN";
       putText(frame, dispName, posText1, FONT_HERSHEY_COMPLEX, 1.2, WHITE, 2, 8); // displaying recognised names
     }
     else
     {
-      pub("unknown");
+      unknownCount++;
+      if (unknownCount > UNKNOWN_COUNT)
+        unknownCount = 0;
+        dispName = "UNKNOWN";
+        pub("unknown");
+        putText(frame, dispName, posText1, FONT_HERSHEY_COMPLEX, 1.2, WHITE, 2, 8); // displaying
     }
 
     // Update GUI Window
