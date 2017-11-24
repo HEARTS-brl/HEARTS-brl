@@ -19,6 +19,21 @@ from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 ####Subscribers - listen for location to move arm to
 
 
+destination = geometry_msgs.msg.Pose()
+
+def callback(data):
+    destination = data.position.z
+    if destination != 0:
+    	print"DESTINATION RECEIVED"
+    	#rospy.loginfo("Destination Received")
+    	pass
+
+    else:
+    	print"DESTINATION NOT RECEIVED"
+    	#rospy.loginfo("No Destination Received")
+
+rospy.Subscriber('/arm_destination_test', geometry_msgs.msg.Pose, callback)
+
 
 print "============ Starting tutorial setup"
 moveit_commander.roscpp_initialize(sys.argv)
@@ -52,7 +67,7 @@ print "============ Printing robot state"
 print robot.get_current_state()
 print "============"
 
-'''
+
 print "============ Generating plan 1"
 pose_target = geometry_msgs.msg.Pose() 
 q = quaternion_from_euler(-0.011, 1.57, 0.037) ## conversion from roll, pitch, and yaw into quaternions
@@ -66,8 +81,9 @@ pose_target.position.z = 0.8
 group.set_pose_target(pose_target)
 #group.setStartStateToCurrentState()
 plan1 = group.plan()
-'''
 
+
+'''
 ### start pose
 start_pose = geometry_msgs.msg.Pose()
 q = quaternion_from_euler(-0.011, 1.57, 0.037) ## conversion from roll, pitch, and yaw into quaternions
@@ -96,7 +112,7 @@ wpose.position.z = waypoints[0].position.z
 waypoints.append(copy.deepcopy(wpose))
 
 # second move down
-wpose.position.z -= 0.10
+wpose.position.z -= 0.0
 waypoints.append(copy.deepcopy(wpose))
 
 # third move to the side
@@ -118,7 +134,7 @@ waypoints.append(copy.deepcopy(wpose))
 
 print "============ Waiting while RVIZ displays plan3..."
 rospy.sleep(5)
-
+'''
 
 
 #print "============ Waiting while RVIZ displays plan1..."
@@ -128,8 +144,8 @@ print "============ Visualizing plan1"
 display_trajectory = moveit_msgs.msg.DisplayTrajectory()
 
 display_trajectory.trajectory_start = robot.get_current_state()
-#display_trajectory.trajectory.append(plan1)
-display_trajectory.trajectory.append(plan3)
+display_trajectory.trajectory.append(plan1)
+#display_trajectory.trajectory.append(plan3)
 display_trajectory_publisher.publish(display_trajectory)
 
 print "test"
@@ -142,7 +158,14 @@ print "About to move!"
 group.go(wait=True)
 
 print"Done moving"
+
 rospy.spin()
-
-
 print"You spin me right round"
+
+'''
+if __name__ == '__main__':
+	rospy.init_node('know_my_home', anonymous=True)
+	rospy.loginfo("know my home controller has started")
+	controller = Controller()
+	rospy.spin()
+'''	
