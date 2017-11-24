@@ -9,6 +9,7 @@ from std_msgs.msg import Empty, String
 from geometry_msgs.msg import Pose2D, Twist
 from roah_rsbb_comm_ros.msg import Benchmark, BenchmarkState, DevicesState, TabletState
 import std_srvs.srv
+from collections import Counter
 
 # activation: doorbell press detected
 # notification:
@@ -19,11 +20,9 @@ class Controller():
         self.prepare = rospy.ServiceProxy('/roah_rsbb/end_prepare', std_srvs.srv.Empty)
         #self.pub_task = rospy.Publisher('hearts/controller/task', String, queue_size=10)
         self.pub_location_goal = rospy.Publisher('/hearts/navigation/goal/location', String, queue_size=10)
-        self.pub_twist = rospy.Publisher('/mobile_base_controller/cmd_vel', Twist, queue_size=10) 
-        self.detect_faces = False        
+        self.pub_twist = rospy.Publisher('/mobile_base_controller/cmd_vel', Twist, queue_size=10)       
 
         # subscribers
-        rospy.Subscriber("hearts/face/user",           String, self.face_callback)
         #rospy.Subscriber("hearts/voice/cmd",           String, self.voice_callback)
         rospy.Subscriber("/hearts/navigation/status", String, self.location_result_callback)
         #rospy.Subscriber("roah_devices/state",        DevicesState, self.state_callback)
@@ -46,33 +45,42 @@ class Controller():
 
     def wait_for_scan_changed(self):
         self.has_scan_changed = False
-        rospy.Subscriber("/scan_changed", String, self.scan_changed_callback)
+        rospy.Subscriber("/scan_change", String, self.scan_changed_callback)
         
         while not self.has_scan_changed:
             rospy.sleep(1)
            
         # TODO: kill subscriber 
     
-    def face_callback(self, data):
-        rospy.loginfo("face_callback: " + data.data)   
-        if self.detect_faces == True: 
-            if data.data == "postman":
-                rospy.loginfo("detected postman")
-                self.process_face_postman()
-                self.detect_faces = False
-            elif data.data == "deliman":
-                rospy.loginfo("detected deliman")
-                self.process_face_deliman()
-                self.detect_faces = False
-            elif data.data == "doctor":
-                rospy.loginfo("detected doctor")
-                self.process_face_doctor()
-                self.detect_faces = False
-            elif data.data == "unknown":
-                rospy.loginfo("detected unrecognized person")
-                self.process_face_unrecognized()             
-                self.detect_faces = False  
-           
+    def detect_visitor(self):
+        self.votes = [ ]
+        sub = rospy.Subscriber("/hearts/face/user", String, self.face_callback)
+        rospy.loginfo("subscribed to topic /hearts/face/user")
+        rospy.sleep(10)
+        sub.unregister()
+        rospy.loginfo("unsubscribed from topic /hearts/face/user - votes = " + str(len(self.votes)))
+        counts = Counter(self.votes)
+        rospy.loginfo(str(counts))
+        visitors = counts.most_common(2)
+        visitor = None
+        if len(visitors) == 2:
+            visitor1 = visitors[0]
+            visitor2 = visitors[1]
+            
+            if visitor1[1] != visitor2[1]:
+                visitor = visitor1[0]
+        elif len(visitors) == 1:
+            visitor = visitors[0][0]
+        
+        if not visitor is None: 
+            rospy.loginfo("visitor = " + visitor)
+        
+        return visitor
+        
+    def face_callback(self, msg):
+        rospy.loginfo("face_callback: " + msg.data)
+        self.votes.append(msg.data)         
+
     #def voice_callback(self, data):
     #    rospy.loginfo("voice_callback: " + data.data)
     #    self.current_voice = data.data
@@ -113,9 +121,22 @@ class Controller():
             
         self.say("please look towards the camera so that I can recognise you")
         
-        if self.detect_faces == False:
-            # bell pressed, detect face
-            self.detect_faces = True
+        visitor = None
+        while visitor is None or visitor == "":
+            visitor = self.detect_visitor()
+        
+        if visitor == "postman":
+            rospy.loginfo("detected postman")
+            self.process_face_postman()
+        elif visitor == "deliman":
+            rospy.loginfo("detected deliman")
+            self.process_face_deliman()
+        elif visitor == "doctor":
+            rospy.loginfo("detected doctor")
+            self.process_face_doctor()
+        elif visitor == "unknown":
+            rospy.loginfo("detected unrecognized person")
+            self.process_face_unrecognized()  
 
     #def state_callback(self, data):
     #    rospy.loginfo("state_callback: " + data.data)
@@ -258,7 +279,7 @@ class Controller():
             return
 
         # 7. speak to doctor, advise robot will wait
-        self.say("I will wait here until you are done")
+        self.say("I will wait here until you are done.")
     
         # 8. wait until doctor exits the bedroom
         rospy.sleep(5)

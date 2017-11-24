@@ -2,7 +2,7 @@
 import rospy
 from control_msgs.msg import PointHeadActionGoal
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
-from pal_startup_msgs.srv import StartupStart, StartupStop
+#from pal_startup_msgs.srv import StartupStart, StartupStop
 from pal_common_msgs.msg import DisableGoal, DisableAction
 import actionlib
 

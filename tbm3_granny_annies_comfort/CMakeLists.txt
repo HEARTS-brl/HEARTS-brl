@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(fbm1_object_perception)
+project(tbm3_granny_annies_comfort)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -7,17 +7,7 @@ project(fbm1_object_perception)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS
-  roscpp
-  rospy
-  sensor_msgs
-  std_msgs
-  cv_bridge
-  image_geometry
-  image_transport
-)
-
-find_package(OpenCV REQUIRED)
+find_package(catkin REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -110,7 +100,7 @@ find_package(OpenCV REQUIRED)
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES fbm1_object_perception
+#  LIBRARIES tbm3_granny_annies_comfort
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
 )
@@ -123,13 +113,12 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
 # include
-   ${catkin_INCLUDE_DIRS}
-   ${OpenCV_INCLUDE_DIRS}
+# ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/fbm1_object_perception.cpp
+#   src/${PROJECT_NAME}/tbm3_granny_annies_comfort.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -140,7 +129,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(object_perception_node src/object_perception_node.cpp)
+# add_executable(${PROJECT_NAME}_node src/tbm3_granny_annies_comfort_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -153,10 +142,9 @@ add_executable(object_perception_node src/object_perception_node.cpp)
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(object_perception_node
-   ${catkin_LIBRARIES}
-   ${OpenCV_LIBRARIES}
-)
+# target_link_libraries(${PROJECT_NAME}_node
+#   ${catkin_LIBRARIES}
+# )
 
 #############
 ## Install ##
@@ -198,7 +186,7 @@ target_link_libraries(object_perception_node
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_fbm1_object_perception.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_tbm3_granny_annies_comfort.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

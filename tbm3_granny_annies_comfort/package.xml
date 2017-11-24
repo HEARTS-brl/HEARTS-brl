@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-  <name>fbm1_object_perception</name>
+  <name>tbm3_granny_annies_comfort</name>
   <version>0.0.0</version>
-  <description>The fbm1_object_perception package</description>
+  <description>The tbm3_granny_annies_comfort package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
@@ -19,7 +19,7 @@
   <!-- Url tags are optional, but multiple are allowed, one per tag -->
   <!-- Optional attribute type can be: website, bugtracker, or repository -->
   <!-- Example: -->
-  <!-- <url type="website">http://wiki.ros.org/fbm1_object_perception</url> -->
+  <!-- <url type="website">http://wiki.ros.org/tbm3_granny_annies_comfort</url> -->
 
 
   <!-- Author tags are optional, multiple are allowed, one per tag -->
@@ -40,24 +40,7 @@
   <!-- Use test_depend for packages you need only for testing: -->
   <!--   <test_depend>gtest</test_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>roscpp</build_depend>
-  <build_depend>rospy</build_depend>
-  <build_depend>sensor_msgs</build_depend>
-  <build_depend>std_msgs</build_depend>
-  <build_depend>cv_bridge</build_depend>
-  <build_depend>image_geometry</build_depend>
-  <build_depend>image_transport</build_depend>
-  <build_depend>cloudsight</build_depend>
-  <build_depend>re</build_depend>
-  <run_depend>roscpp</run_depend>
-  <run_depend>rospy</run_depend>
-  <run_depend>sensor_msgs</run_depend>
-  <run_depend>std_msgs</run_depend>
-  <run_depend>cv_bridge</run_depend>
-  <run_depend>image_geometry</run_depend>
-  <run_depend>image_transport</run_depend>
-  <run_depend>cloudsight</run_depend>
-  <run_depend>re</run_depend>
+
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
