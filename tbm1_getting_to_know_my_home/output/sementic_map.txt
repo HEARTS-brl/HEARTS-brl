@@ -1,0 +1,22 @@
+type(coffee_table, coffee_table).
+in(coffee_table, kitchen).
+type(lemon, food).
+in(lemon, kitchen).
+on(lemon, kitchen_cabinet).
+position (lemon, [2.54,2.84,0.5]).
+picture(lemon, lemon.jpg).
+type(glass, container).
+in(glass, kitchen).
+on(glass, kitchen_table).
+position (glass, [2.54,2.84,0.5]).
+picture(glass, glass.jpg).
+type(water, drink).
+in(water, dining_room).
+on(water, dining_table).
+position (water, [2.54,2.84,0.5]).
+picture(water, water.jpg).
+type(arm_chair, arm_chair).
+in(arm_chair, dining_room).
+type(door_bedroom, door).
+connects(door_bedroom, bedroom, living_room).
+isOpen(door_bedroom, false).

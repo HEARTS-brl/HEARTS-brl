@@ -1,11 +1,11 @@
 <launch>
   
-  <!-- <include file="$(find hearts_face_uniform)/launch/hearts_face_uniform.launch"> -->
+  <include file="$(find hearts_face_uniform)/launch/hearts_face_uniform.launch">
     <!-- <arg name="data_path" value="/home/hearts/tb_ws/src/brl-hearts/hearts_face_uniform/data/" /> -->
     <!-- <arg name="face_cascade_path" value="/home/hearts/tb_ws/src/brl-hearts/hearts_face_uniform/src/haarcascade_frontalface_alt2.xml" /> -->
     <arg name="data_path" value="/home/turtlebot/tb_ws/src/brl-hearts/hearts_face_uniform/data/" />
     <arg name="face_cascade_path" value="/home/turtlebot/tb_ws/src/brl-hearts/hearts_face_uniform/src/haarcascade_frontalface_alt2.xml" />
-  <!-- </include> -->
+  </include>
   
   <include file="$(find hearts_tts)/launch/hearts_tts.launch" />
   <include file="$(find hearts_navigation)/launch/hearts_navigation_navigate.launch">

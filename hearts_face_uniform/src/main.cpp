@@ -44,15 +44,15 @@ class ImageConverter
 private:
   void pub(std::string image_label)
   {
-    if (last_image_label_ != image_label)
-    {
-      last_image_label_ = image_label;
+    //if (last_image_label_ != image_label)
+    //{
+      //last_image_label_ = image_label;
       std_msgs::String msg;
       std::stringstream ss;
       ss << image_label;
       msg.data = ss.str();
       image_label_pub_.publish(msg);
-    }
+    //}
   }
   
 public:
@@ -223,7 +223,6 @@ public:
 
     if ((region.x + region.width > frame.cols) || (region.y + region.height > frame.rows) || (regionB.x < 1) || (regionB.y < 1)) // make sure we don't process the regions when they're out of frame
     {
-      pub("");
       imshow(OPENCV_WINDOW, frame);
       int c = waitKey(3);
       if ((char)c == 27) { return; } // escape
@@ -265,6 +264,8 @@ public:
     double meanValHat = meanVal3.val[0];
     double meanValHatSmall = meanVal4.val[0];
  
+    cout << meanValB << endl << meanValG << endl << meanValR << endl << avgSDVal << endl << endl;
+    
     Point posText1(faces[largestIndex].x, max(1, faces[largestIndex].y - 10));
 
     // rules!!!: checking for white colour, checking for yellow-ish colour, checking for hat pattern, is the hat colour similar to the t-shirt colour
@@ -280,18 +281,21 @@ public:
     if ((rg > POSTMAN_RG_MIN) && (rg < POSTMAN_RG_MAX) && (rb > POSTMAN_RB_MIN) && (rb < POSTMAN_RB_MAX) && (gb > POSTMAN_GB_MIN && gb < POSTMAN_GB_MAX))
     {
       pub("postman");
+      ROS_INFO("published postman");
       dispName = "POST MAN";
       putText(frame, dispName, posText1, FONT_HERSHEY_COMPLEX, 1.2, AMBER, 2, 8); // displaying recognised names
     }
     else if ((rg > DELIMAN_RG_MIN) && (rg < DELIMAN_RG_MAX) && (rb > DELIMAN_RB_MIN) && (rb < DELIMAN_RB_MAX) && (gb > DELIMAN_GB_MIN) && (gb < DELIMAN_GB_MAX))
     {
       pub("deliman");
+      ROS_INFO("published deliman");
       dispName = "DELI MAN";
       putText(frame, dispName, posText1, FONT_HERSHEY_COMPLEX, 1.2, WHITE, 2, 8); // displaying recognised names
     }
     else
     {
         pub("unknown");
+        ROS_INFO("published unknown");
         dispName = "UNKNOWN";
         putText(frame, dispName, posText1, FONT_HERSHEY_COMPLEX, 1.2, WHITE, 2, 8); // displaying
     }

@@ -55,14 +55,32 @@ class Controller():
     def detect_visitor(self):
         self.votes = [ ]
         sub = rospy.Subscriber("/hearts/face/user", String, self.face_callback)
-        rospy.sleep(5)
-        sub.stop()
-        return Counter(self.votes).most_common(1)
+        rospy.loginfo("subscribed to topic /hearts/face/user")
+        rospy.sleep(10)
+        sub.unregister()
+        rospy.loginfo("unsubscribed from topic /hearts/face/user - votes = " + str(len(self.votes)))
+        counts = Counter(self.votes)
+        rospy.loginfo(str(counts))
+        visitors = counts.most_common(2)
+        visitor = None
+        if len(visitors) == 2:
+            visitor1 = visitors[0]
+            visitor2 = visitors[1]
+            
+            if visitor1[1] != visitor2[1]:
+                visitor = visitor1[0]
+        elif len(visitors) == 1:
+            visitor = visitors[0][0]
+        
+        if not visitor is None: 
+            rospy.loginfo("visitor = " + visitor)
+        
+        return visitor
         
     def face_callback(self, msg):
         rospy.loginfo("face_callback: " + msg.data)
         self.votes.append(msg.data)         
-           
+
     #def voice_callback(self, data):
     #    rospy.loginfo("voice_callback: " + data.data)
     #    self.current_voice = data.data
@@ -103,8 +121,10 @@ class Controller():
             
         self.say("please look towards the camera so that I can recognise you")
         
-        visitor = self.detect_visitor()
-
+        visitor = None
+        while visitor is None or visitor == "":
+            visitor = self.detect_visitor()
+        
         if visitor == "postman":
             rospy.loginfo("detected postman")
             self.process_face_postman()
