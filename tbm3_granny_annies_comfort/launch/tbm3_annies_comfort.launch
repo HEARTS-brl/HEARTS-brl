@@ -1,0 +1,5 @@
+<launch>
+  <node name="annies_confort_controller" pkg="tbm3_granny_annies_comfort" type="tbm3_granny_annies_comfort_controller.py" output="screen" />
+  <node name="servicer" pkg="tbm3_granny_annies_comfort" type="service.py" output="screen" />
+
+</launch>
