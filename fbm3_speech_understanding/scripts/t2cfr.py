@@ -7,6 +7,10 @@
 #          convert to CFR format.  
 ################################################################################
 # Updates:
+#
+# 23 Nov 2017 Deek  - Implement "Python Support Library" ROS package  
+#                     First shared module is tag_topics.py
+#
 # 07 Aug 2017 Derek - Make competion data path seperate from the one used to test
 #                     the code using runmode = TH eg test harness.
 #
@@ -20,7 +24,7 @@ from std_msgs.msg import String
 import operator
 import random
 import textrazor
-import tag_topics  as TT
+import python_support_library.tag_topics  as TT
 import os
 
 o_tt=TT.tag_topics()
