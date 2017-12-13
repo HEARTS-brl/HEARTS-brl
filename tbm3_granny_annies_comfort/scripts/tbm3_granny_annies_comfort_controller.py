@@ -63,7 +63,7 @@ class Controller():
     	sub.unregister()
 
 
-
+        # Callback functions
     def tablet_callback(self, msg):
     	self.wait = True
 
@@ -76,6 +76,7 @@ class Controller():
     	self.nav_status = msg.data
 
 
+        ##Navigation Functions
     def move_to_pose2D(self, target_location_2D):
     	##publish granny annie's location
     	rospy.loginfo("Moving to Pose2D")
@@ -113,20 +114,12 @@ class Controller():
         return self.nav_status == "Success"
 
 
+        ## Interactions
     def say(self, text):
         rospy.loginfo("saying \"" + text + "\"")
         rospy.sleep(1)
         self.tts_pub.publish(text)
         rospy.sleep(5)
-
-
-
-
-
-
-
-
-
 
 
     def main(self):
@@ -145,6 +138,8 @@ class Controller():
     	#listen to granny annie
 
     	#reply to granny annie
+
+        #check that command is correct
 
     	#execute command
 
