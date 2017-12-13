@@ -25,6 +25,18 @@ class Controller():
 
         self.user_location = None
 
+        # Disable head manager
+        head_mgr = NavigationCameraMgr()
+        head_mgr.head_mgr_as("disable")
+
+
+        #Dictionaries
+        self.objects = ['coke','water','juice','apple','lemon','glass']
+        self.rooms = ['bedroom', 'living_room']
+        self.device = ['light', 'blinds']
+        self.states = ['on', 'off', 'half', 'open', 'close']
+        self.verb = ['switch']
+
     
     ### When receiving a message from the "roah_rsbb/benchmark/state" topic, will then publish the corresponding state to "roah_rsbb/messages_save"
     def benchmark_state_callback(self, data):
@@ -120,6 +132,27 @@ class Controller():
         rospy.sleep(1)
         self.tts_pub.publish(text)
         rospy.sleep(5)
+
+
+    def listen(self, data):
+        rospy.loginfo("Listening for command")
+        sub = rospy.Subscriber("/hearts/stt", String, self.hearCommand_callback)
+
+        #Possible Commands: 
+        # Switch  
+        # Open
+        # Close
+        # Set
+        # Get / Bring / Find
+        # Go Home
+
+
+        sub.unregister()
+
+
+    def device_operationsself(self):
+        
+
 
 
     def main(self):
