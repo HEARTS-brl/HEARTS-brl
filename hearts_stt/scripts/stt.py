@@ -11,6 +11,11 @@
 #             - Test Harness mode  (driven by th.py)
 ################################################################################
 # Updates:
+# 23 Nov 2017 Deek  - Implement "Python Support Library" ROS package  
+#                     First shared module is tag_topics.py
+#
+# 23 Nov 2017 Derek/Chris - callback2 added to stop Robot listening to itsself.
+#                           uses variable "global_bool"
 # 20 Nov 2017 Derek - add ros log info for verbal instruction feedback
 #
 # 15 Nov 2017 Derek - Moved wait statement to just before "record" statement. This now avoids
@@ -49,14 +54,14 @@ import rospy
 from std_msgs.msg import String
 #import pocketsphinx
 import speech_recognition as sr   # sudo pip install SpeechRecognition && sudo apt-get install python-pyaudio
-import tag_topics         as TT
+import python_support_library.tag_topics       as TT
 import gcp_keywords_r     as gcpk # google cloud platform preferred keyword/sphrases - only used by GCP speech recognition
 import gcp_credentials    as gcpc # google cloud platform credentials to access GCP speech recognition
 
 import wave, array, os            # used by mono_to_stereo()
 
-
 o_tt=TT.tag_topics()
+
 global_bool = False
 
 class SpeechRecognizer():
@@ -304,7 +309,7 @@ if __name__ == "__main__":
     speech_recognition_engine = rospy.get_param("SR_speechrec_engine")
     run_mode = rospy.get_param("SR_TH")
     print("*** speech_recognition_engine: " + speech_recognition_engine)  
-    print("*** Energy threshold         : " + str(energy_threshold))             
+    print("*** Energy threshold         : " + str(energy_threshold))
     speech_recognizer = SpeechRecognizer()    
     
     if not speech_recognition_engine in speech_recognizer.speech_recognition_engines:
