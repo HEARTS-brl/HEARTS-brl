@@ -1,0 +1,11 @@
+<launch>
+    <arg name="d_topic" default="/xtion/depth/image_raw" />
+    <arg name="face_cascade_path" default="/home/turtlebot/tb_ws/src/brl-hearts/hearts_face_uniform/src/haarcascade_frontalface_alt2.xml" />
+    <arg name="rgb_topic" default="/xtion/rgb/image_raw" />
+        
+    <param name="d_topic" value="$(arg d_topic)" />
+    <param name="face_cascade_path" value="$(arg face_cascade_path)" />  
+    <param name="rgb_topic" value="$(arg rgb_topic)" />
+        
+    <node name="hearts_person_tracker" pkg="hearts_person_tracker" type="hearts_person_tracker" output="screen" />
+</launch>
