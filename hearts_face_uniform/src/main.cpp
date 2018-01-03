@@ -150,7 +150,6 @@ public:
 
     if ((faces.size() > 3) || (faces.size() < 1)) // skip if there is no face or there are more than 3 faces
     {
-      pub("");
       imshow(OPENCV_WINDOW, frame);
       int c = waitKey(3);
       if ((char)c == 27) { return; } // escape
