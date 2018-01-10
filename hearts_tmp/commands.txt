@@ -100,7 +100,7 @@ source ./devel/setup.bash
 rosrun hearts_robot_pose mapping_pose_srv
 
 source ./devel/setup.bash
-rosrun hearts_top_pov top_pov_srv -conf ~/ros/tiago_public_ws/src/brl_hearts/navigation/hearts_tools/hearts_pov_conf.yaml
+rosrun hearts_top_pov top_pov_srv -conf /home/turtlebot/tb_ws/src/brl-hearts/hearts_tools/hearts_pov_conf.yaml
 
 source ./devel/setup.bash
 rosrun hearts_top_map top_map_srv
