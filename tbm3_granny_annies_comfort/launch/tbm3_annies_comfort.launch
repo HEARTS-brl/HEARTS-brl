@@ -1,5 +1,12 @@
 <launch>
-  <node name="annies_comfort_controller" pkg="tbm3_granny_annies_comfort" type="tbm3_granny_annies_comfort_controller.py" output="screen" />
-  <node name="servicer" pkg="tbm3_granny_annies_comfort" type="service.py" output="screen" />
+  <include file="$(find hearts_stt)/launch/hearts_stt.launch">
+   <arg name="SR_speechrec_engine" value="google" />
+   <arg name="SR_ENERGY_THRESHOLD" value="1200" />
+   <arg name="listen" value="" />
+  </include>   
+  <include file="$(find hearts_tts)/launch/hearts_tts.launch" />
 
+  <node name="servicer" pkg="tbm3_granny_annies_comfort" type="service.py" output="screen" />
+  <node name="annies_comfort_controller" pkg="tbm3_granny_annies_comfort" type="tbm3_granny_annies_comfort_controller.py" output="screen" />
+ 
 </launch>
