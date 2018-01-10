@@ -58,7 +58,8 @@ class Controller():
 		"open blinds"                   : "self.open_B()" ,
 		"close blinds"                  : "self.close_B()",
 		"leave blinds half open"        : "self.half_B()" ,
-		"go home"                       : "self.go_home()"
+		"go home"                       : "self.go_home()",
+		"get me the mug"                : "self.get("mug")"
 		}
 
 		self.global_answer = ''
@@ -238,6 +239,21 @@ class Controller():
 		quit()
 		return
 
+	def self.get(self,object):
+		# use object to look up location
+		location ="kitchen"
+
+		self.move_to_pose2D(location)
+
+		# Recognise object
+
+
+		#return to grannie annie
+		self.move_to_pose2D(self.user_location)
+
+
+		return	
+
     ### When receiving a message from the "roah_rsbb/benchmark/state" topic, will then publish the corresponding state to "roah_rsbb/messages_save"
 	def benchmark_state_callback(self, data):
 		if data.benchmark_state == BenchmarkState.STOP:
@@ -325,6 +341,7 @@ class Controller():
             
 			return self.nav_status == "Success"
 
+	
 
         ## Interactions
 	def say(self, text):
