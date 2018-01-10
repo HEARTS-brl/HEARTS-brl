@@ -2,23 +2,28 @@
 
 import rospy
 import time
-from std_msgs.msg import Empty, String
-from geometry_msgs.msg import Pose2D, Pose, Twist, PoseStamped
-from roah_rsbb_comm_ros.msg import BenchmarkState
-from roah_rsbb_comm_ros.srv import Percentage
 import std_srvs.srv
+from   std_msgs.msg           import Empty, String
+from   geometry_msgs.msg      import Pose2D, Pose, Twist, PoseStamped
+from   roah_rsbb_comm_ros.msg import BenchmarkState
+from   roah_rsbb_comm_ros.srv import Percentage
+
 
 
 class Controller():
 	
 	def __init__(self):
-        #Publishers
+        #Publishers  
 		self.tts_pub   = rospy.Publisher("/hearts/tts", String, queue_size=10)
 		self.pub_twist = rospy.Publisher('/mobile_base_controller/cmd_vel', Twist, queue_size=10)       
 
 
         #Subscribers
-		rospy.Subscriber("/hearts/stt", String, self.hearCommand_callback)
+		self.listen4cmd('on')
+		self.listen4ans('on')
+		self.listen4ans('off')
+
+		#rospy.Subscriber("/hearts/stt", String, self.hearAnswer_callback)   # listen for answer
 		rospy.Subscriber("roah_rsbb/benchmark/state", BenchmarkState, self.benchmark_state_callback)
     
         #Services
@@ -34,12 +39,12 @@ class Controller():
 
         # List of unwanted words
 		self.rm_words = [
-		'of ', # nb trailing space to avoid corrupting "off"
-		'in ', # nb trailing space to avoid corrupting "blind"
+		'of ',  # nb trailing space to avoid corrupting "off"
+		'in ',  # nb trailing space to avoid corrupting "blind"
 		'the',
 		'please',
 		'my',
-		'me'
+		' me'    # nb trailing space to avoid corrupting "home"
 		]
 
         # Dictionary for DEVICE actions
@@ -50,35 +55,76 @@ class Controller():
 		"switch off right light bedroom": "self.off_RLB()",
 		"switch on both lights bedroom" : "self.on_BLB()" ,
 		"switch off both lights bedroom": "self.off_BLB()",
-		"open blinds"            : "self.open_B()" ,
-		"close blinds"           : "self.close_B()",
-		"leave blinds half open" : "self.half_B()"
+		"open blinds"                   : "self.open_B()" ,
+		"close blinds"                  : "self.close_B()",
+		"leave blinds half open"        : "self.half_B()" ,
+		"go home"                       : "self.go_home()"
 		}
 
-
+		self.global_answer = ''
         #self.objects = ['coke','water','juice','apple','lemon','glass']
         #self.rooms = ['bedroom', 'living_room']
         #self.device = ['light', 'blinds']
         #self.states = ['on', 'off', 'half', 'open', 'close']
         #self.verb = ['switch']
 
+	def listen4cmd(self,status):
+		if status == 'on' :	
+			self.sub_cmd=rospy.Subscriber("/hearts/stt", String, self.hearCommand_callback)    
+		else:
+			self.sub_cmd.unregister()
+
+		return
+
+	def listen4ans(self,status):
+		if status == 'on' :	
+			self.sub_ans=rospy.Subscriber("/hearts/stt", String, self.hearAnswer_callback)  
+		else:
+			self.sub_ans.unregister()
+
+		return		
+
+	def hearAnswer_callback(self,data):	  
+		rospy.loginfo('\nHeard an answer .......................\n')
+		speech = str(data)
+		print("\n**************************************************** Answer text: "+speech)
+		speech = speech.lower()
+		rospy.loginfo('Heard an answer'+speech)
+		words  = speech.split(' ')
+		print('***************************************************** Answer words:')
+		print(words)
+		if  'yes' in words:
+			self.global_answer = 'yes'
+		elif 'no' in words:
+			self.global_answer = 'no'
+
 	def hearCommand_callback(self,data):
 		rospy.loginfo('Heard a command')
-
 		speech = str(data)
 		speech = speech.lower()
 		print("speech -:"+speech)
+        # check that text has been returned
+		print ("\n***** speech >"+speech+"<\n")
+		if "bad_recognition" in speech:
+			self.say("Sorry but no words were heard please repeat your instruction")
+			print("***** BAD RECOGNITION  ")
+			return 
 
 		# remove unwanted words
+		item = 'data:'
+		if item in speech:
+			speech = speech.replace(item,'')
+
+		rspeech = speech # Reduced speech
 		for rm_item in self.rm_words:
 			print("rm word: "+rm_item)
-			speech = speech.replace(rm_item,'')
+			rspeech = rspeech.replace(rm_item,'')
 	
-		words = speech.split(' ')	
+		words = rspeech.split(' ')	
 		print("words  ....>")
 		print(words)
-		# rebuild key with single spaces
 
+		# rebuild key with single spaces
 		lookupkey = ''
 		for ii in range(1,len(words)):
 			if words[ii] != '':
@@ -87,18 +133,49 @@ class Controller():
 
 		rospy.loginfo("lookup key: "+lookupkey)
 
-
-		# look for speech in"device" dict
+		# look for speech in dict
 		print("code2exec ; "+ lookupkey)
 		code2exec = self.device_dict.get(lookupkey)
+
 		# check that key was found
 		if code2exec != None:
-			print('code 2 exec : '+ code2exec)
-			exec(code2exec)
+			#listen for "answer"
+			self.listen4cmd('off')
+			self.listen4ans('on')
+
+			# get confirmation of instruction
+			self.say("You requested that I "+speech+' .')
+			self.say("Shall I do this now")
+
+			#listen for answer
+			while True:
+				print("golbal_answer: "+self.global_answer)
+				if self.global_answer == 'yes':
+
+					self.say("OK will do")
+					print('code 2 exec : '+ code2exec)
+					exec(code2exec)
+					self.say("Task is now complete. Do you have another instruction for me")
+					break
+
+				elif self.global_answer == 'no':
+					self.say("OK I will not do anything. Do you have another instruction for me")
+					break 
+
+				else:
+					self.say("Please answer with a yes or no")
+
+		
+					
+
 		else:
-			print('code 2 exec : not found')	
-		exec("code2exec")
-  		return
+			self.say("Your request was not understood       please repeat")
+			
+		# re-establish subscribers	
+		self.global_answer = ''	
+		self.listen4ans('off')
+		self.listen4cmd('on')	
+		return
 
 	# exec def's for DEVICE actions
 	def on_LLB(self):
@@ -140,7 +217,7 @@ class Controller():
 	def open_B(self):
 		# OPEN Blinds
 		run_service = rospy.ServiceProxy('/roah_rsbb/devices/blinds/max', std_srvs.srv.Empty)
-		run_service()
+		run_service()																																											
 		return
 
 	def close_B(self):
@@ -151,11 +228,15 @@ class Controller():
 
 	def half_B(self):
 		# HALF CLOSE Blinds as at 27 Dec2017 does not work - percentae type problem
-		p = Percentage()
-		p.data = 50
 		run_service = rospy.ServiceProxy('/roah_rsbb/devices/blinds/set',Percentage)
-		run_service(p)
-		return	
+		percent = 40
+		run_service(percent) 
+		return
+
+	def go_home(self):
+		print("\n************ write code to send me home!!\n")
+		quit()
+		return
 
     ### When receiving a message from the "roah_rsbb/benchmark/state" topic, will then publish the corresponding state to "roah_rsbb/messages_save"
 	def benchmark_state_callback(self, data):
@@ -253,20 +334,20 @@ class Controller():
 	    rospy.sleep(5)
 
 
-	def listen(self, data):
-		rospy.loginfo("Listening for command")
-		sub = rospy.Subscriber("/hearts/stt", String, self.hearCommand_callback)
+	# def listen(self, data):
+	# 	rospy.loginfo("Listening for command")
+	# 	sub = rospy.Subscriber("/hearts/stt", String, self.hearCommand_callback)
 
-        #Possible Commands: 
-        # Switch  
-        # Open
-        # Close
-        # Set
-        # Get / Bring / Find
-        # Go Home
+ #        #Possible Commands: 
+ #        # Switch  
+ #        # Open
+ #        # Close
+ #        # Set
+ #        # Get / Bring / Find
+ #        # Go Home
 
 
-		sub.unregister()
+	# 	sub.unregister()
 
 
 	def device_operationsself(self):
