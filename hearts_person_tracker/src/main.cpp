@@ -1,3 +1,5 @@
+#define _USE_MATH_DEFINES
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -6,7 +8,9 @@
 #include "opencv2/core/version.hpp"
 #include <ros/ros.h>
 #include "std_msgs/Float32.h"
+#include "geometry_msgs/Twist.h"
 #include "std_msgs/String.h"
+#include "trajectory_msgs/JointTrajectory.h"
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
@@ -17,9 +21,13 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/objdetect/objdetect.hpp>
 #include "macros.hpp"
+#include "math.h"
 
-using namespace std;
+
 using namespace cv;
+using namespace ros;
+using namespace std;
+
 // using namespace cv::face;
 
 /** Global variables */
@@ -31,9 +39,136 @@ static const string D_OPENCV_WINDOW = "D";
 
 static const string FACE_CASCADE_PATH_PARAMETER = "face_cascade_path";
 
+static const string OUT_OPENCV_WINDOW = "OUT";
+
 static const string RGB_OPENCV_WINDOW = "RGB";
 
 static const string RGB_TOPIC_PARAMETER = "rgb_topic";
+
+class ImageRegion
+{
+Mat _region; 
+double _startX;
+double _startY; 
+double _endX;
+double _endY;
+string _name;
+double _distanceFromCenter;
+double _indexX;
+double _indexY;
+bool _match;
+
+public:
+    ImageRegion()
+    {
+    }
+    
+    ImageRegion(const Mat& region, double startX, double startY, double endX, double endY, string name, double distanceFromCenter, double indexX, double indexY, bool match)
+    {
+        _region = region;
+        _startX = startX;
+        _startY = startY;
+        _endX = endX;
+        _endY = endY;
+        _name = name;
+        _distanceFromCenter = distanceFromCenter;
+        _indexX = indexX;
+        _indexY = indexY;
+        _match = match;
+    }
+        
+    Mat& getRegion()
+    {
+        return _region;
+    }
+    
+    double getStartX()
+    {
+        return _startX;
+    }
+    
+    double getStartY()
+    {
+        return _startY;
+    }
+    
+    double getEndX()
+    {
+        return _endX;
+    }
+    
+    double getEndY()
+    {
+        return _endY;
+    }
+    
+    string getName()
+    {
+        return _name;
+    }
+    
+    double getDistanceFromCenter() const
+    {
+        return _distanceFromCenter;
+    }
+    
+    double getIndexX()
+    {
+        return _indexX;
+    }
+    
+    double getIndexY()
+    {
+        return _indexY;
+    }
+    
+    bool getMatch()
+    {
+        return _match;
+    }
+       
+    bool operator<(const ImageRegion& rhs) const 
+    {
+       return getDistanceFromCenter() < rhs.getDistanceFromCenter();
+    }
+};
+     
+class Params
+{
+    double _b;
+    double _d;
+    double _g;
+    double _r;
+    
+public:
+    Params(double b, double d, double g, double r)
+    {
+        _b = b;
+        _d = d;
+        _g = g;
+        _r = r;
+    }
+    
+    double getB()
+    {
+        return _b;
+    }
+    
+    double getD()
+    {
+        return _d;
+    }
+    
+    double getG()
+    {
+        return _g;
+    }
+    
+    double getR()
+    {
+        return _r;
+    }
+};
 
 class ImageConverter
 {
@@ -44,23 +179,60 @@ class ImageConverter
   
   image_transport::Publisher personImgPub_;
   ros::Publisher personXPub_;
+  ros::Publisher headPub_;
   
   Ptr<FaceRecognizer> model_;
   
-private:
-//  void pub(std::string image_label)
-//  {
-//      std_msgs::String msg;
-//      std::stringstream ss;
-//      ss << image_label;
-//      msg.data = ss.str();
-//      image_label_pub_.publish(msg);
-//  }
+  Mat _d;
+  Mat _rgb;
+  bool _trained;
+  
+  double _bRegionAvgVal;
+  double _dRegionAvgVal; 
+  double _gRegionAvgVal; 
+  double _rRegionAvgVal;
+  
+  double _bRegionStdDev;
+  double _gRegionStdDev;
+  double _rRegionStdDev;
+  
+  double _h_margin;
+  double _v_margin;
+  double _n_h_regions;
+  double _n_v_regions;
+  
+  double _threshold;
+  double _threshold2;
+  
+  deque<Vec3d> _prev;
+  int _nPrev;
   
 public:
-  ImageConverter()
+    ImageConverter();
+    ~ImageConverter();
+    bool process(Vec3d& curr);
+    bool train(Mat& d, Mat& rgb, double& dRegionAvgVal, double& rRegionAvgVal, double& gRegionAvgVal, double& bRegionAvgVal, double& rRegionStdDev, double& gRegionStdDev, double& bRegionStdDev);
+    
+private:
+    string toString(double a);
+    void dTopicCb(const sensor_msgs::ImageConstPtr& msg);
+    void rgbTopicCb(const sensor_msgs::ImageConstPtr& msg);
+    bool isMatch(double bRegionAvgVal, double gRegionAvgVal, double rRegionAvgVal, double bRegionStdDev, double gRegionStdDev, double rRegionStdDev);
+    bool isMatch2(double bRegionAvgVal, double gRegionAvgVal, double rRegionAvgVal, double bRegionStdDev, double gRegionStdDev, double rRegionStdDev);
+    void rotateHead(double angleRads);
+};
+
+ImageConverter::ImageConverter()
     : it_(nh_)
-  { 
+{
+    _h_margin = 20;
+    _v_margin = 20;
+    _n_h_regions = 15;
+    _n_v_regions = 11;
+    _threshold = 20;
+    _threshold2 = 10;
+    _nPrev = 10;
+    
     string dTopic;
     if (!nh_.getParam(D_TOPIC_PARAMETER, dTopic))
         cout << "FAILED TO GET PARAMETER: " << D_TOPIC_PARAMETER << endl;
@@ -79,86 +251,340 @@ public:
     personImgPub_ = it_.advertise("/image_converter/output_video", 1);
     personXPub_ = nh_.advertise<std_msgs::Float32>("/hearts/person/x", 1000);
 
+    headPub_ = nh_.advertise<trajectory_msgs::JointTrajectory>("/head_controller/command", 1);
+    
     // Load the cascades
     if (!face_cascade.load(faceCascadePath))
     { 
-      printf("--(!)Error loading face cascade\n"); 
-      return; 
+        printf("--(!)Error loading face cascade\n"); 
+        return; 
     }
 
     cv::namedWindow(D_OPENCV_WINDOW);
     cv::namedWindow(RGB_OPENCV_WINDOW);
-  }
+    
+    ros::Publisher pubVel = nh_.advertise<geometry_msgs::Twist>("/key_vel", 10);
+    
+    ros::Rate loopRate(1); // 10
+    
+    double h_2 = 0;
+    double w_2 = 0;
+        
+    while (ros::ok())
+    {
+        if (!_trained)
+        {
+            _trained = train(_d, _rgb, _dRegionAvgVal, _rRegionAvgVal, _gRegionAvgVal, _bRegionAvgVal, _rRegionStdDev, _gRegionStdDev, _bRegionStdDev);
+            
+            if (_trained)
+            {
+                Size size = _rgb.size();
+                h_2 = size.height/2;
+                w_2 = size.width/2;
+                
+                cout << "trained: d=" << _dRegionAvgVal << ", r=" << _rRegionAvgVal << ", g=" << _gRegionAvgVal << ", b=" << _bRegionAvgVal << ", rs=" << _rRegionStdDev << ", gs=" << _gRegionStdDev << ", bs=" << _bRegionStdDev << endl;
+            }
+        }
+        else
+        {                            
+            Vec3d curr;
+            if (process(curr))
+            {
+                circle(_rgb, Point(320, 240), 3, Scalar(0,255,0));
+                double a1 = curr[0];
+                double a2 = curr[1];
+                double h = curr[2];
+                double theta_lr_rad = (M_PI/2) - acos(a1/h);
+                cout << theta_lr_rad << endl;
+                double theta_ud_rad = (M_PI/2) - acos(a2/h);
+                rotateHead(theta_lr_rad);
+                cout << curr << endl;
+                
+                // signal smoothing using moving average algorithm (other options e.g. kalman filter may perform better) 
+                if (_prev.size() > _nPrev)
+                    _prev.pop_front();
+                    
+                _prev.push_back(curr);
+                
+                double sum0 = 0;
+                double sum1 = 0;
+                double sum2 = 0;
+                
+                for (int i = 0; i < _prev.size(); i++)
+                {
+                    sum0 += _prev[i][0];
+                    sum1 += _prev[i][1];
+                    sum2 += _prev[i][2];
+                }
+                
+                double avg0 = sum0 / _prev.size();            
+                double avg1 = sum1 / _prev.size();
+                double avg2 = sum2 / _prev.size();
+                
+                circle(_rgb, Point(avg0, avg1), 3, Scalar(0,0,255));
+                cv::imshow("MASK3", _rgb);
+        
+                Vec3d diff(w_2 - avg0, h_2 - avg1, _dRegionAvgVal - avg2);
+                //cout << diff << endl;
+                
+                geometry_msgs::Twist msg;
+                msg.linear.x = -diff[2];
+                msg.angular.z = diff[0] * 0.001;
+                //pubVel.publish(msg);
+            }
+            else
+            {
+                // stop!
+                geometry_msgs::Twist msg;
+                msg.linear.x = 0;
+                msg.angular.z = 0;
+                pubVel.publish(msg);
+            }
+        }
+    
+        ros::spinOnce();
+        loopRate.sleep();
+    }
+}
 
-  ~ImageConverter()
-  {
+ImageConverter::~ImageConverter()
+{
     destroyWindow(D_OPENCV_WINDOW);
     destroyWindow(RGB_OPENCV_WINDOW);
     image_transport::Publisher personImgPub_;
-  }
+}
+
+bool ImageConverter::isMatch(double bRegionAvgVal, double gRegionAvgVal, double rRegionAvgVal, double bRegionStdDev, double gRegionStdDev, double rRegionStdDev)
+{
+    return sqrt(pow(bRegionAvgVal - _bRegionAvgVal, 2) + pow(gRegionAvgVal - _gRegionAvgVal, 2) + pow(rRegionAvgVal - _rRegionAvgVal, 2) + pow(bRegionStdDev - _bRegionStdDev, 2) + pow(gRegionStdDev - _gRegionStdDev, 2) + pow(rRegionStdDev - _rRegionStdDev, 2)) < _threshold;
+}
+ 
+bool ImageConverter::isMatch2(double bRegionAvgVal, double gRegionAvgVal, double rRegionAvgVal, double bRegionStdDev, double gRegionStdDev, double rRegionStdDev)
+{
+    return (abs(bRegionAvgVal - _bRegionAvgVal) < _threshold2) && (abs(gRegionAvgVal - _gRegionAvgVal) < _threshold2) && (abs(rRegionAvgVal - _rRegionAvgVal) < _threshold2) && (abs(bRegionStdDev - _bRegionStdDev) < _threshold2) && (abs(gRegionStdDev - _gRegionStdDev) < _threshold2) && (abs(rRegionStdDev - _rRegionStdDev) < _threshold2);
+} 
   
-  void dTopicCb(const sensor_msgs::ImageConstPtr& msg)
-  {
-    cv_bridge::CvImagePtr cv_ptr;
-    try
-    {
-    // TYPE_32FC1
-      cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::TYPE_32FC1); //TYPE_16SC1); // TYPE_16UC1);
-      cv::normalize(cv_ptr->image, cv_ptr->image, 1, 0, cv::NORM_MINMAX);
-    }
-    catch (cv_bridge::Exception& e)
-    {
-      ROS_ERROR("dTopicCb: %s", e.what());
-      return;
-    }
-
-    Mat frame = cv_ptr->image;
+bool ImageConverter::process(Vec3d& curr)
+{ 
+    Size size = _rgb.size();
+    Mat mask = Mat(size, CV_8UC1, 255);
+    Mat img1 = _rgb.clone();
+    Mat img2 = _rgb.clone();
     
-    cv::imshow(D_OPENCV_WINDOW, frame);
+    double h = size.height;
+    double w = size.width;
+    double h_2 = h / 2;
+    double w_2 = w / 2;    
+
+    double region_h = (h - (2*_v_margin)) / _n_v_regions;
+    double region_w = (w - (2*_h_margin)) / _n_h_regions;    
+    double region_h_2 = region_h / 2;
+    double region_w_2 = region_w / 2;
+    
+    for (int i = 0; i < _n_v_regions; i++)
+    {
+        for (int j = 0; j < _n_h_regions; j++)
+        {    
+            double startY = (region_h * i) + _v_margin;
+            double startX = (region_w * j) + _h_margin;
+            double endY = startY + region_h;
+            double endX = startX + region_w;
+            double centerY = startY + region_h_2;
+            double centerX = startX + region_w_2;
+            double distanceFromCenter = sqrt(pow(h_2 - centerY, 2) + pow(w_2 - centerX, 2));
+            double indexX = j;
+            double indexY = i;                
+            string name = "(" + toString(indexY) + "," + toString(indexX) + ")";
+            
+            //putText(_rgb, name, Point(centerX, centerY), FONT_HERSHEY_PLAIN, 0.5, Scalar(255,0,0));
+            
+            Rect rect;
+            rect.x = startX;
+            rect.y = startY;
+            rect.width = endX - startX;
+            rect.height = endY - startY;
+            Mat region = _rgb(rect);
+            
+            Mat channels[3];
+            split(region, channels);
+            
+            Scalar mean0, mean1, mean2, stdDev0, stdDev1, stdDev2;
+            meanStdDev(channels[0], mean0, stdDev0); 
+            meanStdDev(channels[1], mean1, stdDev1); 
+            meanStdDev(channels[2], mean2, stdDev2);
+            
+            double bRegionAvgVal = mean0.val[0];
+            double gRegionAvgVal = mean1.val[0];
+            double rRegionAvgVal = mean2.val[0];
+            
+            double bRegionStdDev = stdDev0.val[0];
+            double gRegionStdDev = stdDev1.val[0];
+            double rRegionStdDev = stdDev2.val[0];
+            
+            bool match = false;
+            if (isMatch2(bRegionAvgVal, gRegionAvgVal, rRegionAvgVal, bRegionStdDev, gRegionStdDev, rRegionStdDev))
+            {
+                match = true;
+                rectangle(mask, rect, Scalar(0, 0, 0), CV_FILLED);
+            }
+
+            rectangle(img1, rect, Scalar(255,0,0), match ? CV_FILLED : 1);                    
+        }
+    }
+        
+    int n_off_v_regions = _n_v_regions - 1;
+    int n_off_h_regions = _n_h_regions - 1;
+    
+    for (int i = 0; i < n_off_v_regions; i++)
+    {
+        for (int j = 0; j < n_off_h_regions; j++)
+        {   
+            double startY = (region_h * i) + _v_margin + region_h_2;
+            double startX = (region_w * j) + _h_margin + region_w_2;
+            double endY = startY + region_h;
+            double endX = startX + region_w;
+            double centerY = startY + region_h_2;
+            double centerX = startX + region_w_2;
+            double distanceFromCenter = sqrt(pow(h_2 - centerY, 2) + pow(w_2 - centerX, 2));
+            double indexX = j + 0.5;
+            double indexY = i + 0.5; 
+            string name = "(" + toString(indexY) + "," + toString(indexX) + ")";
+            
+            //putText(_rgb, name, Point(centerX, centerY), FONT_HERSHEY_PLAIN, 0.5, Scalar(0,0,255));
+            
+            Rect rect;
+            rect.x = startX;
+            rect.y = startY;
+            rect.width = endX - startX;
+            rect.height = endY - startY;
+            Mat region = _rgb(rect);
+            
+            Mat channels[3];
+            split(region, channels);
+            
+            Scalar mean0, mean1, mean2, stdDev0, stdDev1, stdDev2;
+            meanStdDev(channels[0], mean0, stdDev0); 
+            meanStdDev(channels[1], mean1, stdDev1); 
+            meanStdDev(channels[2], mean2, stdDev2);
+            
+            double bRegionAvgVal = mean0.val[0];
+            double gRegionAvgVal = mean1.val[0];
+            double rRegionAvgVal = mean2.val[0];
+            
+            double bRegionStdDev = stdDev0.val[0];
+            double gRegionStdDev = stdDev1.val[0];
+            double rRegionStdDev = stdDev2.val[0];
+            
+            bool match = false;
+            if (isMatch2(bRegionAvgVal, gRegionAvgVal, rRegionAvgVal, bRegionStdDev, gRegionStdDev, rRegionStdDev))
+            {
+                match = true;
+                rectangle(mask, rect, Scalar(0, 0, 0), CV_FILLED);
+            }
+
+            rectangle(img1, rect, Scalar(0,0,255), match ? CV_FILLED : 1);
+        }
+    }
+    
+    Mat mask2 = mask.clone();
+           
+    // grow adjacent image regions, then return enclosing rect
+    vector<vector<Point> > contours;
+    vector<Vec4i> hierarchy;
+    findContours(mask2, contours, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE, Point(0, 0)); // 
+    
+    double largestArea = 0;
+    int largestContourIndex = -1;
+    
+    for (int i = 0; i < contours.size(); i++) // iterate through each contour. 
+    {
+        // exclude outermost contour which has no parents
+        if (hierarchy[i][3] < 0)
+            continue;
+            
+        double area = contourArea(contours[i], false);  //  Find the area of contour
+        if (largestArea < area)
+        {
+            largestArea = area;
+            largestContourIndex = i;                //Store the index of largest contour
+        }
+    }
+  
+    //for (size_t i = 0; i < contours.size(); i++)
+    //{
+    //    drawContours( img2, contours, (int)i, Scalar(255, 0, 0), 2, 8, hierarchy, 0, Point() );
+    //}
+    
+    cv::imshow("MASK0", mask);
+    cv::imshow("MASK1", img1);
     cv::waitKey(3);
-  }
-
-  void rgbTopicCb(const sensor_msgs::ImageConstPtr& msg)
-  {
-    cv_bridge::CvImagePtr cv_ptr;
-    try
+    
+    if (largestContourIndex > -1)
     {
-      cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+        Rect largestRect = boundingRect(contours[largestContourIndex]); // Find the bounding rectangle for biggest contour
+        Point center = (largestRect.br() + largestRect.tl())*0.5;
+        Vec3d curr_n;
+        curr_n = Vec3d(center.x, center.y, _d.at<float>(center));
+        
+        double z_m = (_d.at<float>(center) / 0.10131);
+        double x_m = ((center.x - w_2) / 540.0) * z_m;
+        double y_m = ((center.y - h_2) / 540.0) * z_m;
+        
+        curr = Vec3d(x_m, y_m, z_m);
+        circle(img2, center, 3, Scalar(0,255,0));
+        cv::imshow("MASK2", img2);
+        cv::waitKey(3);
+        
+        //double centerX = largestRect.x + largestRect.width/2;
+        //double centerY = largestRect.y + largestRect.height/2;
+        
+        //rectangle(img2, largestRect, Scalar(0, 255, 0), 1);
+        return true;
     }
-    catch (cv_bridge::Exception& e)
-    {
-      ROS_ERROR("rgbTopicCb: %s", e.what());
-      return;
-    }
+    
 
-    Mat frame = cv_ptr->image;
+    
+    
+    //cv::imshow("MASK3", drawing);
+    
+    
+    //cv::imshow("MASK", _rgb);
+    //cv::waitKey(3);
+    //bitwise_and(_d, mask, _d);
+    
+    return false;
+}
+
+bool ImageConverter::train(Mat& d, Mat& rgb, double& dRegionAvgVal, double& rRegionAvgVal, double& gRegionAvgVal, double& bRegionAvgVal, double& rRegionStdDev, double& gRegionStdDev, double& bRegionStdDev)
+{    
+    if (d.empty() || rgb.empty())
+         return false;
+                 
+    // TODO: need to calculate mean distance as well! i actually need to call into a function each time depth or image frame changes
+    
+    Mat frame = rgb.clone();
     Mat frame_gray;
-    cvtColor(frame, frame_gray, COLOR_BGR2GRAY);
+    cvtColor(rgb, frame_gray, COLOR_BGR2GRAY);
 
     //-- Detect faces
     std::vector<Rect> faces;
     face_cascade.detectMultiScale(frame_gray, faces, 1.2, 4, 0 | CASCADE_SCALE_IMAGE, Size(50, 50)); // this is face detection, MIN_FACE_SIZE
 
     if ((faces.size() > 3) || (faces.size() < 1)) // skip if there is no face or there are more than 3 faces
-    {
-      imshow(RGB_OPENCV_WINDOW, frame);
-      int c = waitKey(3);
-      if ((char)c == 27) { return; } // escape
-      return;
-    }
-
+        return false;
+    
     int largestIndex = 0;
     int faceSize = faces[0].width;
 
     for (size_t i = 0; i < faces.size(); i++) // this is to find the largest face and process it only
     {
-      //Point center(faces[i].x + faces[i].width / 2, faces[i].y + faces[i].height / 2);
-      //ellipse(frame, center, Size(faces[i].width / 2, faces[i].height / 2), 0, 0, 360, Scalar(255, 0, 255), 4, 8, 0);
-      Mat faceROI = frame_gray(faces[i]);
-      if (faces[i].width > faceSize)
-      {
-          largestIndex = i;
-      }
+        //Point center(faces[i].x + faces[i].width / 2, faces[i].y + faces[i].height / 2);
+        //ellipse(frame, center, Size(faces[i].width / 2, faces[i].height / 2), 0, 0, 360, Scalar(255, 0, 255), 4, 8, 0);
+        Mat faceROI = frame_gray(faces[i]);
+        if (faces[i].width > faceSize)
+        {
+            largestIndex = i;
+        }
     }
 
     Rect largestFaceBox = faces[largestIndex];
@@ -180,62 +606,132 @@ public:
     rectangle(frame, region, GREEN);
     //cout << frame.rows << endl << frame.cols << endl;
 
-    if ((region.x + region.width > frame.cols) || (region.y + region.height > frame.rows)) // make sure we don't process the regions when they're out of frame
-    {
-      imshow(RGB_OPENCV_WINDOW, frame);
-      int c = waitKey(3);
-      if ((char)c == 27) { return; } // escape
-      return;
-    }
+    if ((region.x + region.width > rgb.cols) || (region.y + region.height > rgb.rows)) // make sure we don't process the regions when they're out of frame
+        return false;
 
-    Mat sample = frame(region);
-
-    Mat rgb[3];
-    split(sample, rgb);
-
-    Scalar meanVal0, meanVal1, meanVal2;
-    Scalar stdDev0, stdDev1, stdDev2;
-
-    // calculate the mean value and the standard deviation in the region, for R, G and B respectively
-    cv::meanStdDev(rgb[0], meanVal0, stdDev0); 
-    cv::meanStdDev(rgb[1], meanVal1, stdDev1);
-    cv::meanStdDev(rgb[2], meanVal2, stdDev2);
-
-    double sdValB = stdDev0.val[0];
-    double sdValG = stdDev1.val[0];
-    double sdValR = stdDev2.val[0];
-    double avgSDVal = (sdValB + sdValG + sdValR) / 3;
-
-    double meanValB = meanVal0.val[0];
-    double meanValG = meanVal1.val[0];
-    double meanValR = meanVal2.val[0];
-    double meanGrey = (meanValB + meanValG + meanValR) / 3;
- 
-    cout << meanValB << endl << meanValG << endl << meanValR << endl << avgSDVal << endl << endl;
-   
-    double rg = meanValR / meanValG;
-    double rb = meanValR / meanValB;
-    double gb = meanValG / meanValB;
+    Mat dRegion = d(region);
+    Scalar dRegionAvg = mean(dRegion);
+    dRegionAvgVal = dRegionAvg.val[0]; // double 
+    //cout << "avg. depth = " << dRegionAvgVal << endl;
     
-    cout << rg << endl << rb << endl << gb << endl << endl;
+    Mat rgbRegion = rgb(region);
+    Mat rgbRegionChannels[3];
+    split(rgbRegion, rgbRegionChannels);
     
-    // TODO: need to calculate mean distance as well! i actually need to call into a function each time depth or image frame changes
+    Scalar mean0, mean1, mean2, stdDev0, stdDev1, stdDev2;
+    meanStdDev(rgbRegionChannels[0], mean0, stdDev0); 
+    meanStdDev(rgbRegionChannels[1], mean1, stdDev1); 
+    meanStdDev(rgbRegionChannels[2], mean2, stdDev2);
     
-    // Update GUI Window
-    cv::imshow(RGB_OPENCV_WINDOW, frame);
+    bRegionAvgVal = mean0.val[0];
+    gRegionAvgVal = mean1.val[0];
+    rRegionAvgVal = mean2.val[0];
+    
+    bRegionStdDev = stdDev0.val[0];
+    gRegionStdDev = stdDev1.val[0];
+    rRegionStdDev = stdDev2.val[0];
+    
+    //cout << "avg. red = " << rRegionAvgVal << endl;
+    //cout << "avg. green = " << gRegionAvgVal << endl;
+    //cout << "avg. blue = " << bRegionAvgVal << endl << endl;
+    
+    cv::imshow(OUT_OPENCV_WINDOW, frame);
     cv::waitKey(3);
     
+    // Update GUI Window
+    
     // Output modified video stream
-    personImgPub_.publish(cv_ptr->toImageMsg());
-  }
-};
+    //personImgPub_.publish(cv_ptr->toImageMsg());
+    
+    return true;
+}
 
+void ImageConverter::rotateHead(double angleRads)
+{
+    trajectory_msgs::JointTrajectory headTrajectory;
+    headTrajectory.joint_names.resize(2);
+    headTrajectory.joint_names[0] = "head_2_joint";
+    headTrajectory.joint_names[1] = "head_1_joint";
+    
+    headTrajectory.points.resize(1);
+    
+    double headUd = 0;
+    double headLr = angleRads;
+    
+    headTrajectory.points[0].positions.resize(2);
+    headTrajectory.points[0].positions[0] = headUd;
+    headTrajectory.points[0].positions[1] = headLr;
+    
+    headTrajectory.points[0].velocities.resize(2);
+    headTrajectory.points[0].accelerations.resize(2);
+    headTrajectory.points[0].effort.resize(2);
+    headTrajectory.points[0].time_from_start = ros::Duration(2.0, 0.0);
+    
+    headPub_.publish(headTrajectory);
+    /*
+        
+    point1.velocities = [0.0,0.0]
+    
+    point1.time_from_start = Duration(2.0,0.0)
+    
+    if subject[0] == 'up':
+        self.head_ud = self.head_ud + self.head_move_step_size
+    if subject[0] == 'down':
+        self.head_ud = self.head_ud - self.head_move_step_size
+    if subject[0] == 'left':
+        self.head_lr = self.head_lr + self.head_move_step_size
+    if subject[0] == 'right':
+        self.head_lr = self.head_lr - self.head_move_step_size
+                
+    */
+}
+
+string ImageConverter::toString(double a)
+{
+    stringstream ss;
+    ss << a;
+    return ss.str();
+}    
+  
+void ImageConverter::dTopicCb(const sensor_msgs::ImageConstPtr& msg)
+{
+    try
+    {
+        cv_bridge::CvImagePtr d_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::TYPE_32FC1);
+        Mat d = d_ptr->image;
+        cv::normalize(d, _d, 1, 0, cv::NORM_MINMAX);
+        cv::imshow(D_OPENCV_WINDOW, _d);
+        cv::waitKey(3);
+    }
+    catch (cv_bridge::Exception& e)
+    {
+        ROS_ERROR("dTopicCb: %s", e.what());
+        return;
+    }
+}
+    
+void ImageConverter::rgbTopicCb(const sensor_msgs::ImageConstPtr& msg)
+{
+    try
+    {
+        cv_bridge::CvImagePtr rgb_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+        _rgb = rgb_ptr->image;
+        cv::imshow(RGB_OPENCV_WINDOW, _rgb);
+        cv::waitKey(3);
+    }
+    catch (cv_bridge::Exception& e)
+    {
+        ROS_ERROR("rgbTopicCb: %s", e.what());
+        return;
+    }
+}
+    
 int main(int argc, char** argv)
 {
-  printf("running!");
-  ros::init(argc, argv, "image_converter");
-  ImageConverter ic;
-  ros::spin();
-  return 0;
+    printf("running!");
+    ros::init(argc, argv, "image_converter");
+    ImageConverter ic;
+    ros::spin();
+    return 0;
 }
 
