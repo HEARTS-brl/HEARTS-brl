@@ -131,10 +131,23 @@ class Controller():
 		words  = speech.split(' ')
 		print('***************************************************** Answer words:')
 		print(words)
-		if  'yes' in words:
-			self.global_answer = 'yes'
+		if 'yes' in words:
+			self.say("OK will do")
+			print('code 2 exec : '+ self.code2exec)
+			exec(self.code2exec)
+			self.say("Task is now complete. Do you have another instruction for me")
+			# re-establish subscribers	
+			self.global_answer = ''	
+			self.listen4ans('off')
+			self.listen4cmd('on')
 		elif 'no' in words:
-			self.global_answer = 'no'
+			self.say("OK I will not do anything. Do you have another instruction for me")
+			# re-establish subscribers	
+			self.global_answer = ''	
+			self.listen4ans('off')
+			self.listen4cmd('on')	
+		else:
+			self.say("Please answer with a yes or no")
 
 	def hearCommand_callback(self,data):
 		rospy.loginfo('Heard a command')
@@ -177,7 +190,7 @@ class Controller():
 
 		# look for Device Directive in Device dict
 		print("code2exec ; "+ lookupkey)
-		code2exec = self.actions_dict.get(lookupkey)
+		self.code2exec = self.actions_dict.get(lookupkey)
 
 		# if code2exec == None:
 		# 	# assume object related hence replace bring or find with get
@@ -187,43 +200,15 @@ class Controller():
 		# 	code2exec = self.object_dict.get(lookupkey)
 
 		# check that key was found
-		if code2exec != None:
+		if self.code2exec != None:
 			#listen for "answer"
-			self.listen4cmd('off')
-			self.listen4ans('on')
-
-
-			# get confirmation of instruction
 			self.say("You requested that I "+speech+' .')
 			self.say("Shall I do this now")
-
-			#listen for answer
-			while True:
-				rospy.sleep(2)
-				print("golbal_answer: "+self.global_answer)
-				if self.global_answer == 'yes':
-
-					self.say("OK will do")
-					print('code 2 exec : '+ code2exec)
-					exec(code2exec)
-					self.say("Task is now complete. Do you have another instruction for me")
-					break
-
-				elif self.global_answer == 'no':
-					self.say("OK I will not do anything. Do you have another instruction for me")
-					break 
-
-				else:
-					self.say("Please answer with a yes or no")
-
+			# get confirmation of instruction
+			self.listen4cmd('off')
+			self.listen4ans('on')
 		else:
 			self.say("Your request was not understood       please repeat")
-			
-		# re-establish subscribers	
-		self.global_answer = ''	
-		self.listen4ans('off')
-		self.listen4cmd('on')	
-		return
 
 	# exec def's for DEVICE actions
 	def on_LLB(self):
