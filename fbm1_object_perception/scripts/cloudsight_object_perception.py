@@ -3,6 +3,7 @@
 import rospy
 import time
 from std_msgs.msg import String, UInt8
+from sensor_msgs.msg import Image
 #from roah_rsbb_comm_ros.msg import Benchmark, BenchmarkState
 #from geometry_msgs.msg import Pose2D
 #import std_srvs.srv
