@@ -85,18 +85,18 @@ class Controller():
 
 		}
 
-		# Dictionary for OBJECTS to be recognised
+		# Dictionary for OBJECTS to be recognised at a location. The x,y,theta of these locations must be recorded in the locations.json file.
 		self.object_dict = {
-		"cardboard box"   : ["on the kitchen counter",
-								"on the kitchen table",
-								"on the coffee table",
-								"on the bedside table"
+		"cardboard box"   : ["kitchen counter",
+								"kitchen table",
+								"coffee table",
+								"bedside table"
 							],	
-		"coca-cola can"   : ["on the kitchen table"],
-		"mug"             : ["on the kitchen counter"],
-		"candle"          : ["on the coffee table"],
-		"cup"             : ["on the kitchen table"],
-		"reading glasses" : ["on the bedside table"] 
+		"coca-cola can"   : ["kitchen table"],
+		"mug"             : ["kitchen counter"],
+		"candle"          : ["coffee table"],
+		"cup"             : ["kitchen table"],
+		"reading glasses" : ["bedside table"] 
 		}
 
 		self.global_answer = ''
@@ -284,6 +284,8 @@ class Controller():
 	def go_home(self):
 		print("\n************ write code to send me home!!\n")
 		print("***** Pretend I have gone HOME (Idiling Position)!\n")
+        self.move_to_location("home")
+        self.say("I am going home now")
 		return
 
 	def get(self,object):
@@ -296,17 +298,16 @@ class Controller():
 
 		for LOC in location:
 			print("***** For object : "+object+" - Location is : "+LOC)
-			print("***** Go there")	
+			print("***** Go there")
+            self.move_to_location(location) # robot moves to corresponding position according to locations.json file in hearts_navigation
+
 			print("***** Recognise object")
-			print("***** return to GA\n")
-			#self.move_to_pose2D(self.user, location)
-
-			# Recognise object
 
 
-		#return to grannie annie
+			print("***** return to GA \n")
+            self.move_to_pose2D(self.user_location)
 		
-
+		
 		return	
 
     ### When receiving a message from the "roah_rsbb/benchmark/state" topic, will then publish the corresponding state to "roah_rsbb/messages_save"
@@ -404,6 +405,11 @@ class Controller():
 	    rospy.sleep(1)
 	    self.tts_pub.publish(text)
 	    rospy.sleep(5)
+
+
+    def object_recognition(self):
+        rospy.loginfo("Initating Object Recognition")
+        #sub = rospy.Subscriber()
 
 
 	# def listen(self, data):
