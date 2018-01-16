@@ -46,11 +46,7 @@ class image_cropper:
         self.pubGoal = rospy.Publisher('/hearts/or/item', String, queue_size=1)
 
         self.bridge = CvBridge()
-        #self.image_sub = rospy.Subscriber("/camera/rgb/image_raw", Image, self.image_callback)
-        #For testing purposes 
-        self.image_sub = rospy.Subscriber("/usb_cam/image_raw", Image, self.image_callback)
-        #self.image_sub = rospy.Subscriber("/usb_cam/image_raw", String, self.image_callback)
-
+        self.image_sub = rospy.Subscriber("/camera/rgb/image_raw", Image, self.image_callback)
 
         self.cv_image_cropped = None
 
@@ -60,8 +56,9 @@ class image_cropper:
         self.bench_sub = rospy.Subscriber('/hearts/cloudsight/status', String, self.BenchStatusCallback_2)
 
         self.count = 0
-        t = threading.Timer(1.0, self.callback, [ True ])
+        t = threading.Timer(5.0, self.callback, [ True ])
         t.start()
+        rospy.loginfo(cv2.__version__)
 
     def image_callback(self, data):
         try:
@@ -72,7 +69,6 @@ class image_cropper:
             # y: y + h, x: x + w
             self.cv_image_cropped = self.cv_image[self.top: height - self.bottom, 0:width]
             self.height, self.width = self.cv_image_cropped.shape[:2]
-
 
         except CvBridgeError as e:
             rospy.loginfo(e)
