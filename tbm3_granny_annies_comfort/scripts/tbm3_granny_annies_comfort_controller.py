@@ -23,31 +23,31 @@ from   roah_rsbb_comm_ros.srv import Percentage
 class Controller():
 	
 	def __init__(self):
-        #Publishers  
+		#Publishers  
 		self.tts_pub   = rospy.Publisher("/hearts/tts", String, queue_size=10)
 		self.pub_twist = rospy.Publisher('/mobile_base_controller/cmd_vel', Twist, queue_size=10)       
 
 
-        #Subscribers
+		#Subscribers
 		self.listen4cmd('on')
 		self.listen4cmd('off')
 		self.listen4ans('on')
 		self.listen4ans('off')
 
 		rospy.Subscriber("roah_rsbb/benchmark/state", BenchmarkState, self.benchmark_state_callback)
-    
-        #Services
+	
+		#Services
 		self.prepare = rospy.ServiceProxy('/roah_rsbb/end_prepare', std_srvs.srv.Empty)
 		self.execute = rospy.ServiceProxy('/roah_rsbb/end_execute', std_srvs.srv.Empty)
 
 
 		self.user_location = None
 
-        # Disable head manager
-        #?head_mgr = NavigationCameraMgr()
-        #?head_mgr.head_mgr_as("disable")
+		# Disable head manager
+		#?head_mgr = NavigationCameraMgr()
+		#?head_mgr.head_mgr_as("disable")
 
-        # List of unwanted words
+		# List of unwanted words
 		self.rm_words = [
 		'of',  
 		'in',  
@@ -64,7 +64,7 @@ class Controller():
 		'fetch'
 		]
 
-        # Dictionary for instructions to robot
+		# Dictionary for instructions to robot
 		self.actions_dict = {
 		"switch on left light bedroom"  : "self.on_LLB()",
 		"switch off left light bedroom" : "self.off_LLB()",
@@ -86,18 +86,18 @@ class Controller():
 
 		}
 
-		# Dictionary for OBJECTS to be recognised
+		# Dictionary for OBJECTS to be recognised at a location. The x,y,theta of these locations must be recorded in the locations.json file.
 		self.object_dict = {
-		"cardboard box"   : ["on the kitchen counter",
-								"on the kitchen table",
-								"on the coffee table",
-								"on the bedside table"
+		"cardboard box"   : ["kitchen counter",
+								"kitchen table",
+								"coffee table",
+								"bedside table"
 							],	
-		"coca-cola can"   : ["on the kitchen table"],
-		"mug"             : ["on the kitchen counter"],
-		"candle"          : ["on the coffee table"],
-		"cup"             : ["on the kitchen table"],
-		"reading glasses" : ["on the bedside table"] 
+		"coca-cola can"   : ["kitchen table"],
+		"mug"             : ["kitchen counter"],
+		"candle"          : ["coffee table"],
+		"cup"             : ["kitchen table"],
+		"reading glasses" : ["bedside table"] 
 		}
 
 	def listen4cmd(self,status):
@@ -247,7 +247,7 @@ class Controller():
 		run_service = rospy.ServiceProxy('/roah_rsbb/devices/switch_3/off', std_srvs.srv.Empty)
 		run_service()
 		return
-    
+	
 	def open_B(self):
 		# OPEN Blinds
 		run_service = rospy.ServiceProxy('/roah_rsbb/devices/blinds/max', std_srvs.srv.Empty)
@@ -270,6 +270,8 @@ class Controller():
 	def go_home(self):
 		print("\n************ write code to send me home!!\n")
 		print("***** Pretend I have gone HOME (Idiling Position)!\n")
+		self.move_to_location("home")
+		self.say("I am going home now")
 		return
 
 	def get(self,object):
@@ -282,20 +284,16 @@ class Controller():
 
 		for LOC in location:
 			print("***** For object : "+object+" - Location is : "+LOC)
-			print("***** Go there")	
+			print("***** Go there")
+			self.move_to_location(location) #robot moves to corresponding position according to locations.json file in hearts_navigation
 			print("***** Recognise object")
-			print("***** return to GA\n")
-			#self.move_to_pose2D(self.user, location)
-
-			# Recognise object
-
-
-		#return to grannie annie
+			print("***** return to GA \n")
+			self.move_to_pose2D(self.user_location)
 		
-
+		
 		return	
 
-    ### When receiving a message from the "roah_rsbb/benchmark/state" topic, will then publish the corresponding state to "roah_rsbb/messages_save"
+	### When receiving a message from the "roah_rsbb/benchmark/state" topic, will then publish the corresponding state to "roah_rsbb/messages_save"
 	def benchmark_state_callback(self, data):
 		if data.benchmark_state == BenchmarkState.STOP:
 			rospy.loginfo("STOP")
@@ -309,7 +307,7 @@ class Controller():
 		elif data.benchmark_state == BenchmarkState.EXECUTE:
 			rospy.loginfo("EXECUTE")
 			self.main()
-            
+			
 	def wait_for_call(self):
 		rospy.loginfo("Waiting for call")
 		self.wait = False
@@ -333,8 +331,7 @@ class Controller():
 		sub.unregister()
 
 
-        # Callback functionst Bedroom
-		run_service = ros
+		# Callback functions
 	def tablet_callback(self, msg):
 		self.wait = True
 
@@ -347,7 +344,7 @@ class Controller():
 		self.nav_status = msg.data
 
 
-        ##Navigation Functions
+		##Navigation Functions
 	def move_to_pose2D(self, target_location_2D):
 		##publish granny annie's location
 		rospy.loginfo("Moving to Pose2D")
@@ -381,7 +378,6 @@ class Controller():
 			self.pub_twist.publish(t)
 			rospy.sleep(1)
 			self.wait_to_arrive(count - 1)
-            
 			return self.nav_status == "Success"
 
 
@@ -422,5 +418,3 @@ if __name__ == '__main__':
 	controller = Controller()
 	controller.main()
 	rospy.spin()
-
-   
