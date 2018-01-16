@@ -15,6 +15,7 @@ class Navigator():
         self.isNavigating = False
         self.currentGoal = Pose2D()
         self.lastGoal = Pose2D()
+        self.repeat = False
 
         self.pubGoal = rospy.Publisher('/move_base_simple/goal', PoseStamped, queue_size=1)
 
@@ -22,6 +23,7 @@ class Navigator():
         self.pubPose = rospy.Publisher('/hearts/navigation/current', String, queue_size=1)
 
         self.previous_state = ""
+        self.t = PoseStamped()
         rospy.Subscriber('move_base/status', GoalStatusArray, self.StatusCallback)   # Get status of plan
 
         rospy.Subscriber('hearts/navigation/goal', Pose2D, self.goalCallback)
@@ -42,19 +44,19 @@ class Navigator():
             self.currentGoal = data
 
             # Convert Pose2D to PoseStamped
-            t = PoseStamped()
-            t.header.frame_id = "/map"
-            t.pose.position.x = data.x
-            t.pose.position.y = data.y
+            self.t = PoseStamped()
+            self.t.header.frame_id = "/map"
+            self.t.pose.position.x = data.x
+            self.t.pose.position.y = data.y
             #t.pose.orientation.w = data.theta
             quaternion = tf.transformations.quaternion_from_euler(0, 0, data.theta)
-            t.pose.orientation.x = quaternion[0]
-            t.pose.orientation.y = quaternion[1]
-            t.pose.orientation.z = quaternion[2]
-            t.pose.orientation.w = quaternion[3]
+            self.t.pose.orientation.x = quaternion[0]
+            self.t.pose.orientation.y = quaternion[1]
+            self.t.pose.orientation.z = quaternion[2]
+            self.t.pose.orientation.w = quaternion[3]
             # = createQuaternionMsgFromYaw(data.theta)
             rospy.loginfo(str(data.x)+ str(data.y)+ str(data.theta))
-            self.pubGoal.publish(t)
+            self.pubGoal.publish(self.t)
             self.isNavigating = True
 
     def stopCallback(self, data):
@@ -76,14 +78,23 @@ class Navigator():
                 self.lastGoal = self.currentGoal
                 self.currentGoal = Pose2D()
                 self.isNavigating = False
+                self.repeat = False
             else:
                 status_msg = 'Active'
                 self.isNavigating = True
 
             if self.previous_state != status_msg: 
                 self.pubStatus.publish(status_msg)
+                #TODO Try one more time to go to the destination
                 self.previous_state = status_msg
                 rospy.loginfo('status: ' + str(status))
+                if status == 4 or status == 5 or status == 9:
+                    if not self.repeat:
+                        rospy.loginfo('Repeating')
+                        self.pubGoal.publish(self.t)
+                        self.isNavigating = True
+                        self.repeat = True
+                    
 
 if __name__ == '__main__':
 	rospy.init_node('Navigator', anonymous=True)
