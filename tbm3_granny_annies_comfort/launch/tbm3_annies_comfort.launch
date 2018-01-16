@@ -4,9 +4,25 @@
    <arg name="SR_ENERGY_THRESHOLD" value="1200" />
    <arg name="listen" value="" />
   </include>   
+  
   <include file="$(find hearts_tts)/launch/hearts_tts.launch" />
 
-  <node name="servicer" pkg="tbm3_granny_annies_comfort" type="service.py" output="screen" />
-  <node name="annies_comfort_controller" pkg="tbm3_granny_annies_comfort" type="tbm3_granny_annies_comfort_controller.py" output="screen" />
  
+  <node name="annies_comfort_controller" pkg="tbm3_granny_annies_comfort" type="tbm3_granny_annies_comfort_controller.py" output="screen" />
+
+  
+  <!-- comment out the "servicer" node when actual benchmark box is being used and un-comment the 
+      node: roah_rsbb_comm_ros
+  -->
+
+  <node name="servicer" pkg="tbm3_granny_annies_comfort" type="service.py" output="screen" />
+
+  <!--
+  <node pkg="roah_rsbb_comm_ros" type="comm" name="roah_rsbb_comm" respawn="true">
+    <param name="team_name" type="string" value="Hearts" />
+    <param name="robot_name" type="string" value="Tiago" />
+    <param name="rsbb_key" type="string" value="FJnz6hJX" />
+    <param name="rsbb_host" type="string" value="192.168.0.107" />
+  </node>  
+  -->
 </launch>
