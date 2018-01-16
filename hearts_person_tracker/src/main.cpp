@@ -297,7 +297,7 @@ ImageConverter::ImageConverter()
                 double theta_lr_rad = (M_PI/2) - acos(a1/h);
                 cout << theta_lr_rad << endl;
                 double theta_ud_rad = (M_PI/2) - acos(a2/h);
-                rotateHead(theta_lr_rad);
+                //rotateHead(theta_lr_rad);
                 cout << curr << endl;
                 
                 // signal smoothing using moving average algorithm (other options e.g. kalman filter may perform better) 
