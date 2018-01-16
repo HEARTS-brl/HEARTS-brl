@@ -46,15 +46,19 @@ class image_cropper:
         self.pubGoal = rospy.Publisher('/hearts/or/item', String, queue_size=1)
 
         self.bridge = CvBridge()
-        self.image_sub = rospy.Subscriber("/xtion/rgb/image_raw", Image, self.image_callback) # camera/rgb/image_raw
+        self.image_sub = rospy.Subscriber("/camera/rgb/image_raw", Image, self.image_callback)
+
+        self.cv_image_cropped = None
+
 
         #self.bench_sub = rospy.Subscriber('/roah_rsbb/benchmark/state', BenchmarkState, self.BenchStatusCallback)
 
         self.bench_sub = rospy.Subscriber('/hearts/cloudsight/status', String, self.BenchStatusCallback_2)
 
         self.count = 0
-        t = threading.Timer(1.0, self.callback, [ True ])
+        t = threading.Timer(5.0, self.callback, [ True ])
         t.start()
+        rospy.loginfo(cv2.__version__)
 
     def image_callback(self, data):
         try:
@@ -65,7 +69,6 @@ class image_cropper:
             # y: y + h, x: x + w
             self.cv_image_cropped = self.cv_image[self.top: height - self.bottom, 0:width]
             self.height, self.width = self.cv_image_cropped.shape[:2]
-            # rospy.loginfo("received image!")
 
         except CvBridgeError as e:
             rospy.loginfo(e)
@@ -102,7 +105,7 @@ class image_cropper:
 
         for cnt in cnts:
 
-            # get the contour bounding box 
+        # get the contour bounding box 
             x1,y1,w,h = cv2.boundingRect(cnt)
 
             # calculate the contour area
@@ -133,13 +136,15 @@ class image_cropper:
         return None
 
     def callback(self, flag):
+        if self.cv_image_cropped == None: 
+            return
+
         #rospy.loginfo("RECEIVED IMAGE")
         crop_img = None
         send_raw_imgs = 0
         # Take first frame (ever) as background
         if flag:
             # self.fgmask = self.fgbg.apply(cv_image_cropped)
-            rospy.loginfo("used image!")
             self.refFrame = self.cv_image_cropped
             self.fgbg_flag = self.fgbg_flag + 1
             rospy.loginfo("Got reference image")
@@ -247,7 +252,7 @@ class image_cropper:
             self.count = self.count + 1
             #self.frame_saver_counter = 0
         #self.frame_saver_counter = self.frame_saver_counter + 1
-        
+    
     # Blob detection - didn't work in practise
     def mrblobby(self, img):
 
@@ -301,13 +306,13 @@ class image_cropper:
 
 
 def main(args):
-  rospy.init_node('image_cropper', anonymous=True)
-  ic = image_cropper()
-  try:
-    rospy.spin()
-  except KeyboardInterrupt:
-    rospy.loginfo("Shutting down")
-  cv2.destroyAllWindows()
+    rospy.init_node('image_cropper', anonymous=True)
+    ic = image_cropper()
+    try:
+        rospy.spin()
+    except KeyboardInterrupt:
+        rospy.loginfo("Shutting down")
+    cv2.destroyAllWindows()
 
 if __name__ == '__main__':
     main(sys.argv)

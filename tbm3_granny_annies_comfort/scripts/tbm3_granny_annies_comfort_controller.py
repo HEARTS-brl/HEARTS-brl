@@ -1,5 +1,15 @@
 #!/usr/bin/env python
-
+##############################################################################################
+# Author  : Derek Ripper/Joe Daly
+# Created : Dec 2017
+# Purpose : To fulfil ERL-SR competition Bench Mark TBM3 - Grannie Annies comfort
+#           Written for the 22-26 Jan 2018 ERL competion in Edinburgh.       
+#
+##############################################################################################
+# Updates : 
+#
+#
+##############################################################################################
 import rospy
 import time
 import std_srvs.srv
@@ -13,31 +23,31 @@ from   roah_rsbb_comm_ros.srv import Percentage
 class Controller():
 	
 	def __init__(self):
-        #Publishers  
+		#Publishers  
 		self.tts_pub   = rospy.Publisher("/hearts/tts", String, queue_size=10)
 		self.pub_twist = rospy.Publisher('/mobile_base_controller/cmd_vel', Twist, queue_size=10)       
 
 
-        #Subscribers
+		#Subscribers
 		self.listen4cmd('on')
 		self.listen4ans('on')
 		self.listen4ans('off')
 
 		#rospy.Subscriber("/hearts/stt", String, self.hearAnswer_callback)   # listen for answer
 		rospy.Subscriber("roah_rsbb/benchmark/state", BenchmarkState, self.benchmark_state_callback)
-    
-        #Services
+	
+		#Services
 		self.prepare = rospy.ServiceProxy('/roah_rsbb/end_prepare', std_srvs.srv.Empty)
 		self.execute = rospy.ServiceProxy('/roah_rsbb/end_execute', std_srvs.srv.Empty)
 
 
 		self.user_location = None
 
-        # Disable head manager
-        #?head_mgr = NavigationCameraMgr()
-        #?head_mgr.head_mgr_as("disable")
+		# Disable head manager
+		#?head_mgr = NavigationCameraMgr()
+		#?head_mgr.head_mgr_as("disable")
 
-        # List of unwanted words
+		# List of unwanted words
 		self.rm_words = [
 		'of ',  # nb trailing space to avoid corrupting "off"
 		'in ',  # nb trailing space to avoid corrupting "blind"
@@ -47,8 +57,14 @@ class Controller():
 		' me'    # nb trailing space to avoid corrupting "home"
 		]
 
-        # Dictionary for DEVICE actions
-		self.device_dict = {
+		# List of words that ALL mean get
+		self.get_words = [
+		'bring',
+		'find'
+		]
+
+		# Dictionary for instructions to robot
+		self.actions_dict = {
 		"switch on left light bedroom"  : "self.on_LLB()",
 		"switch off left light bedroom" : "self.off_LLB()",
 		"switch on right light bedroom" : "self.on_RLB()",
@@ -59,15 +75,36 @@ class Controller():
 		"close blinds"                  : "self.close_B()",
 		"leave blinds half open"        : "self.half_B()" ,
 		"go home"                       : "self.go_home()",
-		"get me the mug"                : "self.get("mug")"
+		"get cardboard box"             : "self.get('cardboard box')",
+		"get coca-cola can"             : "self.get('coca-cola can')",
+		"get coca cola can"             : "self.get('coca-cola can')",
+		"get mug"                       : "self.get('mug')",
+		"get candle"                    : "self.get('candle')",
+		"get cup"                       : "self.get('cup')",
+		"get reading glasses"           : "self.get('reading glasses')"
+
+		}
+
+		# Dictionary for OBJECTS to be recognised at a location. The x,y,theta of these locations must be recorded in the locations.json file.
+		self.object_dict = {
+		"cardboard box"   : ["kitchen counter",
+								"kitchen table",
+								"coffee table",
+								"bedside table"
+							],	
+		"coca-cola can"   : ["kitchen table"],
+		"mug"             : ["kitchen counter"],
+		"candle"          : ["coffee table"],
+		"cup"             : ["kitchen table"],
+		"reading glasses" : ["bedside table"] 
 		}
 
 		self.global_answer = ''
-        #self.objects = ['coke','water','juice','apple','lemon','glass']
-        #self.rooms = ['bedroom', 'living_room']
-        #self.device = ['light', 'blinds']
-        #self.states = ['on', 'off', 'half', 'open', 'close']
-        #self.verb = ['switch']
+		#self.objects = ['coke','water','juice','apple','lemon','glass']
+		#self.rooms = ['bedroom', 'living_room']
+		#self.device = ['light', 'blinds']
+		#self.states = ['on', 'off', 'half', 'open', 'close']
+		#self.verb = ['switch']
 
 	def listen4cmd(self,status):
 		if status == 'on' :	
@@ -94,17 +131,30 @@ class Controller():
 		words  = speech.split(' ')
 		print('***************************************************** Answer words:')
 		print(words)
-		if  'yes' in words:
-			self.global_answer = 'yes'
+		if 'yes' in words:
+			self.say("OK will do")
+			print('code 2 exec : '+ self.code2exec)
+			exec(self.code2exec)
+			self.say("Task is now complete. Do you have another instruction for me")
+			# re-establish subscribers	
+			self.global_answer = ''	
+			self.listen4ans('off')
+			self.listen4cmd('on')
 		elif 'no' in words:
-			self.global_answer = 'no'
+			self.say("OK I will not do anything. Do you have another instruction for me")
+			# re-establish subscribers	
+			self.global_answer = ''	
+			self.listen4ans('off')
+			self.listen4cmd('on')	
+		else:
+			self.say("Please answer with a yes or no")
 
 	def hearCommand_callback(self,data):
 		rospy.loginfo('Heard a command')
 		speech = str(data)
 		speech = speech.lower()
 		print("speech -:"+speech)
-        # check that text has been returned
+		# check that text has been returned
 		print ("\n***** speech >"+speech+"<\n")
 		if "bad_recognition" in speech:
 			self.say("Sorry but no words were heard please repeat your instruction")
@@ -118,8 +168,12 @@ class Controller():
 
 		rspeech = speech # Reduced speech
 		for rm_item in self.rm_words:
-			print("rm word: "+rm_item)
+			#print("rm word: "+rm_item)
 			rspeech = rspeech.replace(rm_item,'')
+
+		# substitue words for fetching to "get"
+		for sub_item in self.get_words:
+			rspeech = rspeech.replace(sub_item,'get')
 	
 		words = rspeech.split(' ')	
 		print("words  ....>")
@@ -134,49 +188,27 @@ class Controller():
 
 		rospy.loginfo("lookup key: "+lookupkey)
 
-		# look for speech in dict
+		# look for Device Directive in Device dict
 		print("code2exec ; "+ lookupkey)
-		code2exec = self.device_dict.get(lookupkey)
+		self.code2exec = self.actions_dict.get(lookupkey)
+
+		# if code2exec == None:
+		# 	# assume object related hence replace bring or find with get
+		# 	for sub_item in self.get_words:
+		# 		lookupkey = lookupkey.replace(sub_item, 'get')
+		# 	print("obj lookup:"+lookupkey)		
+		# 	code2exec = self.object_dict.get(lookupkey)
 
 		# check that key was found
-		if code2exec != None:
+		if self.code2exec != None:
 			#listen for "answer"
-			self.listen4cmd('off')
-			self.listen4ans('on')
-
-			# get confirmation of instruction
 			self.say("You requested that I "+speech+' .')
 			self.say("Shall I do this now")
-
-			#listen for answer
-			while True:
-				print("golbal_answer: "+self.global_answer)
-				if self.global_answer == 'yes':
-
-					self.say("OK will do")
-					print('code 2 exec : '+ code2exec)
-					exec(code2exec)
-					self.say("Task is now complete. Do you have another instruction for me")
-					break
-
-				elif self.global_answer == 'no':
-					self.say("OK I will not do anything. Do you have another instruction for me")
-					break 
-
-				else:
-					self.say("Please answer with a yes or no")
-
-		
-					
-
+			# get confirmation of instruction
+			self.listen4cmd('off')
+			self.listen4ans('on')
 		else:
 			self.say("Your request was not understood       please repeat")
-			
-		# re-establish subscribers	
-		self.global_answer = ''	
-		self.listen4ans('off')
-		self.listen4cmd('on')	
-		return
 
 	# exec def's for DEVICE actions
 	def on_LLB(self):
@@ -214,7 +246,7 @@ class Controller():
 		run_service = rospy.ServiceProxy('/roah_rsbb/devices/switch_3/off', std_srvs.srv.Empty)
 		run_service()
 		return
-    
+	
 	def open_B(self):
 		# OPEN Blinds
 		run_service = rospy.ServiceProxy('/roah_rsbb/devices/blinds/max', std_srvs.srv.Empty)
@@ -236,25 +268,31 @@ class Controller():
 
 	def go_home(self):
 		print("\n************ write code to send me home!!\n")
-		quit()
+		print("***** Pretend I have gone HOME (Idiling Position)!\n")
+		self.move_to_location("home")
+		self.say("I am going home now")
 		return
 
-	def self.get(self,object):
+	def get(self,object):
 		# use object to look up location
-		location ="kitchen"
+		location  = self.object_dict.get(object)
+		nlocations = len(location)
+		print('n locations = '+str(nlocations))
+		print('Location is = ')
+		print(location)
 
-		self.move_to_pose2D(location)
-
-		# Recognise object
-
-
-		#return to grannie annie
-		self.move_to_pose2D(self.user_location)
-
-
+		for LOC in location:
+			print("***** For object : "+object+" - Location is : "+LOC)
+			print("***** Go there")
+			self.move_to_location(location) #robot moves to corresponding position according to locations.json file in hearts_navigation
+			print("***** Recognise object")
+			print("***** return to GA \n")
+			self.move_to_pose2D(self.user_location)
+		
+		
 		return	
 
-    ### When receiving a message from the "roah_rsbb/benchmark/state" topic, will then publish the corresponding state to "roah_rsbb/messages_save"
+	### When receiving a message from the "roah_rsbb/benchmark/state" topic, will then publish the corresponding state to "roah_rsbb/messages_save"
 	def benchmark_state_callback(self, data):
 		if data.benchmark_state == BenchmarkState.STOP:
 			rospy.loginfo("STOP")
@@ -268,7 +306,7 @@ class Controller():
 		elif data.benchmark_state == BenchmarkState.EXECUTE:
 			rospy.loginfo("EXECUTE")
 			self.main()
-            
+			
 	def wait_for_call(self):
 		rospy.loginfo("Waiting for call")
 		self.wait = False
@@ -291,7 +329,7 @@ class Controller():
 		sub.unregister()
 
 
-        # Callback functions
+		# Callback functions
 	def tablet_callback(self, msg):
 		self.wait = True
 
@@ -304,7 +342,7 @@ class Controller():
 		self.nav_status = msg.data
 
 
-        ##Navigation Functions
+		##Navigation Functions
 	def move_to_pose2D(self, target_location_2D):
 		##publish granny annie's location
 		rospy.loginfo("Moving to Pose2D")
@@ -338,17 +376,21 @@ class Controller():
 			self.pub_twist.publish(t)
 			rospy.sleep(1)
 			self.wait_to_arrive(count - 1)
-            
 			return self.nav_status == "Success"
 
 	
 
-        ## Interactions
+		## Interactions
 	def say(self, text):
-	    rospy.loginfo("saying \"" + text + "\"")
-	    rospy.sleep(1)
-	    self.tts_pub.publish(text)
-	    rospy.sleep(5)
+		rospy.loginfo("saying \"" + text + "\"")
+		rospy.sleep(1)
+		self.tts_pub.publish(text)
+		rospy.sleep(5)
+
+
+	def object_recognition(self):
+		rospy.loginfo("Initating Object Recognition")
+		#sub = rospy.Subscriber()
 
 
 	# def listen(self, data):
@@ -384,13 +426,13 @@ class Controller():
 		self.move_to_pose2D(self.user_location)
 
 		#speak to granny annie
-		self.say("What can I do for you?")
+		#self.say("What can I do for you?")
 
 		#listen to granny annie
 
 		#reply to granny annie
 
-	    #check that command is correct
+		#check that command is correct
 
 		#execute command
 
@@ -423,17 +465,5 @@ if __name__ == '__main__':
 	rospy.loginfo("annies comfort controller has started")
 
 	controller = Controller()
-	#exec("controller.on_LLB()")
-	# exec("controller.off_LLB()")
-	# exec("controller.on_RLB()")
-	# exec("controller.off_RLB()")	
-	# exec("controller.on_BLB()")
-	# exec("controller.off_BLB()")
-	# exec("controller.open_B()")
-	# exec("controller.close_B()")
-	# #exec("controller.half_B()")
-
 	controller.main()
 	rospy.spin()
-
-   
