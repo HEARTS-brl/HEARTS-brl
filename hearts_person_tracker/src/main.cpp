@@ -1,5 +1,7 @@
 #define _USE_MATH_DEFINES
 
+#include <limits>
+#include <cstddef>
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -14,6 +16,7 @@
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
+#include <sensor_msgs/JointState.h>
 #include <opencv2/core/core.hpp>
 // #include <opencv2/face.hpp>
 #include <opencv2/contrib/contrib.hpp>
@@ -206,7 +209,9 @@ class ImageConverter
   
   deque<Vec3d> _prev;
   int _nPrev;
-  
+  double angleRads_;
+        ros::Subscriber sub;
+    
 public:
     ImageConverter();
     ~ImageConverter();
@@ -217,6 +222,7 @@ private:
     string toString(double a);
     void dTopicCb(const sensor_msgs::ImageConstPtr& msg);
     void rgbTopicCb(const sensor_msgs::ImageConstPtr& msg);
+    void jointStatesTopicCb(const sensor_msgs::JointState::ConstPtr& msg);
     bool isMatch(double bRegionAvgVal, double gRegionAvgVal, double rRegionAvgVal, double bRegionStdDev, double gRegionStdDev, double rRegionStdDev);
     bool isMatch2(double bRegionAvgVal, double gRegionAvgVal, double rRegionAvgVal, double bRegionStdDev, double gRegionStdDev, double rRegionStdDev);
     void rotateHead(double angleRads);
@@ -232,7 +238,7 @@ ImageConverter::ImageConverter()
     _threshold = 20;
     _threshold2 = 10;
     _nPrev = 10;
-    
+    sub = nh_.subscribe("joint_states", 10, &ImageConverter::jointStatesTopicCb, this);
     string dTopic;
     if (!nh_.getParam(D_TOPIC_PARAMETER, dTopic))
         cout << "FAILED TO GET PARAMETER: " << D_TOPIC_PARAMETER << endl;
@@ -252,7 +258,7 @@ ImageConverter::ImageConverter()
     personXPub_ = nh_.advertise<std_msgs::Float32>("/hearts/person/x", 1000);
 
     headPub_ = nh_.advertise<trajectory_msgs::JointTrajectory>("/head_controller/command", 1);
-    
+
     // Load the cascades
     if (!face_cascade.load(faceCascadePath))
     { 
@@ -266,6 +272,9 @@ ImageConverter::ImageConverter()
     ros::Publisher pubVel = nh_.advertise<geometry_msgs::Twist>("/key_vel", 10);
     
     ros::Rate loopRate(1); // 10
+    
+    double angle_rad = 0;
+    double angle_inc_rad = M_PI / 10;
     
     double h_2 = 0;
     double w_2 = 0;
@@ -290,15 +299,50 @@ ImageConverter::ImageConverter()
             Vec3d curr;
             if (process(curr))
             {
+                cout << curr << endl;
+            
                 circle(_rgb, Point(320, 240), 3, Scalar(0,255,0));
                 double a1 = curr[0];
                 double a2 = curr[1];
                 double h = curr[2];
-                double theta_lr_rad = (M_PI/2) - acos(a1/h);
-                cout << theta_lr_rad << endl;
+                
+                //double theta_lr_rad = -((M_PI/2) - acos(a1/h));
+                double theta_lr_rad_inc = -((M_PI/2) - acos(a1/h)); //  * 0.5
+                double theta_lr_rad = angleRads_ + theta_lr_rad_inc;
+                
+                //if (a1 > 0.1)
+                //    theta_lr_rad -= 0.1;
+                //else if (a1 < 0.1)
+                //    theta_lr_rad += 0.1;
+                
+                                
                 double theta_ud_rad = (M_PI/2) - acos(a2/h);
-                //rotateHead(theta_lr_rad);
-                cout << curr << endl;
+                // /head_controller/incrementer (http://tiago-25c:45999/)
+
+                if (!isnan(theta_lr_rad))
+                {
+                    // TODO: needs to stop processing whilst head is moving!
+                    if (theta_lr_rad < -(M_PI/2))
+                        theta_lr_rad = -(M_PI/2);
+                        
+                    if (theta_lr_rad > (M_PI/2))
+                        theta_lr_rad = (M_PI/2);
+                    
+                    cout << theta_lr_rad << endl;
+                    rotateHead(theta_lr_rad);
+                }
+                
+                /*   
+                if ((angle_rad < -(M_PI/2)) ||
+                    (angle_rad > (M_PI/2)))
+                {
+                    angle_inc_rad = -angle_inc_rad;
+                }
+                
+                angle_rad += angle_inc_rad;
+                cout << "head angle: " << angle_rad << endl;
+                rotateHead(angle_rad);
+                */
                 
                 // signal smoothing using moving average algorithm (other options e.g. kalman filter may perform better) 
                 if (_prev.size() > _nPrev)
@@ -668,22 +712,41 @@ void ImageConverter::rotateHead(double angleRads)
     headTrajectory.points[0].time_from_start = ros::Duration(2.0, 0.0);
     
     headPub_.publish(headTrajectory);
-    /*
+   
+    angleRads_ = std::numeric_limits<double>::max();
+   
+    //ros::Subscriber sub;
+    //sub = nh_.subscribe("joint_states", 10, &ImageConverter::jointStatesTopicCb, this);
+    
+    ros::Rate rate(10);
+    
+    while (ros::ok())
+    {
+        if ((angleRads_ < std::numeric_limits<double>::max()) && 
+            (abs(angleRads_ - angleRads) < 0.1))
+        {
+           break;
+        }
         
-    point1.velocities = [0.0,0.0]
+        ros::spinOnce();
+        rate.sleep();
+    }
+
+    //sub.shutdown();
+}
+
+void ImageConverter::jointStatesTopicCb(const sensor_msgs::JointState::ConstPtr& msg)
+{
+    for (int i = 0; i < msg->name.size(); i++)
+    {
+        if (msg->name[i] == "head_1_joint")
+        {
+            angleRads_ = msg->position[i];
+            return;
+        }
+    }
     
-    point1.time_from_start = Duration(2.0,0.0)
-    
-    if subject[0] == 'up':
-        self.head_ud = self.head_ud + self.head_move_step_size
-    if subject[0] == 'down':
-        self.head_ud = self.head_ud - self.head_move_step_size
-    if subject[0] == 'left':
-        self.head_lr = self.head_lr + self.head_move_step_size
-    if subject[0] == 'right':
-        self.head_lr = self.head_lr - self.head_move_step_size
-                
-    */
+    angleRads_ = std::numeric_limits<double>::max();
 }
 
 string ImageConverter::toString(double a)

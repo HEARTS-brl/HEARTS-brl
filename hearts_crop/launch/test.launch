@@ -1,5 +1,0 @@
-<launch>
-  <param name="cropped_folder_path" value='/home/alex/workspace/tb_ws/data/' />
-  <!-- <node name="cloudsight_object_perception" pkg="object_perception_2" type="cloudsight_object_perception.py" /> -->
-  <node name="image_cropper" pkg="hearts_crop" type="cropper.py" />
-</launch>
