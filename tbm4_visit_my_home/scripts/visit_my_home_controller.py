@@ -14,13 +14,14 @@ if/when fail happens
 		case w2- ID obstacle and ask for it to move (or wait for it to move)
 		case w5- ID door handle and then push open door
 when success happens
-if case w3- once arrived then ID human walker
 Say success
 
 Todo: basic update to current program structure
 Todo: Automatically update the map with closed door
 	Dynamic map switching
 Todo: follow human using route planning
+
+Todo: At competition record map with places labeled 1-6 w/o 4 (3=5)
 
 '''
 ########################### Includes ####################################################
@@ -61,6 +62,8 @@ class Controller():
             "here": [],
             "see": self.objects,}
 
+        self.waypoint = 1
+
         ### Publishers - sends out goal locations, movement/turns, and speech
         self.pubGoal = rospy.Publisher('hearts/navigation/goal/location', String, queue_size=10)
         self.pub_talk = rospy.Publisher('/hearts/tts', String, queue_size = 10)
@@ -77,7 +80,7 @@ class Controller():
         rospy.Subscriber("/hearts/stt", String, self.hearCommand_callback)
         rospy.Subscriber('/move_base/feedback', MoveBaseActionFeedback, self.current_pose_callback)
         rospy.Subscriber("roah_rsbb/benchmark/state", BenchmarkState, self.benchmark_state_callback)
-        
+        #TODO subscribe to succeed or fail
         self.prepare = rospy.ServiceProxy('/roah_rsbb/end_prepare', std_srvs.srv.Empty)
         self.execute = rospy.ServiceProxy('/roah_rsbb/end_execute', std_srvs.srv.Empty)
 
@@ -85,7 +88,40 @@ class Controller():
         head_mgr = NavigationCameraMgr()
         head_mgr.head_mgr_as("disable")
         
-	
+    def begin(self):
+        for self.waypoint in range(1,7):
+            if self.waypoint == 4:
+                self.ID_person()
+                self.follow_person()
+            else:
+                self.go_to_target(self.waypoint)
+            self.continue_on = False
+            while not self.continue_on:
+                while self.waiting_for_return==True:
+                    rospy.sleep(1)
+                if self.reached_goal==False:
+                    self.handle_fail(self.waypoint)
+                else:
+                    self.continue_on = True
+            self.pub_talk.publish("Waypoint completed, moving on")
+
+    def handle_fail(self):
+        if self.wapoint == 1:
+            # Todo Update map
+            self.go_to_target(1)
+            
+
+    def go_to_target(self,w):
+        self.pubGoal.publish(str(w))
+        return
+
+    def ID_person(self):
+        #get from zeke or call zeke's functions
+        return
+    def follow_person(self):
+        #get from zeke or call zeke's functions
+        return
+
 
 ########################### Callbacks ##############################
     def benchmark_state_callback(self, data):
