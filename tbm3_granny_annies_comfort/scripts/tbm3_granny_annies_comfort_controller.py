@@ -49,6 +49,7 @@ class Controller():
 
 		# List of unwanted words
 		self.rm_words = [
+		'a',
 		'of',  
 		'in',  
 		'the',
@@ -86,7 +87,8 @@ class Controller():
 
 		}
 
-		# Dictionary for OBJECTS to be recognised at a location. The x,y,theta of these locations must be recorded in the locations.json file.
+		# Dictionary for OBJECTS to be recognised at a location. The x,y,theta of these locations
+		# must be recorded in the locations.json file.
 		self.object_dict = {
 		"cardboard box"   : ["kitchen counter",
 								"kitchen table",
@@ -102,17 +104,21 @@ class Controller():
 
 	def listen4cmd(self,status):
 		if status == 'on' :	
-			self.sub_cmd=rospy.Subscriber("/hearts/stt", String, self.hearCommand_callback)    
+			self.sub_cmd=rospy.Subscriber("/hearts/stt", String, self.hearCommand_callback)  
+			print('***** Listening for a COMMAND')  
 		else:
 			self.sub_cmd.unregister()
+			print('***** NOT! Listening for a COMMAND')  
 
 		return
 
 	def listen4ans(self,status):
 		if status == 'on' :	
 			self.sub_ans=rospy.Subscriber("/hearts/stt", String, self.hearAnswer_callback)  
+			print('***** Listening for an ANSWER')
 		else:
 			self.sub_ans.unregister()
+			print('***** NOT! Listening for an ANSWER')
 
 		return		
 
@@ -301,7 +307,7 @@ class Controller():
 			rospy.loginfo("PREPARE")
 			try:
 				time.sleep(5)
-				self.prepare()
+				self.prepare() # END of PREPARE msg to service
 			except:
 				rospy.loginfo("Failed to reply PREPARE")
 		elif data.benchmark_state == BenchmarkState.EXECUTE:
@@ -309,12 +315,13 @@ class Controller():
 			self.main()
 			
 	def wait_for_call(self):
-		rospy.loginfo("Waiting for call")
+		rospy.loginfo("***** Waiting for call from GA")
 		self.wait = False
 		sub = rospy.Subscriber("/roah_rsbb/tablet/call", Empty, self.tablet_callback)
 		while self.wait == False:
 			rospy.sleep(5)
-		print("POst call recd")	
+		print("***** Call recd from GA")	
+		rospy.sleep(15)
 		sub.unregister()
 
 	def wait_for_user_location(self):
@@ -391,10 +398,10 @@ class Controller():
 		pass
 
 	def main(self):
-		print ("*** in main")
+		print ("\n***** MAIN Executing *****\n")
 
 		#wait for call 
-		#DAR self.wait_for_call()
+		self.wait_for_call()
 		#request location
 		#DAR self.wait_for_user_location()
 
@@ -416,5 +423,5 @@ if __name__ == '__main__':
 	rospy.loginfo("annies comfort controller has started")
 
 	controller = Controller()
-	controller.main()
+	#controller.main()
 	rospy.spin()
