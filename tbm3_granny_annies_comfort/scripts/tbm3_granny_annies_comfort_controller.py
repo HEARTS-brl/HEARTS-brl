@@ -3,7 +3,7 @@
 # Author  : Derek Ripper/Joe Daly
 # Created : Dec 2017
 # Purpose : To fulfil ERL-SR competition Bench Mark TBM3 - Grannie Annies comfort
-#           Written for the 22-26 Jan 2018 ERL competion in Edinburgh.       
+#           Written for the 22-26 Jan 2018 ERL competition in Edinburgh.       
 #
 ##############################################################################################
 # Updates : 
@@ -30,10 +30,10 @@ class Controller():
 
 		#Subscribers
 		self.listen4cmd('on')
+		self.listen4cmd('off')
 		self.listen4ans('on')
 		self.listen4ans('off')
 
-		#rospy.Subscriber("/hearts/stt", String, self.hearAnswer_callback)   # listen for answer
 		rospy.Subscriber("roah_rsbb/benchmark/state", BenchmarkState, self.benchmark_state_callback)
 	
 		#Services
@@ -49,18 +49,20 @@ class Controller():
 
 		# List of unwanted words
 		self.rm_words = [
-		'of ',  # nb trailing space to avoid corrupting "off"
-		'in ',  # nb trailing space to avoid corrupting "blind"
+		'a',
+		'of',  
+		'in',  
 		'the',
 		'please',
 		'my',
-		' me'    # nb trailing space to avoid corrupting "home"
+		'me'    # nb trailing space to avoid corrupting "home"
 		]
 
 		# List of words that ALL mean get
 		self.get_words = [
 		'bring',
-		'find'
+		'find',
+		'fetch'
 		]
 
 		# Dictionary for instructions to robot
@@ -85,7 +87,8 @@ class Controller():
 
 		}
 
-		# Dictionary for OBJECTS to be recognised at a location. The x,y,theta of these locations must be recorded in the locations.json file.
+		# Dictionary for OBJECTS to be recognised at a location. The x,y,theta of these locations
+		# must be recorded in the locations.json file.
 		self.object_dict = {
 		"cardboard box"   : ["kitchen counter",
 								"kitchen table",
@@ -99,107 +102,76 @@ class Controller():
 		"reading glasses" : ["bedside table"] 
 		}
 
-		self.global_answer = ''
-		#self.objects = ['coke','water','juice','apple','lemon','glass']
-		#self.rooms = ['bedroom', 'living_room']
-		#self.device = ['light', 'blinds']
-		#self.states = ['on', 'off', 'half', 'open', 'close']
-		#self.verb = ['switch']
-
 	def listen4cmd(self,status):
 		if status == 'on' :	
-			self.sub_cmd=rospy.Subscriber("/hearts/stt", String, self.hearCommand_callback)    
+			self.sub_cmd=rospy.Subscriber("/hearts/stt", String, self.hearCommand_callback)  
+			print('***** Listening for a COMMAND')  
 		else:
 			self.sub_cmd.unregister()
+			print('***** NOT! Listening for a COMMAND')  
 
 		return
 
 	def listen4ans(self,status):
 		if status == 'on' :	
 			self.sub_ans=rospy.Subscriber("/hearts/stt", String, self.hearAnswer_callback)  
+			print('***** Listening for an ANSWER')
 		else:
 			self.sub_ans.unregister()
+			print('***** NOT! Listening for an ANSWER')
 
 		return		
 
 	def hearAnswer_callback(self,data):	  
-		rospy.loginfo('\nHeard an answer .......................\n')
 		speech = str(data)
-		print("\n**************************************************** Answer text: "+speech)
 		speech = speech.lower()
-		rospy.loginfo('Heard an answer'+speech)
+		rospy.loginfo('*** Heard an answer : '+speech+'\n')
 		words  = speech.split(' ')
-		print('***************************************************** Answer words:')
-		print(words)
+
 		if 'yes' in words:
-			self.say("OK will do")
-			print('code 2 exec : '+ self.code2exec)
+			self.say("OK then I will do that")
 			exec(self.code2exec)
-			self.say("Task is now complete. Do you have another instruction for me")
+			self.say("Task is now complete. Please give me my next instruction")
+			
 			# re-establish subscribers	
-			self.global_answer = ''	
 			self.listen4ans('off')
 			self.listen4cmd('on')
+
 		elif 'no' in words:
-			self.say("OK I will not do anything. Do you have another instruction for me")
+			self.say("OK I will forget your last instruction. Please give me my next instruction")
+
 			# re-establish subscribers	
-			self.global_answer = ''	
 			self.listen4ans('off')
 			self.listen4cmd('on')	
+
 		else:
 			self.say("Please answer with a yes or no")
 
+		return
+
 	def hearCommand_callback(self,data):
-		rospy.loginfo('Heard a command')
+
 		speech = str(data)
 		speech = speech.lower()
-		print("speech -:"+speech)
-		# check that text has been returned
-		print ("\n***** speech >"+speech+"<\n")
-		if "bad_recognition" in speech:
-			self.say("Sorry but no words were heard please repeat your instruction")
-			print("***** BAD RECOGNITION  ")
-			return 
+		rospy.loginfo('*** Heard a command\n'+speech+'\n')
 
-		# remove unwanted words
+		# remove the ROS msg "Data:" value from speech	
 		item = 'data:'
 		if item in speech:
 			speech = speech.replace(item,'')
 
-		rspeech = speech # Reduced speech
-		for rm_item in self.rm_words:
-			#print("rm word: "+rm_item)
-			rspeech = rspeech.replace(rm_item,'')
+        # check that text has been returned
+		if "bad_recognition" in speech:
+			self.say("Sorry but no words were recognised please repeat your instruction")
+			return 
 
-		# substitue words for fetching to "get"
-		for sub_item in self.get_words:
-			rspeech = rspeech.replace(sub_item,'get')
-	
-		words = rspeech.split(' ')	
-		print("words  ....>")
-		print(words)
+		lookupkey = self.bld_lookupkey(speech)
+		rospy.loginfo("*** lookup key: "+lookupkey)
 
-		# rebuild key with single spaces
-		lookupkey = ''
-		for ii in range(1,len(words)):
-			if words[ii] != '':
-				lookupkey = lookupkey + words[ii]+' '
-		lookupkey = lookupkey.strip()
-
-		rospy.loginfo("lookup key: "+lookupkey)
-
-		# look for Device Directive in Device dict
-		print("code2exec ; "+ lookupkey)
+		# obtain  "Directive to Robot" from dictionary
 		self.code2exec = self.actions_dict.get(lookupkey)
 
-		# if code2exec == None:
-		# 	# assume object related hence replace bring or find with get
-		# 	for sub_item in self.get_words:
-		# 		lookupkey = lookupkey.replace(sub_item, 'get')
-		# 	print("obj lookup:"+lookupkey)		
-		# 	code2exec = self.object_dict.get(lookupkey)
-
-		# check that key was found
+		# check that lookup key was found
 		if self.code2exec != None:
 			#listen for "answer"
 			self.say("You requested that I "+speech+' .')
@@ -209,6 +181,41 @@ class Controller():
 			self.listen4ans('on')
 		else:
 			self.say("Your request was not understood       please repeat")
+
+		return
+	
+	def bld_lookupkey(self,speech):
+
+		# Change words for fetching to "get"
+		rspeech = speech # Reduced words in captured speech
+		for sub_item in self.get_words:
+			rspeech = rspeech.replace(sub_item,'get')
+
+		# build list of words	
+		words = rspeech.split(' ')	
+
+		# change 2nd and subsequent values: 'off' to ''
+		firstfound = True
+		for idx, sub_item in enumerate(words):
+			if sub_item == 'off' and firstfound:
+				firstfound   = False
+			elif sub_item == 'off' and not firstfound:
+				words[idx] = ''
+
+		#remove unwanted words
+		for rm_item in self.rm_words:	
+			for idx,elem in enumerate(words):
+				if elem == rm_item:
+					words[idx] = ''
+	
+		# rebuild lookup key as a string with single spaces
+		lookupkey = ''
+		for ii in range(1,len(words)):
+			if words[ii] != '':
+				lookupkey = lookupkey + words[ii]+' '
+		lookupkey = lookupkey.strip()
+
+		return lookupkey
 
 	# exec def's for DEVICE actions
 	def on_LLB(self):
@@ -300,7 +307,7 @@ class Controller():
 			rospy.loginfo("PREPARE")
 			try:
 				time.sleep(5)
-				self.prepare()
+				self.prepare() # END of PREPARE msg to service
 			except:
 				rospy.loginfo("Failed to reply PREPARE")
 		elif data.benchmark_state == BenchmarkState.EXECUTE:
@@ -308,11 +315,13 @@ class Controller():
 			self.main()
 			
 	def wait_for_call(self):
-		rospy.loginfo("Waiting for call")
+		rospy.loginfo("***** Waiting for call from GA")
 		self.wait = False
 		sub = rospy.Subscriber("/roah_rsbb/tablet/call", Empty, self.tablet_callback)
 		while self.wait == False:
 			rospy.sleep(5)
+		print("***** Call recd from GA")	
+		rospy.sleep(15)
 		sub.unregister()
 
 	def wait_for_user_location(self):
@@ -378,81 +387,30 @@ class Controller():
 			self.wait_to_arrive(count - 1)
 			return self.nav_status == "Success"
 
-	
 
 		## Interactions
 	def say(self, text):
-		rospy.loginfo("saying \"" + text + "\"")
 		rospy.sleep(1)
 		self.tts_pub.publish(text)
 		rospy.sleep(5)
 
-
-	def object_recognition(self):
-		rospy.loginfo("Initating Object Recognition")
-		#sub = rospy.Subscriber()
-
-
-	# def listen(self, data):
-	# 	rospy.loginfo("Listening for command")
-	# 	sub = rospy.Subscriber("/hearts/stt", String, self.hearCommand_callback)
-
- #        #Possible Commands: 
- #        # Switch  
- #        # Open
- #        # Close
- #        # Set
- #        # Get / Bring / Find
- #        # Go Home
-
-
-	# 	sub.unregister()
-
-
 	def device_operationsself(self):
 		pass
 
-
-
 	def main(self):
-		print ("*** in main")
+		print ("\n***** MAIN Executing *****\n")
 
 		#wait for call 
 		self.wait_for_call()
 		#request location
-		self.wait_for_user_location()
+		#DAR self.wait_for_user_location()
 
 		#navigate to the user's location
-		self.move_to_pose2D(self.user_location)
-
-		#speak to granny annie
-		#self.say("What can I do for you?")
-
-		#listen to granny annie
-
-		#reply to granny annie
-
-		#check that command is correct
-
-		#execute command
-
-		#turn lights on/off
-
-		#do dimmer switch
-
-		#do blinds
-
-		#bring object
-
-		#go home
-
+		#DAR self.move_to_pose2D(self.user_location)
+		
+		self.listen4cmd('on')
 
 		rospy.loginfo("End of programme")
-
-
-
-
-
 
 
 
@@ -465,5 +423,5 @@ if __name__ == '__main__':
 	rospy.loginfo("annies comfort controller has started")
 
 	controller = Controller()
-	controller.main()
+	#controller.main()
 	rospy.spin()
