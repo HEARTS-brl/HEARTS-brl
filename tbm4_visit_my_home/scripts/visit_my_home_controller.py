@@ -31,8 +31,9 @@ from rospy.rostime import Duration
 import time
 from math import cos, sin
 
-from navigation_camera_mgr_example import NavigationCameraMgr
+#from navigation_camera_mgr_example import NavigationCameraMgr
 import std_srvs.srv
+from pal_navigation_msgs.srv import Acknowledgment
 
 from std_msgs.msg import String
 from std_msgs.msg import Empty
@@ -83,6 +84,8 @@ class Controller():
         #TODO subscribe to succeed or fail
         self.prepare = rospy.ServiceProxy('/roah_rsbb/end_prepare', std_srvs.srv.Empty)
         self.execute = rospy.ServiceProxy('/roah_rsbb/end_execute', std_srvs.srv.Empty)
+        self.change_maps = rospy.ServiceProxy('/pal_map_manager/change_map',Acknowledgment)
+        self.change_maps("input: 'map_1'")
 
         # Disable head manager
         head_mgr = NavigationCameraMgr()
@@ -121,6 +124,14 @@ class Controller():
     def follow_person(self):
         #get from zeke or call zeke's functions
         return
+
+    def nav_status_callback(self,data):
+        if status == 4 or status == 5 or status == 9:
+            if not self.repeat:
+                rospy.loginfo('Repeating')
+                self.pubGoal.publish(self.t)
+                self.isNavigating = True
+                self.repeat = True
 
 
 ########################### Callbacks ##############################

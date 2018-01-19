@@ -85,15 +85,9 @@ class Navigator():
 
             if self.previous_state != status_msg: 
                 self.pubStatus.publish(status_msg)
-                #TODO Try one more time to go to the destination
                 self.previous_state = status_msg
                 rospy.loginfo('status: ' + str(status))
-                if status == 4 or status == 5 or status == 9:
-                    if not self.repeat:
-                        rospy.loginfo('Repeating')
-                        self.pubGoal.publish(self.t)
-                        self.isNavigating = True
-                        self.repeat = True
+
                     
 
 if __name__ == '__main__':
