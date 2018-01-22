@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 '''
 Rooms:
-    kitchen, bedroom, living room, dining room, hallway
+    kitchen, bedroom, living room, dining room, hall
 Furniture:
     bed, table lamps, couch, armchairs, chairs, tables, shelves,
 Objects:
@@ -10,7 +10,7 @@ Objects:
 commands:
     MOVE [forward, backward]
     TURN [left, right]
-    GO to the [kitchen, bedroom, living room, dining room, hallway (room)]
+    GO to the [kitchen, bedroom, living room, dining room, hall (room)]
     ##HERE is the [room]##
     LOOK [Up, Down, Left, Right]
     SEE the [open, closed] door BETWEEN the [room] and the [room]
@@ -61,14 +61,21 @@ class Controller():
     
         self.outfolder = rospy.get_param('output_path')
         
-        self.objects = ['coke','water','juice','apple','lemon','rice','pringles','kleenex','sponge','soap','cup','glass','whiteboard']
+        self.objects = ['banana','apple','lemon','orange','macaroni','weetabix','juice',
+        'water','pringles','paracetamol','soda','pasta','soup','toothpaste','salt','gum']
+        #'coke','water','juice','apple','lemon',
+        #'rice','pringles','kleenex','sponge','soap','cup','glass','whiteboard']
+
         self.categories = {'drink':['coke','water','juice'],
         'food':['apple','lemon','rice','pringles'],
         'cleaning stuff':['kleenex','sponge','soap','whiteboard'],
         'container':['cup','glass']}
-        self.furniture = ['arm','cabinet','table','chair','armchair','side','coffee','tv','kitchen','dining','couch','bookshelf','nightstand','night','bed','wardrobe','plant']
-        self.rooms = ['kitchen', 'bedroom', 'living_room', 'dining_room', 'hallway']
-        self.doors = ['bedroom', 'entrance']
+
+        self.furniture = ['arm','cabinet','table','chair','side','coffee',
+        'tv','kitchen','dining','couch','bookshelf','nightstand','night','bed','wardrobe',
+        'plant']
+        self.rooms = ['kitchen', 'bedroom', 'living_room', 'dining_room', 'hall']
+        self.doors = ['bedroom', 'entrance','hall']
         self.tbm1_commands_dict = {
             "move": ["forward", "backward"],
             "turn": ["right", "left"],
@@ -165,7 +172,7 @@ class Controller():
                 room2 = 'living_room'
             else: 
                 thing_id = 'door_entrance'
-                room1 = 'hallway'
+                room1 = 'hall'
                 room2 = 'outside'
             line1 = self.linewriter('type',[thing_id,'door'])
             line2 = self.linewriter('connects',[thing_id,room1,room2])
