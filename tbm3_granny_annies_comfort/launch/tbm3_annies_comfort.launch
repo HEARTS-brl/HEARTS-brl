@@ -14,10 +14,10 @@
       node: roah_rsbb_comm_ros
   -->
   
- <!--
+ 
   <node name="servicer" pkg="tbm3_granny_annies_comfort" type="service.py" output="screen" />
- -->
-  
+ 
+  <!--
   <node pkg="roah_rsbb_comm_ros" type="comm" name="roah_rsbb_comm" respawn="true">
     <param name="team_name" type="string" value="Hearts" />
     <param name="robot_name" type="string" value="Tiago" />
@@ -30,6 +30,5 @@
     <arg name="map_name" value="map_1" />
   </include>
   <param name="locations_json" type="string" value="$(find hearts_navigation)/data/locations.json" />
-  
-
+  -->
 </launch>

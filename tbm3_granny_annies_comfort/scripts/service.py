@@ -11,22 +11,22 @@ def location_pose_2D(req):
 	return std_srvs.srv.EmptyResponse()
 
 def callback_1(req):
-	print("\n***** Service Action: LEFT LIGHT BEDROOM switch_1 on\n")
+	print("\n***** Service Action: RIGHT LIGHT BEDROOM switch_1 on\n")
 	rc = std_srvs.srv.EmptyResponse()
 	return rc
 
 def callback_2(req):
-	print("\n***** Service Action: LEFT LIGHT BEDROOM switch_1 off\n")
+	print("\n***** Service Action: RIGHT LIGHT BEDROOM switch_1 off\n")
 	rc = std_srvs.srv.EmptyResponse()
 	return rc	
 
 def callback_3(req):
-	print("\n***** Service Action: RIGHT LIGHT BEDROOM switch_2 on\n")
+	print("\n***** Service Action: LEFT LIGHT BEDROOM switch_2 on\n")
 	rc = std_srvs.srv.EmptyResponse()
 	return rc	
 
 def callback_4(req):
-	print("\n***** Service Action: RIGHT LIGHT BEDROOM switch_2 off\n")
+	print("\n***** Service Action: LEFT LIGHT BEDROOM switch_2 off\n")
 	rc = std_srvs.srv.EmptyResponse()
 	return rc	
 
@@ -41,12 +41,12 @@ def callback_6(req):
 	return rc	
 
 def callback_7(req):
-	print("\n***** Service Action: OPEN BLINDS max\n")
+	print("\n***** Service Action: CLOSE BLINDS ma\n")
 	rc = std_srvs.srv.EmptyResponse()
 	return rc	
 
 def callback_8(req):
-	print("\n***** Service Action: CLOSE BLINDS min\n")
+	print("\n***** Service Action: OPEN BLINDS max\n")
 	rc = std_srvs.srv.EmptyResponse()
 	return rc		
 
@@ -55,6 +55,13 @@ def callback_9(req):
 	#rc = std_srvs.srv.EmptyResponse() ## this dosn't work!! need to return empty list to avoid error msgs.
 	rc =[]
 	return rc																																																																																																																																																																																																																																																																																																																																								
+
+
+def callback_10(req):
+    print("\n***** Service Action: Dimmer set "+str(req)+"\n")
+    #rc = std_srvs.srv.EmptyResponse() ## this dosn't work!! need to return empty list to avoid error msgs.
+    rc =[]
+    return rc           
 
 def service():
 	rospy.init_node('a_node')
@@ -67,7 +74,8 @@ def service():
 	s6 = rospy.Service('/roah_rsbb/devices/switch_3/off', std_srvs.srv.Empty  , callback_6)	
 	s7 = rospy.Service('/roah_rsbb/devices/blinds/max',   std_srvs.srv.Empty  , callback_7)	
 	s8 = rospy.Service('/roah_rsbb/devices/blinds/min',   std_srvs.srv.Empty  , callback_8)	
-	s9 = rospy.Service('/roah_rsbb/devices/blinds/set',   Percentage          , callback_9)	
+	s9 = rospy.Service('/roah_rsbb/devices/blinds/set',   Percentage          , callback_9)
+	s10 = rospy.Service('/roah_rsbb/devices/dimmer/set',  Percentage         , callback_10)    	
 	print("using latest service definition")
 	rospy.spin()
 

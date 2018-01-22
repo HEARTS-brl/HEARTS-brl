@@ -55,6 +55,7 @@ class Controller():
 		'the',
 		'please',
 		'my',
+		'to',
 		'me'    # nb trailing space to avoid corrupting "home"
 		]
 
@@ -73,6 +74,7 @@ class Controller():
 		"switch off right light bedroom": "self.off_RLB()",
 		"switch on both lights bedroom" : "self.on_BLB()" ,
 		"switch off both lights bedroom": "self.off_BLB()",
+        "set light dimmer half"         : "self.half_L()" ,
 		"open blinds"                   : "self.open_B()" ,
 		"close blinds"                  : "self.close_B()",
 		"leave blinds half open"        : "self.half_B()" ,
@@ -99,7 +101,8 @@ class Controller():
 		"mug"             : ["kitchen counter"],
 		"candle"          : ["coffee table"],
 		"cup"             : ["kitchen table"],
-		"reading glasses" : ["bedside table"] 
+		"reading glasses" : ["bedside table"],
+		"candle"          : ["coffee table"]
 		}
 
 	def listen4cmd(self,status):
@@ -220,25 +223,25 @@ class Controller():
 	# exec def's for DEVICE actions
 	def on_LLB(self):
 		# ON  Left Light Bedroom
-		run_service = rospy.ServiceProxy('/roah_rsbb/devices/switch_1/on', std_srvs.srv.Empty)
+		run_service = rospy.ServiceProxy('/roah_rsbb/devices/switch_2/on', std_srvs.srv.Empty)
 		run_service()
 		return
 
 	def off_LLB(self):
 		# OFF Left Light Bedroom
-		run_service = rospy.ServiceProxy('/roah_rsbb/devices/switch_1/off', std_srvs.srv.Empty)
+		run_service = rospy.ServiceProxy('/roah_rsbb/devices/switch_2/off', std_srvs.srv.Empty)
 		run_service()
 		return	
 
 	def on_RLB(self):
 		# ON   Right Light Bedroom
-		run_service = rospy.ServiceProxy('/roah_rsbb/devices/switch_2/on', std_srvs.srv.Empty)
+		run_service = rospy.ServiceProxy('/roah_rsbb/devices/switch_1/on', std_srvs.srv.Empty)
 		run_service()
 		return
 
 	def off_RLB(self):
 		# OFF Right Light Bedroom
-		run_service = rospy.ServiceProxy('/roah_rsbb/devices/switch_2/off', std_srvs.srv.Empty)
+		run_service = rospy.ServiceProxy('/roah_rsbb/devices/switch_1/off', std_srvs.srv.Empty)
 		run_service()
 		return
 
@@ -253,6 +256,14 @@ class Controller():
 		run_service = rospy.ServiceProxy('/roah_rsbb/devices/switch_3/off', std_srvs.srv.Empty)
 		run_service()
 		return
+
+        # set light dimmer to half
+	def half_L(self):
+		print("\n***** in dimmer call\n")
+		run_service = rospy.ServiceProxy('/roah_rsbb/devices/dimmer/set',Percentage)
+		percent = 50
+ 		run_service(percent) 
+
 	
 	def open_B(self):
 		# OPEN Blinds
@@ -264,12 +275,12 @@ class Controller():
 		# CLOSE Blinds
 		run_service = rospy.ServiceProxy('/roah_rsbb/devices/blinds/min', std_srvs.srv.Empty)
 		run_service()
-		return	
+		return
 
 	def half_B(self):
 		# HALF CLOSE Blinds as at 27 Dec2017 does not work - percentae type problem
 		run_service = rospy.ServiceProxy('/roah_rsbb/devices/blinds/set',Percentage)
-		percent = 40
+		percent = 50
 		run_service(percent) 
 		return
 
@@ -289,12 +300,12 @@ class Controller():
 		print(location)
 
 		for LOC in location:
-			print("***** For object : "+object+" - Location is : "+LOC)
+			print("\n***** For object : "+object+" - Location is : "+LOC+"\n")
 			print("***** Go there")
-			self.move_to_location(LOC) #robot moves to corresponding position according to locations.json file in hearts_navigation
+			## self.move_to_location(LOC) #robot moves to corresponding position according to locations.json file in hearts_navigation
 			print("***** Recognise object")
 			print("***** return to GA \n")
-			self.move_to_pose2D(self.user_location)
+			## Fsert lightelf.move_to_pose2D(self.user_location)
 		
 		
 		return	
@@ -403,14 +414,14 @@ class Controller():
 		#wait for call 
 		self.wait_for_call()
 		#request location
-		#DAR self.wait_for_user_location()
+		self.wait_for_user_location()
 
 		#navigate to the user's location
-		#DAR self.move_to_pose2D(self.user_location)
+		self.move_to_pose2D(self.user_location)
 		
 		self.listen4cmd('on')
 
-		rospy.loginfo("End of programme")
+		rospy.loginfo("End of MAIN programme")
 
 
 
