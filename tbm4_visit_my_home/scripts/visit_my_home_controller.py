@@ -87,6 +87,8 @@ class Controller():
         self.prepare = rospy.ServiceProxy('/roah_rsbb/end_prepare', std_srvs.srv.Empty)
         self.execute = rospy.ServiceProxy('/roah_rsbb/end_execute', std_srvs.srv.Empty)
         self.change_maps = rospy.ServiceProxy('/pal_map_manager/change_map',Acknowledgment)
+        self.start_track = rospy.ServiceProxy('/start_person_tracking',std_srvs.srv.Trigger)
+        self.end_track = rospy.ServiceProxy('/stop_person_tracking',std_srvs.srv.Trigger)
         #axk = self.change_maps("input: 'map_1'")
 
         # Disable head manager
@@ -94,10 +96,9 @@ class Controller():
         head_mgr.head_mgr_as("disable")
         
     def begin(self):
-        for self.waypoint in range(1,7):
+        for self.waypoint in range(1,6):
             if self.waypoint == 4:
                 self.ID_person()
-                self.follow_person()
             else:
                 self.go_to_target(self.waypoint)
             self.continue_on = False # True when reached target or abandoned target
@@ -107,18 +108,22 @@ class Controller():
 
     def handle_fail(self):
         if self.waypoint == 1:
-            ack = self.change_maps("input: 'map_B'")
             self.go_to_target(1)
         if self.waypoint == 2:
-            #TODO detect face if possible? Detect object?
-            self.pub_talk.publish("please move out of the way")
+            self.go_to_target(1.5)
             rospy.sleep(5)
+            self.pub_talk.publish("A door is in the way. Please open the door")
+            rospy.sleep(2)
+            self.go_to_target(2)
         if self.waypoint == 5:
             #TODO move arm to push open the door
+            self.go_to_target(4.5)
+            rospy.sleep(5)
             self.pub_talk.publish("knock knock, would someone please open the door")
-
-
-            
+            rospy.sleep(2)
+        if self.waypoint == 3 or self.waypoint == 4:
+            self.continue_on = True
+        return
 
     def go_to_target(self,w):
         self.pubGoal.publish(str(w))
@@ -126,7 +131,13 @@ class Controller():
 
     def ID_person(self):
         #get from zeke or call zeke's functions
+        while not success:
+            self.pub_talk.publish("Please look the robot in the face")
+            success = self.start_track()
+            rospy.sleep(5)
+        self.pub_talk.publish("Please say stop when you have reached the destination")
         return
+
     def follow_person(self):
         #get from zeke or call zeke's functions
         return
@@ -135,16 +146,11 @@ class Controller():
         length_status = len(data.status_list)
         if length_status > 0:
             status = data.status_list[length_status-1].status
-        if status == 1 or status == 3:
+        if status == 3:
             self.continue_on = True
         elif status == 4 or status == 5 or status == 9:
             self.handle_fail()
-            if not self.repeat:
-                rospy.loginfo('Repeating')
-                self.pubGoal.publish(self.t)
-                self.isNavigating = True
-                self.repeat = True
-
+        return
 
 ########################### Callbacks ##############################
     def benchmark_state_callback(self, data):
@@ -172,6 +178,9 @@ class Controller():
         possible_verbs = self.tbm1_commands_dict.keys()
         if words[0] == "start":
             self.begin()
+        if words[0] =="stop":
+            _ = self.end_track()
+            self.continue_on = True
         if words[0] in possible_verbs:
             valid_command = True
             verb = words[0]
