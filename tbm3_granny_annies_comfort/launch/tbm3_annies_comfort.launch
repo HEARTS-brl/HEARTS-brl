@@ -24,11 +24,11 @@
     <param name="rsbb_host" type="string" value="192.168.0.107" />
   </node>  
   -->
-  
+  <!--
   <include file="$(find hearts_navigation)/launch/hearts_navigation_navigate.launch">
     <arg name="map_name" value="map_pal3" />
   </include>
   <param name="locations_json" type="string" value="$(find hearts_navigation)/data/locations.json" />
- 
+  -->
 
 </launch>
