@@ -81,11 +81,13 @@ class Controller():
         rospy.Subscriber("/hearts/stt", String, self.hearCommand_callback)
         rospy.Subscriber('/move_base/feedback', MoveBaseActionFeedback, self.current_pose_callback)
         rospy.Subscriber("roah_rsbb/benchmark/state", BenchmarkState, self.benchmark_state_callback)
+        rospy.Subscriber('move_base/status', GoalStatusArray, self.nav_status_callback)
+
         #TODO subscribe to succeed or fail
         self.prepare = rospy.ServiceProxy('/roah_rsbb/end_prepare', std_srvs.srv.Empty)
         self.execute = rospy.ServiceProxy('/roah_rsbb/end_execute', std_srvs.srv.Empty)
         self.change_maps = rospy.ServiceProxy('/pal_map_manager/change_map',Acknowledgment)
-        self.change_maps("input: 'map_1'")
+        #axk = self.change_maps("input: 'map_1'")
 
         # Disable head manager
         head_mgr = NavigationCameraMgr()
@@ -98,20 +100,24 @@ class Controller():
                 self.follow_person()
             else:
                 self.go_to_target(self.waypoint)
-            self.continue_on = False
+            self.continue_on = False # True when reached target or abandoned target
             while not self.continue_on:
-                while self.waiting_for_return==True:
-                    rospy.sleep(1)
-                if self.reached_goal==False:
-                    self.handle_fail(self.waypoint)
-                else:
-                    self.continue_on = True
-            self.pub_talk.publish("Waypoint completed, moving on")
+                rospy.sleep(1)
+            self.pub_talk.publish("Waypoint "+str(self.waypoint)+" completed, moving on")
 
     def handle_fail(self):
-        if self.wapoint == 1:
-            # Todo Update map
+        if self.waypoint == 1:
+            ack = self.change_maps("input: 'map_B'")
             self.go_to_target(1)
+        if self.waypoint == 2:
+            #TODO detect face if possible? Detect object?
+            self.pub_talk.publish("please move out of the way")
+            rospy.sleep(5)
+        if self.waypoint == 5:
+            #TODO move arm to push open the door
+            self.pub_talk.publish("knock knock, would someone please open the door")
+
+
             
 
     def go_to_target(self,w):
@@ -126,7 +132,13 @@ class Controller():
         return
 
     def nav_status_callback(self,data):
-        if status == 4 or status == 5 or status == 9:
+        length_status = len(data.status_list)
+        if length_status > 0:
+            status = data.status_list[length_status-1].status
+        if status == 1 or status == 3:
+            self.continue_on = True
+        elif status == 4 or status == 5 or status == 9:
+            self.handle_fail()
             if not self.repeat:
                 rospy.loginfo('Repeating')
                 self.pubGoal.publish(self.t)
@@ -158,6 +170,8 @@ class Controller():
         rospy.loginfo(speech)
         words = [x for x in words if x!='the']
         possible_verbs = self.tbm1_commands_dict.keys()
+        if words[0] == "start":
+            self.begin()
         if words[0] in possible_verbs:
             valid_command = True
             verb = words[0]

@@ -15,7 +15,6 @@ class Navigator():
         self.isNavigating = False
         self.currentGoal = Pose2D()
         self.lastGoal = Pose2D()
-        self.repeat = False
 
         self.pubGoal = rospy.Publisher('/move_base_simple/goal', PoseStamped, queue_size=1)
 
