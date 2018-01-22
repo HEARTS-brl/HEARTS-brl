@@ -42,26 +42,26 @@ from turtlesim.msg import Pose
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from move_base_msgs.msg import MoveBaseActionFeedback
 from roah_rsbb_comm_ros.msg import Benchmark, BenchmarkState
+from actionlib_msgs.msg import GoalStatusArray
 
 ############################# Controller Class ############################################
 class Controller():
     def __init__(self):
         # Movement Parameters
+        self.ok_to_start = False
         self.head_lr = 0.0
         self.head_ud = -0.5
         self.head_move_step_size = .15
         self.turn_step_size = 0.2
         self.move_step_size = 0.2
 
-        self.handle_camera_direction(['center'])
+        #self.handle_camera_direction(['center'])
         self.outfolder = rospy.get_param('output_path')
         self.tbm1_commands_dict = {
             "move": ["forward", "backward"],
             "turn": ["right", "left"],
-            "go": self.rooms,
             "look": ["up", "down", "right", "left"],
-            "here": [],
-            "see": self.objects,}
+            "here": []}
 
         self.waypoint = 1
 
@@ -92,11 +92,15 @@ class Controller():
         #axk = self.change_maps("input: 'map_1'")
 
         # Disable head manager
-        head_mgr = NavigationCameraMgr()
-        head_mgr.head_mgr_as("disable")
+        #head_mgr = NavigationCameraMgr()
+        #head_mgr.head_mgr_as("disable")
+        rospy.loginfo("End init- ready for start")
+        return(None)
         
     def begin(self):
+        self.ok_to_start = True
         for self.waypoint in range(1,6):
+            rospy.loginfo("starting: "+str(self.waypoint))
             if self.waypoint == 4:
                 self.ID_person()
             else:
@@ -104,25 +108,27 @@ class Controller():
             self.continue_on = False # True when reached target or abandoned target
             while not self.continue_on:
                 rospy.sleep(1)
-            self.pub_talk.publish("Waypoint "+str(self.waypoint)+" completed, moving on")
+            self.pub_talk.publish("Waypoint "+str(self.waypoint)+" completed, moving on***********")
+            rospy.sleep(3)
 
     def handle_fail(self):
-        if self.waypoint == 1:
-            self.go_to_target(1)
-        if self.waypoint == 2:
-            self.go_to_target(1.5)
-            rospy.sleep(5)
-            self.pub_talk.publish("A door is in the way. Please open the door")
-            rospy.sleep(2)
-            self.go_to_target(2)
-        if self.waypoint == 5:
-            #TODO move arm to push open the door
-            self.go_to_target(4.5)
-            rospy.sleep(5)
-            self.pub_talk.publish("knock knock, would someone please open the door")
-            rospy.sleep(2)
-        if self.waypoint == 3 or self.waypoint == 4:
-            self.continue_on = True
+        if self.ok_to_start:
+            if self.waypoint == 1:
+                self.go_to_target(1)
+            if self.waypoint == 2:
+                self.go_to_target(1.5)
+                rospy.sleep(5)
+                self.pub_talk.publish("A door is in the way. Please open the door")
+                rospy.sleep(2)
+                self.go_to_target(2)
+            if self.waypoint == 5:
+                #TODO move arm to push open the door
+                self.go_to_target(4.5)
+                rospy.sleep(5)
+                self.pub_talk.publish("knock knock, would someone please open the door")
+                rospy.sleep(2)
+            if self.waypoint == 3 or self.waypoint == 4:
+                self.continue_on = True
         return
 
     def go_to_target(self,w):
@@ -130,9 +136,12 @@ class Controller():
         return
 
     def ID_person(self):
+        rospy.loginfo("Looking for a person")
         #get from zeke or call zeke's functions
+        success = self.start_track()
         while not success:
             self.pub_talk.publish("Please look the robot in the face")
+            rospy.loginfo("Please look the robot in the face")
             success = self.start_track()
             rospy.sleep(5)
         self.pub_talk.publish("Please say stop when you have reached the destination")

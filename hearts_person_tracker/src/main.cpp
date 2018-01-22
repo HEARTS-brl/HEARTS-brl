@@ -408,6 +408,8 @@ ImageConverter::ImageConverter()
                         
                     double x = _dRegionAvgVal - h;
                     
+                    cout << "distance delta : " << x << endl;
+                    
                     if (x < -xLimit)
                         _prevX.push_back(+0.1);
                     else if (x > +xLimit)
