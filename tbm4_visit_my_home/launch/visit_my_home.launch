@@ -11,4 +11,6 @@
     <param name="rsbb_key" type="string" value="FJ6LazOM" />
     <param name="rsbb_host" type="string" value="10.2.0.101" />
   </node>
+  <include file="$(find hearts_person_tracker)/launch/hearts_person_tracker.launch">
+  </include>
 </launch>
