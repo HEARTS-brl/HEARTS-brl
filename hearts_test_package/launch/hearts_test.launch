@@ -4,6 +4,8 @@
     <param name="team_name" type="string" value="Hearts" />
     <param name="robot_name" type="string" value="Tiago" />
     <param name="rsbb_key" type="string" value="FJ6LazOM" />
-    <param name="rsbb_host" type="string" value="192.168.1.20" />
+    <param name="rsbb_host" type="string" value="10.2.0.101" />
+    <!-- not sure if this is needed -->
+    <!-- <param name="rsbb_key" type="string" value="6666"/> --> 
   </node>
 </launch>

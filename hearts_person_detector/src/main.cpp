@@ -232,6 +232,7 @@ public:
     bool train(Mat& d, Mat& rgb, double& dRegionAvgVal, double& rRegionAvgVal, double& gRegionAvgVal, double& bRegionAvgVal, double& rRegionStdDev, double& gRegionStdDev, double& bRegionStdDev);
     
 private:
+    void liftTorso(double torsoJointRads);
     string toString(double a);
     void dTopicCb(const sensor_msgs::ImageConstPtr& msg);
     void rgbTopicCb(const sensor_msgs::ImageConstPtr& msg);
