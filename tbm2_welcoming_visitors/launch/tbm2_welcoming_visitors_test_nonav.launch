@@ -14,7 +14,7 @@
     <param name="team_name" type="string" value="Hearts" />
     <param name="robot_name" type="string" value="Tiago" />
     <param name="rsbb_key" type="string" value="FJ6LazOM" />
-    <param name="rsbb_host" type="string" value="192.168.1.20" />
+    <param name="rsbb_host" type="string" value="192.168.1.129" />
   </node> -->
   <node name="welcome_visitor_controller" pkg="tbm2_welcoming_visitors" type="welcome_visitor_controller.py" output="screen" />
   <node name="change_detector" pkg="tbm2_welcoming_visitors" type="change_detector.py" output="screen" />
