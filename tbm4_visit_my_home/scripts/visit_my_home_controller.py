@@ -108,7 +108,7 @@ class Controller():
             self.continue_on = False # True when reached target or abandoned target
             while not self.continue_on:
                 rospy.sleep(1)
-            self.pub_talk.publish("Waypoint "+str(self.waypoint)+" completed, moving on***********")
+            rospy.loginfo("Waypoint "+str(self.waypoint)+" completed, moving on***********")
             rospy.sleep(3)
 
     def handle_fail(self):
@@ -138,17 +138,16 @@ class Controller():
     def ID_person(self):
         rospy.loginfo("Looking for a person")
         #get from zeke or call zeke's functions
+        self.pub_talk.publish("Please one foot in front of me")
+        rospy.sleep(5)
         success = self.start_track()
         while not success:
             self.pub_talk.publish("Please look the robot in the face")
             rospy.loginfo("Please look the robot in the face")
             success = self.start_track()
             rospy.sleep(5)
+        self.pub_talk.publish("Lead onward")
         self.pub_talk.publish("Please say stop when you have reached the destination")
-        return
-
-    def follow_person(self):
-        #get from zeke or call zeke's functions
         return
 
     def nav_status_callback(self,data):
