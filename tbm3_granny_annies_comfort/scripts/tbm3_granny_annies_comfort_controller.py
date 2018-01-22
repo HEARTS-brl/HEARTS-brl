@@ -291,7 +291,7 @@ class Controller():
 		for LOC in location:
 			print("***** For object : "+object+" - Location is : "+LOC)
 			print("***** Go there")
-			self.move_to_location(location) #robot moves to corresponding position according to locations.json file in hearts_navigation
+			self.move_to_location(LOC) #robot moves to corresponding position according to locations.json file in hearts_navigation
 			print("***** Recognise object")
 			print("***** return to GA \n")
 			self.move_to_pose2D(self.user_location)
