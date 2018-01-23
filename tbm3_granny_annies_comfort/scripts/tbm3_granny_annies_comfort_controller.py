@@ -368,6 +368,11 @@ class Controller():
 		rospy.loginfo("Waiting for user location callback")
 		rospy.loginfo(msg)
 		found = False
+
+		print("msg.x     : "+str(msg.x))
+		print("msg.x     : "+str(msg.y))
+		print("msg.theta : "+str(msg.theta))
+
 		for idx in range (0,2):
 			if  msg.x > self.jlocxl[idx] and msg.x < self.jlocxh[idx] and \
 				msg.y > self.jlocyl[idx] and msg.y < self.jlocyh[idx]     :
