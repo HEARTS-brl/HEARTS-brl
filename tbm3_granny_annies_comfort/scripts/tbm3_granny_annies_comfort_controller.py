@@ -42,6 +42,18 @@ class Controller():
 
 
 		self.user_location = None
+		
+		# Granny Annies position in our map's coord system
+		self.ulocx = [11, 22]
+		self.ulocy = [33, 44]
+		
+		# Granny Annies position in judges coord system
+		# h for high value and l for low value ie the range
+		self.jlocxh = [12, 23]
+		self.jlocxl = [10, 21]
+		self.jlocyh = [34, 45]
+		self.jlocyl = [32, 42]
+
 
 		# Disable head manager
 		#?head_mgr = NavigationCameraMgr()
@@ -287,8 +299,9 @@ class Controller():
 	def go_home(self):
 		print("\n************ write code to send me home!!\n")
 		print("***** Pretend I have gone HOME (Idiling Position)!\n")
+		self.say("OK,  I am returning to my Initial position home now")
 		self.move_to_location("home")
-		self.say("I am going home now")
+
 		return
 
 	def get(self,object):
@@ -302,10 +315,13 @@ class Controller():
 		for LOC in location:
 			print("\n***** For object : "+object+" - Location is : "+LOC+"\n")
 			print("***** Go there")
-			## self.move_to_location(LOC) #robot moves to corresponding position according to locations.json file in hearts_navigation
+			self.move_to_location(LOC) #robot moves to corresponding position according to locations.json file in hearts_navigation
+
 			print("***** Recognise object")
+			self.say("I can see the"+object)
+
 			print("***** return to GA \n")
-			## Fsert lightelf.move_to_pose2D(self.user_location)
+			self.move_to_pose2D(self.user_location)
 		
 		
 		return	
@@ -339,9 +355,9 @@ class Controller():
 		rospy.loginfo("Waiting for user location")
 		self.user_location = None
 		sub = rospy.Subscriber("/roah_rsbb/tablet/position", Pose2D, self.user_location_callback)
-		rospy.wait_for_service('/roah_rsbb/tablet/map')
-		user_location_service = rospy.ServiceProxy('/roah_rsbb/tablet/map', std_srvs.srv.Empty)
-		user_location_service()
+		# rospy.wait_for_service('/roah_rsbb/tablet/map')
+		# user_location_service = rospy.ServiceProxy('/roah_rsbb/tablet/map', std_srvs.srv.Empty)
+		# user_location_service()
 		rospy.loginfo("going to while loop")
 		while self.user_location is None:
 			rospy.sleep(5)
@@ -351,12 +367,38 @@ class Controller():
 
 		# Callback functions
 	def tablet_callback(self, msg):
+		say("granny annie has called for attention")
 		self.wait = True
 
 	def user_location_callback(self, msg):
 		rospy.loginfo("Waiting for user location callback")
 		rospy.loginfo(msg)
-		self.user_location = msg
+		found = False
+
+		print("msg.x     from tablet: "+str(msg.x))
+		print("msg.x     from tablet: "+str(msg.y))
+		print("msg.theta from tablet: "+str(msg.theta))
+
+
+
+		for idx in range (0,2):
+			if  msg.x > self.jlocxl[idx] and msg.x < self.jlocxh[idx] and \
+				msg.y > self.jlocyl[idx] and msg.y < self.jlocyh[idx]     :
+
+				# assign the coords in our system
+				msg.x = self.ulocx[idx]
+				msg.y = self.ulocy[idx]
+				self.user_location = msg
+				found = True
+
+		if not found :
+			print("Re-mapping for Grany Annie location failed!")
+			print("\n***** STOPPING PROGRAM *****\n")
+			quit()
+		print("remapped granny location")		
+		print("X     : "+str(self.user_location.x))
+		print("Y     : "+str(self.user_location.y))
+		print("theta : "+str(self.user_location.theta))
 
 	def navigation_callback(self, msg):
 		self.nav_status = msg.data
