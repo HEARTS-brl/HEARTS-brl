@@ -228,55 +228,60 @@ SurfDescriptorExtractor surfDesc;
                     best_matches.push_back(finalMatches[i]);
                 }
             }
+            
+            if (!bestImg.empty())
+            {            
+                //-- Draw only "good" matches
+                Mat img_matches;
+                drawMatches(bestImg, keypoints_best, query, keypoint_query,
+                    best_matches, img_matches, Scalar::all(-1), Scalar::all(-1),
+                    vector<char>(), 0); // default drawing
 
-            //-- Draw only "good" matches
-            Mat img_matches;
-            drawMatches(bestImg, keypoints_best, query, keypoint_query,
-            best_matches, img_matches, Scalar::all(-1), Scalar::all(-1),
-            vector<char>(), 0); // default drawing
-
-            //DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS
-
-            if (img_matches.cols > 1920) // resize if image too big
-            {
-                double resizeRatio = 1920.0 / img_matches.cols;
-                cv::resize(img_matches, img_matches, Size(), resizeRatio, resizeRatio);
-            }
-
-            double max_dist = 0; double min_dist = 100;
-
-		ROS_INFO_STREAM("NUM ROWS: " << descriptors_best.rows);
-            //-- Quick calculation of max and min distances between keypoints
-            for (int i = 0; i < descriptors_best.rows; i++)
-            {
-                double dist = finalMatches[i].distance;
- 		if (dist < min_dist) min_dist = dist;
+                cout << "3" << endl;
                 
-		//min_dist = dist;
-                if (dist > max_dist) max_dist = dist;
-            }
+                //DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS
 
-            ROS_INFO_STREAM("-- Min dist: " << min_dist << endl);
-            ROS_INFO_STREAM("-- Total distance (inversed): " << distVec.at(largestIndex) << endl);
+                if (img_matches.cols > 1920) // resize if image too big
+                {
+                    double resizeRatio = 1920.0 / img_matches.cols;
+                    cv::resize(img_matches, img_matches, Size(), resizeRatio, resizeRatio);
+                }
 
-            if (distVec.at(largestIndex) > dist_thresh)
-            {
-                int whichObjInx = floor(largestIndex) / trainImgNum_;
-                string whichObjStr = objName_.at(whichObjInx);
+                double max_dist = 0; double min_dist = 100;
 
-                ROS_INFO_STREAM(whichObjStr << " Recognised!" << endl);
-                putText(img_matches, whichObjStr + " Recognised!", posText, FONT_HERSHEY_COMPLEX, 1.2, BLUE, 2, 8); // displaying recognised names
-                imshow(openCvWindow, img_matches);
+		    ROS_INFO_STREAM("NUM ROWS: " << descriptors_best.rows);
+                //-- Quick calculation of max and min distances between keypoints
+                for (int i = 0; i < descriptors_best.rows; i++)
+                {
+                    double dist = finalMatches[i].distance;
+     		if (dist < min_dist) min_dist = dist;
+                    
+		    //min_dist = dist;
+                    if (dist > max_dist) max_dist = dist;
+                }
 
-                std_msgs::String msg;
-                msg.data = whichObjStr;
-                pub_.publish(msg);
+                ROS_INFO_STREAM("-- Min dist: " << min_dist << endl);
+                ROS_INFO_STREAM("-- Total distance (inversed): " << distVec.at(largestIndex) << endl);
 
-ROS_INFO("Published to topic!");
-            }
-            else
-            {
-                imshow(openCvWindow, query);
+                if (distVec.at(largestIndex) > dist_thresh)
+                {
+                    int whichObjInx = floor(largestIndex) / trainImgNum_;
+                    string whichObjStr = objName_.at(whichObjInx);
+
+                    ROS_INFO_STREAM(whichObjStr << " Recognised!" << endl);
+                    putText(img_matches, whichObjStr + " Recognised!", posText, FONT_HERSHEY_COMPLEX, 1.2, BLUE, 2, 8); // displaying recognised names
+                    imshow(openCvWindow, img_matches);
+
+                    std_msgs::String msg;
+                    msg.data = whichObjStr;
+                    pub_.publish(msg);
+
+    ROS_INFO("Published to topic!");
+                }
+                else
+                {
+                    imshow(openCvWindow, query);
+                }
             }
         }
     }
