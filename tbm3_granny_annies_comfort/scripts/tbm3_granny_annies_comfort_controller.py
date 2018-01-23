@@ -45,8 +45,9 @@ class Controller():
 		
 		# Granny Annies position in our map's coord system
 		# col 0= bed, col1 = sofa
-		self.ulocx = [11, 22]
-		self.ulocy = [33, 44]
+		self.ulocx = [ -0.493560373783 ,-2.34082365036]
+		self.ulocy = [ -3.79606962204,  -7.20651531219]
+		self.uloct = [  0.995374783353,  0.92682136867]
 		
 		# Granny Annies position in judges coord system
 		# h for high value and l for low value ie the range
@@ -389,6 +390,7 @@ class Controller():
 				# assign the coords in our system
 				msg.x = self.ulocx[idx]
 				msg.y = self.ulocy[idx]
+				msg.theta = self.uloct[idx]
 				self.user_location = msg
 				found = True
 
