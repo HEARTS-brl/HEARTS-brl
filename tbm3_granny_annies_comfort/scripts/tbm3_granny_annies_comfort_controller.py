@@ -54,6 +54,7 @@ class Controller():
 		self.jlocyh = [34, 45]
 		self.jlocyl = [32, 42]
 
+
 		# Disable head manager
 		#?head_mgr = NavigationCameraMgr()
 		#?head_mgr.head_mgr_as("disable")
@@ -298,8 +299,9 @@ class Controller():
 	def go_home(self):
 		print("\n************ write code to send me home!!\n")
 		print("***** Pretend I have gone HOME (Idiling Position)!\n")
+		self.say("OK,  I am returning to my Initial position home now")
 		self.move_to_location("home")
-		self.say("I am going home now")
+
 		return
 
 	def get(self,object):
@@ -313,10 +315,13 @@ class Controller():
 		for LOC in location:
 			print("\n***** For object : "+object+" - Location is : "+LOC+"\n")
 			print("***** Go there")
-			## self.move_to_location(LOC) #robot moves to corresponding position according to locations.json file in hearts_navigation
+			self.move_to_location(LOC) #robot moves to corresponding position according to locations.json file in hearts_navigation
+
 			print("***** Recognise object")
+			self.say("I can see the"+object)
+
 			print("***** return to GA \n")
-			## Fsert lightelf.move_to_pose2D(self.user_location)
+			self.move_to_pose2D(self.user_location)
 		
 		
 		return	
@@ -362,6 +367,7 @@ class Controller():
 
 		# Callback functions
 	def tablet_callback(self, msg):
+		say("granny annie has called for attention")
 		self.wait = True
 
 	def user_location_callback(self, msg):
@@ -369,9 +375,11 @@ class Controller():
 		rospy.loginfo(msg)
 		found = False
 
-		print("msg.x     : "+str(msg.x))
-		print("msg.x     : "+str(msg.y))
-		print("msg.theta : "+str(msg.theta))
+		print("msg.x     from tablet: "+str(msg.x))
+		print("msg.x     from tablet: "+str(msg.y))
+		print("msg.theta from tablet: "+str(msg.theta))
+
+
 
 		for idx in range (0,2):
 			if  msg.x > self.jlocxl[idx] and msg.x < self.jlocxh[idx] and \
