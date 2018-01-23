@@ -32,7 +32,7 @@ public:
     {
         // TODO: define topics!
         std::string pub_topic = "/hearts/object_perception/recognised_image";
-        std::string sub_topic = "/camera/rgb/image_raw";
+        std::string sub_topic = "/xtion/rgb/image_raw";
 
         pub_ = nh_.advertise<std_msgs::String>(pub_topic, 1000);
 
@@ -77,6 +77,8 @@ public:
 
         // load training data
 
+        cout << "objects: " << objNum_ << ", training images: " << trainImgNum_ << endl;
+        
         // loading all training image data
         if ((objNum_ > 0) && (trainImgNum_ > 0))
         {
@@ -85,10 +87,12 @@ public:
                 for (int j = 1; j <= trainImgNum_; j++)
                 {
                     stringstream ss;
-                    ss << objName_[i] << "_" << j << ".jpg";
+                    ss << objName_[i] << "_" << j << ".png"; // jpg
                     string imName = ss.str();
+                    cout << "loading " << imName << "..." << endl;
                     Mat imgTemp = imread(trainPath + imName, IMREAD_GRAYSCALE);
                     trainData_.push_back(imgTemp);
+                    cout << "loaded " << imName << endl;
                 }
             }
         }
@@ -303,7 +307,7 @@ int main(int argc, char** argv)
   
     ObjectPerceiver op;
 
-    ROS_INFO("perceiving objects");
+    ROS_INFO("perceiving objects new!");
 
     ros::spin();
     return 0;
