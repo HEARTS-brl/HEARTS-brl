@@ -209,7 +209,7 @@ bool ImageConverter::hasDoor(Mat& d, Mat& rgb)
     {
         for (int j = 0; j < d.cols; j++)
         {
-            if (d.at<double>(i, j) > 40000) // 3m
+            if (d.at<double>(i, j) > 35000) // 3.5m
                 return false;
         }
     }

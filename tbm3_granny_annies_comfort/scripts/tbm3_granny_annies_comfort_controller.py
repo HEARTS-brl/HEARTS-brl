@@ -17,7 +17,7 @@ from   std_msgs.msg           import Empty, String
 from   geometry_msgs.msg      import Pose2D, Pose, Twist, PoseStamped
 from   roah_rsbb_comm_ros.msg import BenchmarkState
 from   roah_rsbb_comm_ros.srv import Percentage
-
+from random import *
 
 
 class Controller():
@@ -26,7 +26,8 @@ class Controller():
 		#Publishers  
 		self.tts_pub   = rospy.Publisher("/hearts/tts", String, queue_size=10)
 		self.pub_twist = rospy.Publisher('/mobile_base_controller/cmd_vel', Twist, queue_size=10)       
-
+        self.move_to_loc_pub = rospy.Publisher('/hearts/navigation/goal/location', String, queue_size=10)
+		self.pose_2d_pub = rospy.Publisher('hearts/navigation/goal', Pose2D, queue_size = 10)
 
 		#Subscribers
 		self.listen4cmd('on')
@@ -35,7 +36,7 @@ class Controller():
 		self.listen4ans('off')
 
 		rospy.Subscriber("roah_rsbb/benchmark/state", BenchmarkState, self.benchmark_state_callback)
-	
+			
 		#Services
 		self.prepare = rospy.ServiceProxy('/roah_rsbb/end_prepare', std_srvs.srv.Empty)
 		self.execute = rospy.ServiceProxy('/roah_rsbb/end_execute', std_srvs.srv.Empty)
@@ -324,7 +325,8 @@ class Controller():
 
 			print("***** return to GA \n")
 			self.move_to_pose2D(self.user_location)
-		
+			# cardboard box detection not working!
+			return
 		
 		return	
 
@@ -453,10 +455,12 @@ class Controller():
 
 	def main(self):
 		print ("\n***** MAIN Executing *****\n")
-		self.move_to_loc_pub = rospy.Publisher('/hearts/navigation/goal/location', String, queue_size=10)
-		self.pose_2d_pub = rospy.Publisher('hearts/navigation/goal', Pose2D, queue_size = 10)
-		#wait for call 
+		#go to home position
+		#self.move_to_location("home")
+
+		#wait for call 		
 		self.wait_for_call()
+
 		#request location
 		self.wait_for_user_location()
 
