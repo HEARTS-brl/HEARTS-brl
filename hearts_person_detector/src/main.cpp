@@ -50,6 +50,10 @@ static const string RGB_OPENCV_WINDOW = "RGB";
 
 static const string RGB_TOPIC_PARAMETER = "rgb_topic";
 
+static const string HEAD_1_JOINT_NAME = "head_1_joint";
+
+static const string HEAD_2_JOINT_NAME = "head_2_joint";
+
 class ImageConverter
 {
   ros::NodeHandle nh_;
@@ -61,7 +65,12 @@ class ImageConverter
   
   Mat _d;
   Mat _rgb;
+  ros::Subscriber sub_;
+  ros::Publisher headPub_;
   
+  double udAngleRads_;
+  double lrAngleRads_;
+            
 public:
     ImageConverter();
     ~ImageConverter();
@@ -69,10 +78,12 @@ public:
 private:
     void dTopicCb(const sensor_msgs::ImageConstPtr& msg);
     void rgbTopicCb(const sensor_msgs::ImageConstPtr& msg);
+    void jointStatesTopicCb(const sensor_msgs::JointState::ConstPtr& msg);
     string toString(double a);
     bool hasFace(Mat& d, Mat& rgb);
     bool hasDoor(Mat& d, Mat& rgb);
     bool Start(std_srvs::TriggerRequest &req, std_srvs::TriggerResponse &res);
+    void moveHead(double lrAngleRads, double udAngleRads);
 };
 
 bool ImageConverter::Start(std_srvs::TriggerRequest &req, std_srvs::TriggerResponse &res)
@@ -118,6 +129,9 @@ ImageConverter::ImageConverter()
         printf("--(!)Error loading face cascade\n"); 
         return; 
     }
+    
+    headPub_ = nh_.advertise<trajectory_msgs::JointTrajectory>("/head_controller/command", 1);
+    sub_ = nh_.subscribe("joint_states", 10, &ImageConverter::jointStatesTopicCb, this);
 
     cv::namedWindow(D_OPENCV_WINDOW);
     cv::namedWindow(RGB_OPENCV_WINDOW);
@@ -135,6 +149,57 @@ ImageConverter::~ImageConverter()
     destroyWindow(RGB_OPENCV_WINDOW);
 }
 
+void ImageConverter::moveHead(double lrAngleRads, double udAngleRads)
+{
+    trajectory_msgs::JointTrajectory headTrajectory;
+    headTrajectory.joint_names.resize(2);
+    headTrajectory.joint_names[0] = HEAD_2_JOINT_NAME;
+    headTrajectory.joint_names[1] = HEAD_1_JOINT_NAME;
+    
+    headTrajectory.points.resize(1);
+    
+    headTrajectory.points[0].positions.resize(2);
+    headTrajectory.points[0].positions[0] = udAngleRads;
+    headTrajectory.points[0].positions[1] = lrAngleRads;
+    
+    headTrajectory.points[0].velocities.resize(2);
+    headTrajectory.points[0].accelerations.resize(2);
+    headTrajectory.points[0].effort.resize(2);
+    headTrajectory.points[0].time_from_start = ros::Duration(2.0, 0.0);
+    
+    headPub_.publish(headTrajectory);
+   
+    udAngleRads_ = std::numeric_limits<double>::max();
+    lrAngleRads_ = std::numeric_limits<double>::max();
+  
+    ros::Rate rate(10);
+    
+    while (ros::ok())
+    {
+        if ((udAngleRads_ < std::numeric_limits<double>::max()) && 
+            (abs(udAngleRads_ - udAngleRads) < 0.1) && 
+            (lrAngleRads_ < std::numeric_limits<double>::max()) && 
+            (abs(lrAngleRads_ - lrAngleRads) < 0.1))
+        {
+           break;
+        }
+        
+        ros::spinOnce();
+        rate.sleep();
+    }
+}
+
+void ImageConverter::jointStatesTopicCb(const sensor_msgs::JointState::ConstPtr& msg)
+{
+    for (int i = 0; i < msg->name.size(); i++)
+    {
+        if (msg->name[i] == HEAD_2_JOINT_NAME)
+            udAngleRads_ = msg->position[i];
+        else if (msg->name[i] == HEAD_1_JOINT_NAME)
+            lrAngleRads_ = msg->position[i];
+    }
+}
+
 bool ImageConverter::hasDoor(Mat& d, Mat& rgb)
 {
     if (d.empty() || rgb.empty())
@@ -144,7 +209,7 @@ bool ImageConverter::hasDoor(Mat& d, Mat& rgb)
     {
         for (int j = 0; j < d.cols; j++)
         {
-            if (d.at<double>(i, j) > 30000) // 3m
+            if (d.at<double>(i, j) > 40000) // 3m
                 return false;
         }
     }
@@ -159,6 +224,8 @@ bool ImageConverter::hasFace(Mat& d, Mat& rgb)
                  
     // TODO: need to calculate mean distance as well! i actually need to call into a function each time depth or image frame changes
     
+    moveHead(0, 0.4);
+    
     Mat frame = rgb.clone();
     Mat frame_gray;
     cvtColor(rgb, frame_gray, COLOR_BGR2GRAY);
@@ -166,6 +233,8 @@ bool ImageConverter::hasFace(Mat& d, Mat& rgb)
     //-- Detect faces
     std::vector<Rect> faces;
     face_cascade.detectMultiScale(frame_gray, faces, 1.2, 4, 0 | CASCADE_SCALE_IMAGE, Size(50, 50)); // this is face detection, MIN_FACE_SIZE
+
+    moveHead(0, 0);
 
     return faces.size() > 0;
 }

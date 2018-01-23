@@ -78,7 +78,7 @@ class Controller():
         rospy.Subscriber("/hearts/stt", String, self.hearCommand_callback)
         rospy.Subscriber('/move_base/feedback', MoveBaseActionFeedback, self.current_pose_callback)
         rospy.Subscriber("roah_rsbb/benchmark/state", BenchmarkState, self.benchmark_state_callback)
-        rospy.Subscriber('move_base/status', GoalStatusArray, self.nav_status_callback)
+        rospy.Subscriber('/hearts/navigation/status', String, self.nav_status_callback)
 
         #TODO subscribe to succeed or fail
         self.prepare = rospy.ServiceProxy('/roah_rsbb/end_prepare', std_srvs.srv.Empty)
@@ -89,6 +89,7 @@ class Controller():
         self.detect_obstacle = rospy.ServiceProxy('/start_person_detection',std_srvs.srv.Trigger)
 
         # Disable head manager
+        rospy.sleep(10.)
         self.log_speak("End initialize, ready for start")
         return(None)
         
@@ -106,7 +107,7 @@ class Controller():
                 self.go_to_target(self.waypoint)
             self.continue_on = False # True when reached target or abandoned target
             while not self.continue_on:
-                rospy.sleep(1)
+                rospy.sleep(1.)
             self.log_speak("Waypoint "+str(self.waypoint)+" completed, moving on")
             
 
@@ -118,13 +119,13 @@ class Controller():
                 self.go_to_target(1.5)
                 #rospy.sleep(5)
                 self.log_speak("A door is in the way. Please open the door")
-                rospy.sleep(5)
+                rospy.sleep(5.)
                 self.go_to_target(2)
             if self.waypoint == 5:
                 self.go_to_target(4.5)
-                rospy.sleep(5)
+                rospy.sleep(5.)
                 self.log_speak("knock knock, would someone please open the door")
-                rospy.sleep(2)
+                rospy.sleep(2.)
             if self.waypoint == 3:
                 self.continue_on = True
         return
@@ -137,37 +138,35 @@ class Controller():
         rospy.loginfo("Looking for a person")
         #get from zeke or call zeke's functions
         self.log_speak("Please stand one meter directly in front of me")
-        rospy.sleep(5)
+        rospy.sleep(5.)
         self.log_speak("Please say cheese")
         success = self.start_track()
         while not success:
             self.log_speak("Please stand a bit closer")
-            rospy.sleep(3)
+            rospy.sleep(3.)
             success = self.start_track()
-        self.log_speak("Found you. Please tell me the word, stop! when we reach the destination")
+        self.log_speak("Found you. Please tell me the word, stopping! when we reach the destination")
         self.log_speak("Lead onward")
         return
 
     def nav_status_callback(self,data):
-        length_status = len(data.status_list)
-        if length_status > 0:
-            status = data.status_list[length_status-1].status
-        if status == 3:
+        status = data.data
+        if status == "Success":
             if self.destination == 1.5:
                 # TODO Call service
                 obstacle_type = self.detect_obstacle()
                 if obstacle_type.message == '1': #person
-                    self.pub_talk("Person detected, please move")
+                    self.log_speak("Person detected, please move")
                 if obstacle_type.message == '2': #door
-                    self.pub_talk("Door detected, please open")
+                    self.log_speak("Door detected, please open")
                 if obstacle_type.message == '3': #small obstacle
-                    self.pub_talk("Small obstacle detected, please move it")
-                rospy.sleep(10)
+                    self.log_speak("Small obstacle detected, please move it")
+                rospy.sleep(10.)
                 self.destination = 2
                 self.go_to_target(self.destination)
             else:
                 self.continue_on = True
-        elif status == 4 or status == 5 or status == 9:
+        elif status == "Fail":
             self.handle_fail()
         return
 
@@ -178,7 +177,7 @@ class Controller():
         elif data.benchmark_state == BenchmarkState.PREPARE:
             rospy.loginfo("PREPARE")
             try:
-                time.sleep(5)
+                time.sleep(5.)
                 self.prepare()
             except:
                 rospy.loginfo("Failed to reply PREPARE")
@@ -195,9 +194,9 @@ class Controller():
         rospy.loginfo(speech)
         words = [x for x in words if x!='the']
         possible_verbs = self.tbm1_commands_dict.keys()
-        if words[0] == "start":
+        if words[0] == "starting":
             self.begin()
-        if words[0] =="stop":
+        if words[0] =="stopping":
             _ = self.end_track()
             self.pub_talk("Heard Stop. Thanks for leading me. I will go inside now")
             self.continue_on = True
