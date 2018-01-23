@@ -53,8 +53,8 @@ class Controller():
 		# h for high value and l for low value ie the range
 		self.jlocxh = [-0.40, 1.50]
 		self.jlocxl = [-1.80, 0.00]
-		self.jlocyh = [-2.20, 5.50]
-		self.jlocyl = [-4.20, 4.20]
+		self.jlocyh = [-2.20, -4.20]
+		self.jlocyl = [-4.20, -5.50]
 
 
 		# Disable head manager
@@ -411,19 +411,17 @@ class Controller():
 	def move_to_pose2D(self, target_location_2D):
 		##publish granny annie's location
 		rospy.loginfo("Moving to Pose2D")
-		pub = rospy.Publisher('hearts/navigation/goal', Pose2D, queue_size = 10)
-		pub.publish(target_location_2D)
+		
+		self.pose_2d_pub.publish(target_location_2D)
 
 		self.wait_to_arrive(5)
-		pub.unregister()
-
+		
 	def move_to_location(self, target_location):
 		rospy.loginfo("Moving to a location")
-		pub = rospy.Publisher('/hearts/navigation/goal/location', String, queue_size=10)
-		pub.publish(target_location)
+		
+		self.move_to_loc_pub.publish(target_location)
 
 		self.wait_to_arrive(5)
-		pub.unregister()
 
 
 	def wait_to_arrive(self, count): #when this function is called, must specify no of counts before it breaks out of infinite loop
@@ -455,7 +453,8 @@ class Controller():
 
 	def main(self):
 		print ("\n***** MAIN Executing *****\n")
-
+		self.move_to_loc_pub = rospy.Publisher('/hearts/navigation/goal/location', String, queue_size=10)
+		self.pose_2d_pub = rospy.Publisher('hearts/navigation/goal', Pose2D, queue_size = 10)
 		#wait for call 
 		self.wait_for_call()
 		#request location

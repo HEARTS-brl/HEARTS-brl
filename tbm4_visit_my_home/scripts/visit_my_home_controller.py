@@ -54,6 +54,7 @@ class Controller():
         self.head_move_step_size = .15
         self.turn_step_size = 0.2
         self.move_step_size = 0.2
+        self.destination=0
 
         #self.handle_camera_direction(['center'])
         self.outfolder = rospy.get_param('output_path')
@@ -292,7 +293,7 @@ class Controller():
     def log_speak(self, text):
         rospy.loginfo(text)
         self.pub_talk.publish(text)
-        rospy.sleep(len(text/5))
+        rospy.sleep(len(text)/5)
 
 
 

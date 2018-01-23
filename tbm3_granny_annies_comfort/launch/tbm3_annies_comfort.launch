@@ -25,7 +25,7 @@
   </node>  
    
   <include file="$(find hearts_navigation)/launch/hearts_navigation_navigate.launch">
-    <arg name="map_name" value="map_open" />
+    <arg name="map_name" value="map_final" />
   </include>
   <param name="locations_json" type="string" value="$(find hearts_navigation)/data/locations.json" />
 
