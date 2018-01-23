@@ -335,7 +335,7 @@ ImageConverter::ImageConverter()
                 double h = curr[2];
                 //cout << "o: " << a1 << ", h: " << h << endl;
                 double theta = asin(a1/h);
-                cout << "theta: " << (theta / (2*M_PI)) * 360 << " degrees" << endl;
+                //cout << "theta: " << (theta / (2*M_PI)) * 360 << " degrees" << endl;
                 /*
                 // TODO: need to get this working!
                 double theta_lr_rad_inc = -((M_PI/2) - acos(a1/h)); 
@@ -647,16 +647,23 @@ bool ImageConverter::process(Vec3d& curr)
         _gRegionStdDev = newStdDev1.val[0];
         _rRegionStdDev = newStdDev2.val[0];
         
-        cout << "_bRegionAvgVal: " << _bRegionAvgVal << ", _gRegionAvgVal: " << _gRegionAvgVal << ", _rRegionAvgVal: " << _rRegionAvgVal << ", _bRegionStdDev: " << _bRegionStdDev << ", _gRegionStdDev: " << _gRegionStdDev << ", _rRegionStdDev: " << _rRegionStdDev << endl;
+        //cout << "_bRegionAvgVal: " << _bRegionAvgVal << ", _gRegionAvgVal: " << _gRegionAvgVal << ", _rRegionAvgVal: " << _rRegionAvgVal << ", _bRegionStdDev: " << _bRegionStdDev << ", _gRegionStdDev: " << _gRegionStdDev << ", _rRegionStdDev: " << _rRegionStdDev << endl;
     
+        Scalar newMeanD = mean(_d, invertedMask);
+        double d = newMeanD.val[0];
+        
         Rect largestRect = boundingRect(contours[largestContourIndex]); // Find the bounding rectangle for biggest contour
         Point center = (largestRect.br() + largestRect.tl())*0.5;
         Vec3d curr_n;
-        curr_n = Vec3d(center.x, center.y, _d.at<float>(center));
+        curr_n = Vec3d(center.x, center.y, d);
         
-        double z_m = (_d.at<float>(center) / 0.10131);
+        
+        
+        double z_m = (d / 10000);//0.10131);
         double x_m = ((center.x - w_2) / 540.0) * z_m;
         double y_m = ((center.y - h_2) / 540.0) * z_m;
+        
+        cout << "distance: " << z_m << " m" << endl;
         
         curr = Vec3d(x_m, y_m, z_m);
         circle(img2, center, 3, Scalar(0,255,0));
@@ -691,6 +698,8 @@ bool ImageConverter::train(Mat& d, Mat& rgb, double& dRegionAvgVal, double& rReg
     // TODO: need to calculate mean distance as well! i actually need to call into a function each time depth or image frame changes
     
     Mat frame = rgb.clone();
+    
+    /*
     Mat frame_gray;
     cvtColor(rgb, frame_gray, COLOR_BGR2GRAY);
 
@@ -736,10 +745,18 @@ bool ImageConverter::train(Mat& d, Mat& rgb, double& dRegionAvgVal, double& rReg
 
     if ((region.x + region.width > rgb.cols) || (region.y + region.height > rgb.rows)) // make sure we don't process the regions when they're out of frame
         return false;
-
+*/
+// 640 x 480
+    Rect region;
+    region.x = 270;
+    region.y = 190;
+    region.width = 100;
+    region.height = 100;
+    rectangle(frame, region, BLUE);
+    
     Mat dRegion = d(region);
     Scalar dRegionAvg = mean(dRegion);
-    dRegionAvgVal = dRegionAvg.val[0] / 0.10131; // double 
+    dRegionAvgVal = dRegionAvg.val[0] / 10000; //0.10131; // double 
     //cout << "avg. depth = " << dRegionAvgVal << endl;
     
     Mat rgbRegion = rgb(region);
@@ -842,11 +859,14 @@ string ImageConverter::toString(double a)
   
 void ImageConverter::dTopicCb(const sensor_msgs::ImageConstPtr& msg)
 {
+// 1m = 10000
+// 2m = 20000
     try
     {
         cv_bridge::CvImagePtr d_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::TYPE_32FC1);
         Mat d = d_ptr->image;
-        cv::normalize(d, _d, 1, 0, cv::NORM_MINMAX);
+        //cv::normalize(d, _d, 1, 0, cv::NORM_MINMAX);
+        _d = d;
         cv::imshow(D_OPENCV_WINDOW, _d);
         cv::waitKey(3);
     }
