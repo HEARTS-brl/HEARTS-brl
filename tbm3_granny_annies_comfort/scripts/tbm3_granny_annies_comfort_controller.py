@@ -44,15 +44,16 @@ class Controller():
 		self.user_location = None
 		
 		# Granny Annies position in our map's coord system
+		# col 0= bed, col1 = sofa
 		self.ulocx = [11, 22]
 		self.ulocy = [33, 44]
 		
 		# Granny Annies position in judges coord system
 		# h for high value and l for low value ie the range
-		self.jlocxh = [12, 23]
-		self.jlocxl = [10, 21]
-		self.jlocyh = [34, 45]
-		self.jlocyl = [32, 42]
+		self.jlocxh = [-0.40, 1.50]
+		self.jlocxl = [-1.80, 0.00]
+		self.jlocyh = [-2.20, 5.50]
+		self.jlocyl = [-4.20, 4.20]
 
 
 		# Disable head manager
@@ -355,9 +356,9 @@ class Controller():
 		rospy.loginfo("Waiting for user location")
 		self.user_location = None
 		sub = rospy.Subscriber("/roah_rsbb/tablet/position", Pose2D, self.user_location_callback)
-		# rospy.wait_for_service('/roah_rsbb/tablet/map')
-		# user_location_service = rospy.ServiceProxy('/roah_rsbb/tablet/map', std_srvs.srv.Empty)
-		# user_location_service()
+		rospy.wait_for_service('/roah_rsbb/tablet/map')
+		user_location_service = rospy.ServiceProxy('/roah_rsbb/tablet/map', std_srvs.srv.Empty)
+		user_location_service()
 		rospy.loginfo("going to while loop")
 		while self.user_location is None:
 			rospy.sleep(5)
@@ -367,7 +368,7 @@ class Controller():
 
 		# Callback functions
 	def tablet_callback(self, msg):
-		say("granny annie has called for attention")
+		self.say("granny annie has called for attention")
 		self.wait = True
 
 	def user_location_callback(self, msg):
@@ -375,9 +376,9 @@ class Controller():
 		rospy.loginfo(msg)
 		found = False
 
-		print("msg.x     from tablet: "+str(msg.x))
-		print("msg.x     from tablet: "+str(msg.y))
-		print("msg.theta from tablet: "+str(msg.theta))
+		print("msg.x     from GA tablet: "+str(msg.x))
+		print("msg.x     from GA tablet: "+str(msg.y))
+		print("msg.theta from GA tablet: "+str(msg.theta))
 
 
 
