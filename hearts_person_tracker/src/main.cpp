@@ -250,7 +250,7 @@ bool ImageConverter::Start(std_srvs::TriggerRequest &req, std_srvs::TriggerRespo
         _h_2 = size.height/2;
         _w_2 = size.width/2;
         
-        cout << "trained: d=" << _dRegionAvgVal << ", r=" << _rRegionAvgVal << ", g=" << _gRegionAvgVal << ", b=" << _bRegionAvgVal << ", rs=" << _rRegionStdDev << ", gs=" << _gRegionStdDev << ", bs=" << _bRegionStdDev << endl;
+        cout << "TRAINED: _bRegionAvgVal: " << _bRegionAvgVal << ", _gRegionAvgVal: " << _gRegionAvgVal << ", _rRegionAvgVal: " << _rRegionAvgVal << ", _bRegionStdDev: " << _bRegionStdDev << ", _gRegionStdDev: " << _gRegionStdDev << ", _rRegionStdDev: " << _rRegionStdDev << endl;
     }
     else
         cout << "Failed to start." << endl;
@@ -407,6 +407,8 @@ ImageConverter::ImageConverter()
                         _prevX.pop_front();
                         
                     double x = _dRegionAvgVal - h;
+                    
+                    cout << "distance delta : " << x << endl;
                     
                     if (x < -xLimit)
                         _prevX.push_back(+0.1);
@@ -622,6 +624,31 @@ bool ImageConverter::process(Vec3d& curr)
     
     if (largestContourIndex > -1)
     {
+        Mat invertedMask;
+        bitwise_not(mask, invertedMask);
+    
+        // Chris's idea - recalculate training parameters on each image frame
+        
+        cv::imshow("INVERTED MASK", invertedMask);
+        
+        Mat newChannels[3];
+        split(_rgb, newChannels);
+        
+        Scalar newMean0, newMean1, newMean2, newStdDev0, newStdDev1, newStdDev2;
+        meanStdDev(newChannels[0], newMean0, newStdDev0, invertedMask); 
+        meanStdDev(newChannels[1], newMean1, newStdDev1, invertedMask); 
+        meanStdDev(newChannels[2], newMean2, newStdDev2, invertedMask);
+                
+        _bRegionAvgVal = newMean0.val[0];
+        _gRegionAvgVal = newMean1.val[0];
+        _rRegionAvgVal = newMean2.val[0];
+                
+        _bRegionStdDev = newStdDev0.val[0];
+        _gRegionStdDev = newStdDev1.val[0];
+        _rRegionStdDev = newStdDev2.val[0];
+        
+        cout << "_bRegionAvgVal: " << _bRegionAvgVal << ", _gRegionAvgVal: " << _gRegionAvgVal << ", _rRegionAvgVal: " << _rRegionAvgVal << ", _bRegionStdDev: " << _bRegionStdDev << ", _gRegionStdDev: " << _gRegionStdDev << ", _rRegionStdDev: " << _rRegionStdDev << endl;
+    
         Rect largestRect = boundingRect(contours[largestContourIndex]); // Find the bounding rectangle for biggest contour
         Point center = (largestRect.br() + largestRect.tl())*0.5;
         Vec3d curr_n;
