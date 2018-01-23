@@ -74,10 +74,6 @@ class Controller():
         self.pub_dummy = rospy.Publisher('/move_base/feedback', MoveBaseActionFeedback, queue_size = 10)
               
         ### Subscribers - must listen for speech commands, location
-        #rospy.Subscriber("hearts/navigation/goal/location", String, self.locGoal_callback)
-        #rospy.Subscriber("/turtle1/pose", Pose, self.currentPose_callback)
-        #rospy.Subscriber("hearts/navigation/pose/location", String, self.current_pose)
-        #rospy.Subscriber("roah_rsbb/benchmark", Benchmark, self.benchmark_callback)
         rospy.Subscriber("/hearts/stt", String, self.hearCommand_callback)
         rospy.Subscriber('/move_base/feedback', MoveBaseActionFeedback, self.current_pose_callback)
         rospy.Subscriber("roah_rsbb/benchmark/state", BenchmarkState, self.benchmark_state_callback)
@@ -89,18 +85,15 @@ class Controller():
         self.change_maps = rospy.ServiceProxy('/pal_map_manager/change_map',Acknowledgment)
         self.start_track = rospy.ServiceProxy('/start_person_tracking',std_srvs.srv.Trigger)
         self.end_track = rospy.ServiceProxy('/stop_person_tracking',std_srvs.srv.Trigger)
-        #axk = self.change_maps("input: 'map_1'")
 
         # Disable head manager
-        #head_mgr = NavigationCameraMgr()
-        #head_mgr.head_mgr_as("disable")
-        rospy.loginfo("End init- ready for start")
+        self.log_speak("End initialize, ready for start")
         return(None)
         
     def begin(self):
         self.ok_to_start = True
         for self.waypoint in range(1,6):
-            rospy.loginfo("starting: "+str(self.waypoint))
+            self.log_speak("starting waypoint "+str(self.waypoint))
             if self.waypoint == 4:
                 self.ID_person()
             else:
@@ -108,8 +101,8 @@ class Controller():
             self.continue_on = False # True when reached target or abandoned target
             while not self.continue_on:
                 rospy.sleep(1)
-            rospy.loginfo("Waypoint "+str(self.waypoint)+" completed, moving on***********")
-            rospy.sleep(3)
+            self.log_speak("Waypoint "+str(self.waypoint)+" completed, moving on")
+            
 
     def handle_fail(self):
         if self.ok_to_start:
@@ -117,17 +110,16 @@ class Controller():
                 self.go_to_target(1)
             if self.waypoint == 2:
                 self.go_to_target(1.5)
+                #rospy.sleep(5)
+                self.log_speak("A door is in the way. Please open the door")
                 rospy.sleep(5)
-                self.pub_talk.publish("A door is in the way. Please open the door")
-                rospy.sleep(2)
                 self.go_to_target(2)
             if self.waypoint == 5:
-                #TODO move arm to push open the door
                 self.go_to_target(4.5)
                 rospy.sleep(5)
-                self.pub_talk.publish("knock knock, would someone please open the door")
+                self.log_speak("knock knock, would someone please open the door")
                 rospy.sleep(2)
-            if self.waypoint == 3 or self.waypoint == 4:
+            if self.waypoint == 3:
                 self.continue_on = True
         return
 
@@ -138,16 +130,16 @@ class Controller():
     def ID_person(self):
         rospy.loginfo("Looking for a person")
         #get from zeke or call zeke's functions
-        self.pub_talk.publish("Please one foot in front of me")
+        self.log_speak("Please stand one meter directly in front of me")
         rospy.sleep(5)
+        self.log_speak("Please say cheese")
         success = self.start_track()
         while not success:
-            self.pub_talk.publish("Please look the robot in the face")
-            rospy.loginfo("Please look the robot in the face")
+            self.log_speak("Please stand a bit closer")
+            rospy.sleep(3)
             success = self.start_track()
-            rospy.sleep(5)
-        self.pub_talk.publish("Lead onward")
-        self.pub_talk.publish("Please say stop when you have reached the destination")
+        self.log_speak("Found you. Please tell me the word, stop! when we reach the destination")
+        self.log_speak("Lead onward")
         return
 
     def nav_status_callback(self,data):
@@ -188,6 +180,7 @@ class Controller():
             self.begin()
         if words[0] =="stop":
             _ = self.end_track()
+            self.pub_talk("Heard Stop. Thanks for leading me. I will go inside now")
             self.continue_on = True
         if words[0] in possible_verbs:
             valid_command = True
@@ -278,6 +271,10 @@ class Controller():
         l = '['+str(x2)+','+str(y2)+','+str(z2)+']'
         return(l)
 
+    def log_speak(self, text):
+        rospy.loginfo(text)
+        self.pub_talk.publish(text)
+        rospy.sleep(len(text/5))
 
 
 
