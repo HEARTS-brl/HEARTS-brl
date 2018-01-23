@@ -85,6 +85,7 @@ class Controller():
         self.change_maps = rospy.ServiceProxy('/pal_map_manager/change_map',Acknowledgment)
         self.start_track = rospy.ServiceProxy('/start_person_tracking',std_srvs.srv.Trigger)
         self.end_track = rospy.ServiceProxy('/stop_person_tracking',std_srvs.srv.Trigger)
+        self.detect_obstacle = rospy.ServiceProxy('/start_person_detection',std_srvs.srv.Trigger)
 
         # Disable head manager
         self.log_speak("End initialize, ready for start")
@@ -94,8 +95,12 @@ class Controller():
         self.ok_to_start = True
         for self.waypoint in range(1,6):
             self.log_speak("starting waypoint "+str(self.waypoint))
+            self.destination = self.waypoint #for handling waypoint 2
             if self.waypoint == 4:
                 self.ID_person()
+            elif self.waypoint == 2:
+                self.destination = 1.5
+                self.go_to_target(self.destination)
             else:
                 self.go_to_target(self.waypoint)
             self.continue_on = False # True when reached target or abandoned target
@@ -147,7 +152,20 @@ class Controller():
         if length_status > 0:
             status = data.status_list[length_status-1].status
         if status == 3:
-            self.continue_on = True
+            if self.destination == 1.5:
+                # TODO Call service
+                obstacle_type = self.detect_obstacle()
+                if obstacle_type.message == '1': #person
+                    self.pub_talk("Person detected, please move")
+                if obstacle_type.message == '2': #door
+                    self.pub_talk("Door detected, please open")
+                if obstacle_type.message == '3': #small obstacle
+                    self.pub_talk("Small obstacle detected, please move it")
+                rospy.sleep(10)
+                self.destination = 2
+                self.go_to_target(self.destination)
+            else:
+                self.continue_on = True
         elif status == 4 or status == 5 or status == 9:
             self.handle_fail()
         return
