@@ -6,7 +6,7 @@
     <!-- used to generate wav files e.g. wav out path -->
     <arg name="SR_ERL_DATAPATHOUT" default=" $(find hearts_stt)/temp/" />
     <!-- used to configure listening energy threshold -->
-    <arg name="SR_ENERGY_THRESHOLD" default="1200" />
+    <arg name="SR_ENERGY_THRESHOLD" default="600" />
     <!-- keywords for google -->
     <arg name="SR_GCP_KEYWORDSFILE" default="$(find hearts_stt)/data_in/CFR/gcp_keywords_vb.txt" />
     <!-- Used in microphone mode: default is to listen continuously  ="", or to wait on keystoke  ="listen" -->
