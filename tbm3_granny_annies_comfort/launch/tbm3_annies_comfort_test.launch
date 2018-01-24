@@ -21,7 +21,8 @@
     <param name="team_name" type="string" value="Hearts" />
     <param name="robot_name" type="string" value="Tiago" />
     <param name="rsbb_key" type="string" value="FJnz6hJX" />
-    <param name="rsbb_host" type="string" value="192.168.0.57" />
+    <!-- <param name="rsbb_host" type="string" value="192.168.0.57" /> --> <!-- apmt -->
+    <param name="rsbb_host" type="string" value="137.195.112.253" /><!-- testbed -->
   </node>  
    
   <include file="$(find hearts_navigation)/launch/hearts_navigation_navigate_test.launch" />

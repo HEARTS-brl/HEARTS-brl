@@ -1,5 +1,20 @@
-type(juice, juice).
-in(juice, living_room).
-on(juice, coffee_table).
-position (juice, [2.54,2.84,0.5]).
-picture(juice, juice.jpg).
+type(door_entrance, door).
+connects(door_entrance, hall, outside).
+isOpen(door_entrance, false).
+type(weetabix, weetabix).
+in(weetabix, dining_room).
+on(weetabix, dining_table).
+position (weetabix, [2.54,2.84,0.5]).
+picture(weetabix, weetabix.jpg).
+type(water, water).
+in(water, living_room).
+on(water, coffee_table).
+position (water, [2.54,2.84,0.5]).
+picture(water, water.jpg).
+type(plant, plant).
+in(plant, bedroom).
+type(paracetamol, paracetamol).
+in(paracetamol, bedroom).
+on(paracetamol, bedside_table).
+position (paracetamol, [2.54,2.84,0.5]).
+picture(paracetamol, paracetamol.jpg).
