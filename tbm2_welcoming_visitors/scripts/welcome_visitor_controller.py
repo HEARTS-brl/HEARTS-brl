@@ -197,33 +197,14 @@ class Controller():
         # 4. detect door is open
         rospy.sleep(3)
 
-        # 5. speak to postman, instruct to follow robot: "Please follow me"
-        self.say("Hello! Please follow me")
-
-        # 6. move to kitchen
-        if self.move_to("home", 3) == False:
-            self.say("I am unable to move to the kitchen")
-            return
-
-        # 7. speak to postman, instruct to leave parcel on table: "Please leave the parcel on the table"
-        self.say("Please leave the parcel on the table")
-
-        # 8. wait
-        # TODO
-        rospy.sleep(5)
-
-        # 9. speak to postman, instruct to follow robot: "Please follow me"
-        self.say("Please follow me")
-
-        # 10. move to front door
-        if self.move_to("hallway", 3) == False:
-            self.say("I am unable to move to the front door")
-            return
-
-        # 11. bid postman farewell
+        # 5. speak to postman, instruct to leave parcel on hallway floor
+        self.say("Please leave the parcel on the floor")
+        rospy.sleep(2)
+        
+        # 6. bid postman farewell
         self.say("Thank you for visiting. Goodbye!")
 
-        # 12. return to base
+        # 7. return to base
         if self.move_to("home", 3) == False:
             self.say("I am unable to move to the base")
             return
