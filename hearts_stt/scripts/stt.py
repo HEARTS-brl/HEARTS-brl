@@ -59,6 +59,12 @@ import gcp_keywords_r     as gcpk # google cloud platform preferred keyword/sphr
 import gcp_credentials    as gcpc # google cloud platform credentials to access GCP speech recognition
 
 import wave, array, os            # used by mono_to_stereo()
+import signal
+
+def handler (signum, frame):
+    raise Exception("Too slow my friend, try again!!! XD")
+
+signal.signal(signal.SIGALRM, handler)
 
 o_tt=TT.tag_topics()
 
@@ -257,8 +263,8 @@ def mono_to_stereo(inputfile):
         tempinput  = inputfile+"_temp"
         outputfile = inputfile
         os.rename(inputfile, tempinput)
-	    # print (ifile.getparams())
-	    # (1, 2, 44100, 2013900, 'NONE', 'not compressed')
+        # print (ifile.getparams())
+        # (1, 2, 44100, 2013900, 'NONE', 'not compressed')
         (nchannels, sampwidth, framerate, nframes, comptype, compname) = ifile.getparams()
         assert comptype == 'NONE'  # Compressed not supported yet
         array_type = {1:'B', 2: 'h', 4: 'l'}[sampwidth]
@@ -331,9 +337,15 @@ if __name__ == "__main__":
         passes = 0
         rate = rospy.Rate(1)
         while not rospy.is_shutdown():
+
            audio = speech_recognizer.get_audio_mic(energy_threshold, pause_threshold, dynamic_energy_threshold) 
            rospy.loginfo("SPEECH HEARD.....: ")
-           text  = speech_recognizer.recognize(audio)
+           signal.alarm(60)
+           try:
+               text  = speech_recognizer.recognize(audio)
+           except Exception, exc:
+               print("Exception had")
+               print exc
            passes +=  1
            if global_bool:
                rospy.loginfo("Speaking")
