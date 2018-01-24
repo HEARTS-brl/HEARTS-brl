@@ -3,7 +3,7 @@
 import rospy
 from std_msgs.msg import String, Int32
 from sensor_msgs.msg import LaserScan
-
+import numpy as np
 
 rospy.init_node("change_detector", anonymous=True)
 
@@ -13,7 +13,7 @@ p = rospy.Publisher('/scan_change', String, queue_size = 10)
 #Subscribers
 
 previous_scan = []
-threshold = 80
+threshold = 20
 #store last laser scan - ranges only?
 def call_back(data):
 	global previous_scan
@@ -26,8 +26,9 @@ def call_back(data):
 		return()
 	else:
 		for i in range(len(current_scan)):
-			d = abs(current_scan[i]-previous_scan[i])
-			total = total+d
+		    if not np.isnan(current_scan[i]) and not np.isinf(current_scan[i]) and not np.isnan(previous_scan[i]) and not np.isinf(previous_scan[i]):
+    			d = abs(current_scan[i]-previous_scan[i])
+	    		total = total+d
 	#rospy.loginfo(total)
 	if total>threshold:
 		p.publish('yes')

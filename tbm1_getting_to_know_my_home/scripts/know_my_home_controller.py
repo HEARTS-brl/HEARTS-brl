@@ -117,7 +117,6 @@ class Controller():
             subject = words[1:]
             #TODO parse rooms into single words (e.g. dining room into dining_room)
         else:        #self.pub_move = rospy.Publisher('/hearts/controller/move', Twist, queue_size = 10)        
-
             valid_command=False
             self.pub_talk.publish("Invalid command please try again")
             return
@@ -157,11 +156,11 @@ class Controller():
                 thing_id = 'door_bedroom'
                 room1 = 'bedroom'
                 room2 = 'living_room'
-            if 'bathroom' in subjects: 
+            if 'bathroom' in subject: 
                 thing_id = 'door_bathroom'
                 room1 = 'bathroom'
                 room2 = 'kitchen'
-            if 'hall' in subjects: 
+            if 'hall' in subject: 
                 thing_id = 'door_hall'
                 room1 = 'hall'
                 room2 = 'kitchen'

@@ -6,7 +6,7 @@
 import rospy
 import time
 from std_msgs.msg import Empty, String
-from geometry_msgs.msg import Pose2D, Twist
+from geometry_msgs.msg import Pose2D, Twist, Pose
 from roah_rsbb_comm_ros.msg import Benchmark, BenchmarkState, DevicesState, TabletState
 import std_srvs.srv
 from collections import Counter
@@ -60,7 +60,7 @@ class Controller():
         self.votes = [ ]
         sub = rospy.Subscriber("/hearts/face/user", String, self.face_callback)
         rospy.loginfo("subscribed to topic /hearts/face/user")
-        rospy.sleep(10)
+        rospy.sleep(20)
         sub.unregister()
         rospy.loginfo("unsubscribed from topic /hearts/face/user - votes = " + str(len(self.votes)))
         counts = Counter(self.votes)
@@ -197,33 +197,14 @@ class Controller():
         # 4. detect door is open
         rospy.sleep(3)
 
-        # 5. speak to postman, instruct to follow robot: "Please follow me"
-        self.say("Hello! Please follow me")
-
-        # 6. move to kitchen
-        if self.move_to("home", 3) == False:
-            self.say("I am unable to move to the kitchen")
-            return
-
-        # 7. speak to postman, instruct to leave parcel on table: "Please leave the parcel on the table"
-        self.say("Please leave the parcel on the table")
-
-        # 8. wait
-        # TODO
-        rospy.sleep(5)
-
-        # 9. speak to postman, instruct to follow robot: "Please follow me"
-        self.say("Please follow me")
-
-        # 10. move to front door
-        if self.move_to("hallway", 3) == False:
-            self.say("I am unable to move to the front door")
-            return
-
-        # 11. bid postman farewell
+        # 5. speak to postman, instruct to leave parcel on hallway floor
+        self.say("Please leave the parcel on the floor")
+        rospy.sleep(2)
+        
+        # 6. bid postman farewell
         self.say("Thank you for visiting. Goodbye!")
 
-        # 12. return to base
+        # 7. return to base
         if self.move_to("home", 3) == False:
             self.say("I am unable to move to the base")
             return
@@ -286,32 +267,15 @@ class Controller():
             return
 
         # 5. speak to doctor, advise robot will wait
-        self.say("Please enter. I will wait here until you are done.")
+        self.say("Please enter. Stand facing me when you are done.")
     
         # 6. wait until doctor exits the bedroom
         rospy.sleep(3)
         self.wait_for_scan_changed()
-
-        # 7. follow doctor to front door
-        self.start_track()
-        self.say("I will follow you to the door")
-        
-        sub = rospy.Subscriber("/move_base_simple/current_pose", Pose, self.current_pose_callback)
-        
-        # 8. detect when near front door and stop following
-        # e.g. x > 2.2 and > -6.75
-        r = rospy.Rate(10)
-        while not rospy.is_shutdown():
-            if not self.current_pose is None and \
-               self.current_pose.position.x > 2.2 and \
-               self.current_pose.position.y > -6.75:
-                # near front door
-                break
-            else:
-                r.sleep()
-        
-        sub.shutdown()
-        self.stop_track()
+        self.say("Now you are done. I will follow you to the door. Please lead the way.")
+                
+        #self.say("Now you are done.")
+        rospy.sleep(2)
         
         # 9. move to hallway
         if self.move_to("hallway", 3) == False:

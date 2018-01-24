@@ -14,7 +14,12 @@
     <arg name="password" value="hearts_erl_2_pal"/>
   </include> -->
   <!-- Heriot-Watt IP camera setup -->
-  <remap from="/image_raw" to="/roah_ipcam/image"/>
+  <!-- <node name="republisher" pkg="image_transport" type="republish" respawn="true"
+        args="compressed in:=/image raw out:=/roah_ipcam/image"/> -->
+  <!-- <remap from="/image_raw/compressed" to="/roah_ipcam/image/compressed"/> -->
+  <!-- <node name="republisher" pkg="image_transport" type="republish"
+        args="compressed in:=/roah_ipcam/image raw out:=/roah_ipcam/image"
+        /> -->
   <node name="axis_driver" pkg="axis_camera" type="axis.py">
     <param name="hostname" value="10.2.0.107" />
     <param name="username" value="HEARTS" />
