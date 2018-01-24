@@ -205,7 +205,7 @@ class Controller():
 			self.listen4ans('on')
 			
 		else:
-			self.say("Your command was not understood       please repeat")
+			self.say("Sorry but yor command was not understood       please repeat")
 
 		return
 	
@@ -424,6 +424,8 @@ class Controller():
 		self.pose_2d_pub.publish(target_location_2D)
 
 		self.wait_to_arrive(5)
+
+		self.say("How can I help you today? Plesae give me a command")
 		
 	def move_to_location(self, target_location):
 		rospy.loginfo("Moving to a location")
@@ -431,6 +433,8 @@ class Controller():
 		self.move_to_loc_pub.publish(target_location)
 
 		self.wait_to_arrive(5)
+
+		self.say("I have arrived at the "+target_locaion+" location")
 
 
 	def wait_to_arrive(self, count): #when this function is called, must specify no of counts before it breaks out of infinite loop
@@ -466,12 +470,15 @@ class Controller():
 		#self.move_to_location("home")
 
 		#wait for call 		
+		self.say("Waiting to be called by granny annie.")
 		self.wait_for_call()
 
 		#request location
+		self.say("Waiting for ganny annie's location")
 		self.wait_for_user_location()
 
 		#navigate to the user's location
+		self.say("hello granny annie I am on my way to you.")
 		self.move_to_pose2D(self.user_location)
 		
 		self.listen4cmd('on')
