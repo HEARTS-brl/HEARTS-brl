@@ -16,6 +16,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/objdetect/objdetect.hpp>
 #include "macros.hpp"
+#include <cv_bridge/cv_bridge.h>
 
 using namespace std;
 using namespace cv;
@@ -124,7 +125,26 @@ public:
   image_transport::Publisher image_pub_;
   }
 
+
   void imageCb(const sensor_msgs::ImageConstPtr& msg)
+  {
+
+    cv_bridge::CvImagePtr cv_ptr;
+    try
+    {
+      cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+    }
+    catch (cv_bridge::Exception& e)
+    {
+      ROS_ERROR("cv_bridge exception: %s", e.what());
+      return;
+    }
+    
+    Mat frame = cv_ptr->image;
+    
+    //Mat frame = cv_bridge::toCvShare(msg, "bgr8")->image;
+/*
+  void imageCb(const sensor_msgs::CompressedImageConstPtr& msg)
   {
     cv_bridge::CvImagePtr cv_ptr;
     try
@@ -136,8 +156,9 @@ public:
       ROS_ERROR("cv_bridge exception: %s", e.what());
       return;
     }
-
-    Mat frame = cv_ptr->image;
+    
+    Mat frame = cv::imdecode(cv::Mat(msg->data),1);
+    */
     //cout << "rows_"<<frame.rows << " and cols_"<<frame.cols << endl;
     std::vector<Rect> faces;
     Mat frame_gray;
@@ -313,7 +334,7 @@ public:
     cv::waitKey(3);
     
     // Output modified video stream
-    image_pub_.publish(cv_ptr->toImageMsg());
+    //image_pub_.publish(cv_ptr->toImageMsg());
   }
 };
 
