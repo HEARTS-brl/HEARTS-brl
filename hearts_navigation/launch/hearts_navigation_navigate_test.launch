@@ -1,5 +1,5 @@
 <launch>
-    <arg name="map_name" default="map_test" />
+    <arg name="map_name" default="map_final" /> <!-- map_test -->
     <arg name="locations_json" default="$(find hearts_navigation)/data/locations_test.json" />
     <param name="locations_json" value="$(arg locations_json)" />
     <node name="localization" pkg="hearts_navigation" type="localization.bash" args="$(arg map_name)" output="screen" />
