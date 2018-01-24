@@ -8,9 +8,16 @@
   <!-- <remap from="/ipcam/front_door/snapshot" to="/roah_ipcam/image"/> -->
   <!-- <include file="$(find brl_ipcam)/launch/brl_ipcam.launch" /> -->
   <!-- PAL Robotics IP camera setup -->
-  <include file="$(find roah_ipcam)/launch/roah_ipcam.launch">
+  <!-- <include file="$(find roah_ipcam)/launch/roah_ipcam.launch">
     <arg name="ip" value="192.168.1.90"/>
     <arg name="user" value="hearts"/>
     <arg name="password" value="hearts_erl_2_pal"/>
-  </include>
+  </include> -->
+  <!-- Heriot-Watt IP camera setup -->
+  <remap from="/image_raw" to="/roah_ipcam/image"/>
+  <node name="axis_driver" pkg="axis_camera" type="axis.py">
+    <param name="hostname" value="10.2.0.107" />
+    <param name="username" value="HEARTS" />
+    <param name="password" value="erlhw-3" />
+  </node> 
 </launch>
