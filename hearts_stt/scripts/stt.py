@@ -237,7 +237,7 @@ def callback2(data):
     global_bool = True
     rospy.loginfo("SPEAKING")
     for i in range(len(l)):
-        rospy.sleep(1)
+        rospy.sleep(0.1)
     global_bool = False
     rospy.loginfo("DONE SPEAKING")
         

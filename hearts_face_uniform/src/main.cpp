@@ -197,17 +197,21 @@ public:
 
     //cout << confidence << endl;
 
-    Rect region, regionB, regionC; // sampling a region for uniform recognition. Variables: region is on the belly, regionB is on the hat, regionC is on the icon of the hat
+    Rect region, regionB, regionC; // sampling a region for uniform recognition. 
+    
+    // region is on the belly
     region.x = largestFaceBox.x;
     region.y = largestFaceBox.y + 1.8 * largestFaceBox.width;
     region.width = largestFaceBox.width;
     region.height = 1.6 * largestFaceBox.height;
 
+    // regionB is on the hat
     regionB.x = largestFaceBox.x;
     regionB.y = largestFaceBox.y - round(0.4 * largestFaceBox.width);
     regionB.width = largestFaceBox.width;
     regionB.height = round(0.6 * largestFaceBox.height);
 
+    // regionC is on the icon of the hat
     regionC.x = regionB.x + round(0.4*regionB.width);
     regionC.y = regionB.y + round(0.42*regionB.height);
     regionC.width = round(0.17*regionB.width);
@@ -240,15 +244,15 @@ public:
     split(sample, rgb);
     split(sampleB, rgbB);
 
-    Scalar meanVal0, meanVal1, meanVal2, meanVal3, meanVal4;
-    Scalar stdDev0, stdDev1, stdDev2, stdDev3, stdDev4;
+    Scalar meanVal0, meanVal1, meanVal2;//, meanVal3, meanVal4;
+    Scalar stdDev0, stdDev1, stdDev2;//, stdDev3, stdDev4;
 
     cv::meanStdDev(rgb[0], meanVal0, stdDev0); // calculate the mean value and the standard deviation in the first region, for R, G and B respectively
     cv::meanStdDev(rgb[1], meanVal1, stdDev1);
     cv::meanStdDev(rgb[2], meanVal2, stdDev2);
 
-    cv::meanStdDev(sampleB, meanVal3, stdDev3);
-    cv::meanStdDev(sampleC, meanVal4, stdDev4);
+    //cv::meanStdDev(sampleB, meanVal3, stdDev3);
+    //cv::meanStdDev(sampleC, meanVal4, stdDev4);
 
     double sdValB = stdDev0.val[0];
     double sdValG = stdDev1.val[0];
@@ -260,45 +264,50 @@ public:
     double meanValR = meanVal2.val[0];
     double meanGrey = (meanValB + meanValG + meanValR) / 3;
 
-    double meanValHat = meanVal3.val[0];
-    double meanValHatSmall = meanVal4.val[0];
+    //double meanValHat = meanVal3.val[0];
+    //double meanValHatSmall = meanVal4.val[0];
  
-    cout << meanValB << endl << meanValG << endl << meanValR << endl << avgSDVal << endl << endl;
-    
+    cout << "meanValB: " << meanValB << ", meanValG: " << meanValG << ", meanValR: " << meanValR << ", sdValB: " << sdValB << ", sdValG: " << sdValG << ", sdValR: " << sdValR << endl;
+ 
     Point posText1(faces[largestIndex].x, max(1, faces[largestIndex].y - 10));
 
     // rules!!!: checking for white colour, checking for yellow-ish colour, checking for hat pattern, is the hat colour similar to the t-shirt colour
     std::string dispName;
    // if ((max(meanValR, meanValG) / min(meanValR, meanValG) < 1.2) && (max(meanValR, meanValB) / min(meanValR, meanValB) > 1.4) && (max(meanValG, meanValB) / min(meanValG, meanValB) > 1.3) && (avgSDVal < 30) && (meanValHat/meanValHatSmall < 0.8))
 
-    double rg = meanValR / meanValG;
-    double rb = meanValR / meanValB;
-    double gb = meanValG / meanValB;
     
-    cout << rg << endl << rb << endl << gb << endl << endl;
-    
-    if ((rg > POSTMAN_RG_MIN) && (rg < POSTMAN_RG_MAX) && (rb > POSTMAN_RB_MIN) && (rb < POSTMAN_RB_MAX) && (gb > POSTMAN_GB_MIN && gb < POSTMAN_GB_MAX))
+    if ((abs(meanValB - POSTMAN_B_MEAN) < THRESHOLD) &&
+        (abs(meanValG - POSTMAN_G_MEAN) < THRESHOLD) &&
+        (abs(meanValR - POSTMAN_R_MEAN) < THRESHOLD) &&
+        (abs(sdValB - POSTMAN_B_STDEV) < THRESHOLD) &&
+        (abs(sdValG - POSTMAN_G_STDEV) < THRESHOLD) &&
+        (abs(sdValR - POSTMAN_R_STDEV) < THRESHOLD))
     {
-      pub("postman");
-      ROS_INFO("published postman");
-      dispName = "POST MAN";
-      putText(frame, dispName, posText1, FONT_HERSHEY_COMPLEX, 1.2, AMBER, 2, 8); // displaying recognised names
-    }
-    else if ((rg > DELIMAN_RG_MIN) && (rg < DELIMAN_RG_MAX) && (rb > DELIMAN_RB_MIN) && (rb < DELIMAN_RB_MAX) && (gb > DELIMAN_GB_MIN) && (gb < DELIMAN_GB_MAX))
+        pub("postman");
+        ROS_INFO("published postman");
+        dispName = "POST MAN";
+        putText(frame, dispName, posText1, FONT_HERSHEY_COMPLEX, 1.2, AMBER, 2, 8); // displaying recognised names
+    }  
+    else if ((abs(meanValB - DELIMAN_B_MEAN) < THRESHOLD) &&
+        (abs(meanValG - DELIMAN_G_MEAN) < THRESHOLD) &&
+        (abs(meanValR - DELIMAN_R_MEAN) < THRESHOLD) &&
+        (abs(sdValB - DELIMAN_B_STDEV) < THRESHOLD) &&
+        (abs(sdValG - DELIMAN_G_STDEV) < THRESHOLD) &&
+        (abs(sdValR - DELIMAN_R_STDEV) < THRESHOLD))
     {
-      pub("deliman");
-      ROS_INFO("published deliman");
-      dispName = "DELI MAN";
-      putText(frame, dispName, posText1, FONT_HERSHEY_COMPLEX, 1.2, WHITE, 2, 8); // displaying recognised names
-    }
+        pub("deliman");
+        ROS_INFO("published deliman");
+        dispName = "DELI MAN";
+        putText(frame, dispName, posText1, FONT_HERSHEY_COMPLEX, 1.2, WHITE, 2, 8); // displaying recognised names
+    }  
     else
     {
         pub("unknown");
         ROS_INFO("published unknown");
         dispName = "UNKNOWN";
         putText(frame, dispName, posText1, FONT_HERSHEY_COMPLEX, 1.2, WHITE, 2, 8); // displaying
-    }
-
+    }  
+    
     // Update GUI Window
     cv::imshow(OPENCV_WINDOW, frame);
     cv::waitKey(3);

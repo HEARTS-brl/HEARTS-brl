@@ -7,10 +7,7 @@
   </include>
   
   <include file="$(find hearts_tts)/launch/hearts_tts.launch" />
-  <include file="$(find hearts_navigation)/launch/hearts_navigation_navigate.launch">
-    <arg name="map_name" value="map_test" />
-    <arg name="locations_json" value="$(find hearts_navigation)/data/locations_test.json" />
-  </include>
+  <include file="$(find hearts_navigation)/launch/hearts_navigation_navigate_test.launch" />
   <node pkg="roah_rsbb_comm_ros" type="comm" name="roah_rsbb_comm" respawn="true">
     <param name="team_name" type="string" value="Hearts" />
     <param name="robot_name" type="string" value="Tiago" />
@@ -19,6 +16,8 @@
   </node>
   <node name="welcome_visitor_controller" pkg="tbm2_welcoming_visitors" type="welcome_visitor_controller.py" output="screen" />
   <node name="change_detector" pkg="tbm2_welcoming_visitors" type="change_detector.py" output="screen" />
+  <include file="$(find hearts_person_tracker)/launch/hearts_person_tracker.launch">
+  </include>
   <!-- <node name="webcam_publisher" pkg="hearts_webcam" type="hearts_webcam" output="screen" args="1" /> -->
   <!--  -->
   <!--  -->

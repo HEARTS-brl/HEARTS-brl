@@ -46,9 +46,15 @@ class Controller():
 		
 		# Granny Annies position in our map's coord system
 		# col 0= bed, col1 = sofa
-		self.ulocx = [ -0.493560373783 ,-2.34082365036]
-		self.ulocy = [ -3.79606962204,  -7.20651531219]
-		self.uloct = [  0.995374783353,  0.92682136867]
+		#self.ulocx = [ -0.493560373783 ,-2.34082365036]
+		#self.ulocy = [ -3.79606962204,  -7.20651531219]
+		#self.uloct = [  0.995374783353,  0.92682136867]
+		
+		#test version  
+		self.ulocx = [ 0.206475734711, 2.52560305595 ]
+		self.ulocy = [ 0.507319450378, 0.0467052459717 ]
+		self.uloct = [ 0.00143957138062, 0.00225162506104 ]
+		
 		
 		# Granny Annies position in judges coord system
 		# h for high value and l for low value ie the range
@@ -81,7 +87,7 @@ class Controller():
 		'fetch'
 		]
 
-		# Dictionary for instructions to robot
+		# Dictionary for commands to robot
 		self.actions_dict = {
 		"switch on left light bedroom"  : "self.on_LLB()",
 		"switch off left light bedroom" : "self.off_LLB()",
@@ -149,14 +155,14 @@ class Controller():
 		if 'yes' in words:
 			self.say("OK then I will do that")
 			exec(self.code2exec)
-			self.say("Task is now complete. Please give me my next instruction")
+			self.say("The task is now complete. Please give me my next command")
 			
 			# re-establish subscribers	
 			self.listen4ans('off')
 			self.listen4cmd('on')
 
 		elif 'no' in words:
-			self.say("OK I will forget your last instruction. Please give me my next instruction")
+			self.say("OK I will forget your last command. Please give me my next command")
 
 			# re-establish subscribers	
 			self.listen4ans('off')
@@ -180,7 +186,7 @@ class Controller():
 
         # check that text has been returned
 		if "bad_recognition" in speech:
-			self.say("Sorry but no words were recognised please repeat your instruction")
+			self.say("Sorry but no words were recognised please repeat your command")
 			return 
 
 		lookupkey = self.bld_lookupkey(speech)
@@ -192,13 +198,14 @@ class Controller():
 		# check that lookup key was found
 		if self.code2exec != None:
 			#listen for "answer"
-			self.say("You requested that I "+speech+' .')
-			self.say("Shall I do this now")
-			# get confirmation of instruction
+			self.say("You requested that I "+speech+' Shall I do this now.')
+	
+			# get confirmation of command
 			self.listen4cmd('off')
 			self.listen4ans('on')
+			
 		else:
-			self.say("Your request was not understood       please repeat")
+			self.say("Your command was not understood       please repeat")
 
 		return
 	
@@ -301,8 +308,8 @@ class Controller():
 
 	def go_home(self):
 		print("\n************ write code to send me home!!\n")
-		print("***** Pretend I have gone HOME (Idiling Position)!\n")
-		self.say("OK,  I am returning to my Initial position home now")
+		print("*****  I have gone HOME (Idiling Position)!\n")
+		self.say("OK,  I am returning to my Initial home position now")
 		self.move_to_location("home")
 
 		return
@@ -317,11 +324,11 @@ class Controller():
 
 		for LOC in location:
 			print("\n***** For object : "+object+" - Location is : "+LOC+"\n")
-			print("***** Go there")
+			print("***** Go there now.")
 			self.move_to_location(LOC) #robot moves to corresponding position according to locations.json file in hearts_navigation
 
 			print("***** Recognise object")
-			self.say("I can see the"+object)
+			self.say("I can see the "+object+" so now returning to granny annie")
 
 			print("***** return to GA \n")
 			self.move_to_pose2D(self.user_location)
@@ -364,8 +371,8 @@ class Controller():
 		user_location_service()
 		rospy.loginfo("going to while loop")
 		while self.user_location is None:
-			rospy.sleep(5)
-			rospy.loginfo("Exiting while loop")
+			rospy.sleep(0.1)
+			rospy.loginfo("Waiting for user location in while loop")
 		sub.unregister()
 
 

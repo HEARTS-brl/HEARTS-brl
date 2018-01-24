@@ -24,23 +24,23 @@ using namespace cv;
 /** Global variables */
 static const std::string OPENCV_WINDOW = "Image window";
 
-// todo - accept as a ros param
-static const std::string PATH = "/home/turtlebot/tb_ws/src/brl-hearts/hearts_face_uniform/";
-
-std::string face_cascade_name = PATH + "src/haarcascade_frontalface_alt2.xml";
-std::string DATA_PATH = PATH + "data/";
+std::string face_cascade_name = "/home/turtlebot/tb_ws/src/brl-hearts/hearts_face_uniform/src/haarcascade_frontalface_alt2.xml";
 
 static const String window_name = "Face Registration";
 static const string imgType = ".jpg";
+
+static const string DATA_PATH_PARAMETER = "data_path";
     	
 class ImageCapturer
-{    
+{   
+
     ros::NodeHandle nh_;
     image_transport::ImageTransport it_;
     image_transport::Subscriber image_sub_;
     bool done;
     vector<Mat> frames;
     CascadeClassifier face_cascade;
+    string _dataPath; 
     
 public:
     
@@ -48,6 +48,9 @@ public:
         : it_(nh_)
     {
         done = false;
+             
+        if (!nh_.getParam(DATA_PATH_PARAMETER, _dataPath))
+            cout << "FAILED TO GET PARAMETER: " << DATA_PATH_PARAMETER << endl;   
         
         // Load the cascades
         if (!face_cascade.load(face_cascade_name))
@@ -62,6 +65,25 @@ public:
         image_sub_ = it_.subscribe("/roah_ipcam/image", 1, &ImageCapturer::imageCb, this);
 
         cv::namedWindow(OPENCV_WINDOW);
+        
+        ros::Rate r(10);
+        while (ros::ok() && !done)
+        {
+            ros::spinOnce();
+            r.sleep();
+        }
+            
+        for (int i = 0; i < frames.size(); i++)
+        {
+            Mat frame = frames[i];
+		
+            stringstream ss2;
+            ss2 << (i + 1);
+            string count_str = ss2.str();
+            
+		    imwrite(_dataPath + count_str + imgType, frame);
+		    usleep(200);        
+        }
     }
 
     ~ImageCapturer()
@@ -69,15 +91,6 @@ public:
         destroyWindow(OPENCV_WINDOW);
     }
     
-    bool is_done()
-    {
-        return done;
-    } 
-    
-    vector<Mat> get_frames()
-    {
-        return frames;
-    }
     
 private:
     void imageCb(const sensor_msgs::ImageConstPtr& msg)
@@ -167,27 +180,7 @@ int main(int argc, char** argv)
     printf("running!");
     ros::init(argc, argv, "image_capturer");
     ImageCapturer ic;
-    ros::Rate r(10);
-    while (ros::ok() && !ic.is_done())
-    {
-        ros::spinOnce();
-        r.sleep();
-    }
     
-    vector<Mat> frames = ic.get_frames();
-    
-    for (int i = 0; i < frames.size(); i++)
-    {
-        Mat frame = frames[i];
-		
-        stringstream ss2;
-        ss2 << (i + 1);
-        string count_str = ss2.str();
-        
-		imwrite(DATA_PATH + count_str + imgType, frame);
-		usleep(200);        
-    }
-
     //ros::spin();
     return 0;
 }

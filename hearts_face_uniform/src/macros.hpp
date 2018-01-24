@@ -15,6 +15,22 @@
 
 #define CONFIDENCE_THRESH 80
 
+#define THRESHOLD 20
+
+#define POSTMAN_B_MEAN 0
+#define POSTMAN_G_MEAN 0
+#define POSTMAN_R_MEAN 0
+#define POSTMAN_B_STDEV 0
+#define POSTMAN_G_STDEV 0
+#define POSTMAN_R_STDEV 0
+
+#define DELIMAN_B_MEAN 0
+#define DELIMAN_G_MEAN 0
+#define DELIMAN_R_MEAN 0
+#define DELIMAN_B_STDEV 0
+#define DELIMAN_G_STDEV 0
+#define DELIMAN_R_STDEV 0
+
 #define POSTMAN_RG_MIN 0.93
 #define POSTMAN_RG_MAX 1.03
 #define POSTMAN_RB_MIN 2.2

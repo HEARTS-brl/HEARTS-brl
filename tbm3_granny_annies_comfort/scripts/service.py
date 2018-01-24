@@ -65,8 +65,7 @@ from roah_rsbb_comm_ros.srv import Percentage
 
 def callback_11(req):
 	print("\n***** Service Action: TABLET MAP"+str(req)+"\n")
-	#rc = std_srvs.srv.EmptyResponse() ## this dosn't work!! need to return empty list to avoid error msgs.
-	rc =[]
+	rc = std_srvs.srv.EmptyResponse()
 	return rc           
 
 

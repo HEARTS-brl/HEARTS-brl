@@ -8,9 +8,15 @@
   <!-- <remap from="/ipcam/front_door/snapshot" to="/roah_ipcam/image"/> -->
   <!-- <include file="$(find brl_ipcam)/launch/brl_ipcam.launch" /> -->
   <!-- PAL Robotics IP camera setup -->
-  <include file="$(find roah_ipcam)/launch/roah_ipcam.launch">
+  <!-- <include file="$(find roah_ipcam)/launch/roah_ipcam.launch">
     <arg name="ip" value="192.168.1.90"/>
     <arg name="user" value="hearts"/>
     <arg name="password" value="hearts_erl_2_pal"/>
+  </include> -->
+  <!-- Heriot-Watt IP camera setup -->
+  <include file="$(find roah_ipcam)/launch/roah_ipcam.launch">
+    <arg name="ip" value="10.2.0.107"/>
+    <arg name="user" value="HEARTS"/>
+    <arg name="password" value="erlhw-3"/>
   </include>
 </launch>

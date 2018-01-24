@@ -20,3 +20,13 @@ in(arm_chair, dining_room).
 type(door_bedroom, door).
 connects(door_bedroom, bedroom, living_room).
 isOpen(door_bedroom, false).
+type(door_entrance, door).
+connects(door_entrance, hall, outside).
+isOpen(door_entrance, false).
+type(apple, food).
+in(apple, kitchen).
+on(apple, table).
+position (apple, [2.54,2.84,0.5]).
+picture(apple, apple.jpg).
+type(kitchen_chair, kitchen_chair).
+in(kitchen_chair, hallway).

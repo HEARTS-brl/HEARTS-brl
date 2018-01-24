@@ -15,7 +15,7 @@
   -->
   
  
-  <node name="servicer" pkg="tbm3_granny_annies_comfort" type="service.py" output="screen" /> 
+  <!-- <node name="servicer" pkg="tbm3_granny_annies_comfort" type="service.py" output="screen" /> -->
  
   <node pkg="roah_rsbb_comm_ros" type="comm" name="roah_rsbb_comm" respawn="true">
     <param name="team_name" type="string" value="Hearts" />
