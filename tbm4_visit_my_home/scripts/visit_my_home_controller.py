@@ -174,8 +174,10 @@ class Controller():
             self.log_speak("Please stand a bit closer")
             rospy.sleep(3.)
             success = self.start_track()
-        self.log_speak("Found you. Please tell me the word, stopping! when we reach the destination")
+        self.log_speak("Found you. Please tell me the word stopping when we reach the destination")
         self.log_speak("Lead onward")
+        while not self.continue_on:
+            rospy.sleep(1)
         return
 
     def nav_status_callback(self,data):
