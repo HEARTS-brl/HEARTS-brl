@@ -98,16 +98,44 @@ class Controller():
         for self.waypoint in range(1,6):
             self.log_speak("starting waypoint "+str(self.waypoint))
             self.destination = self.waypoint #for handling waypoint 2
-            if self.waypoint == 4:
-                self.ID_person()
+            if self.waypoint == 1:
+                self.destination = .5
+                self.go_to_target(self.destination)
+                rospy.sleep(5)
+                self.log_speak("Person detected, I will go around")
+
+                self.destination = .6
+                self.go_to_target(self.destination)
+                self.go_to_target(self.waypoint)
+
             elif self.waypoint == 2:
                 self.destination = 1.5
                 self.go_to_target(self.destination)
-            else:
+                obstacle_type = self.detect_obstacle()
+                if obstacle_type.message == '1': #person
+                    self.log_speak("Person detected, please move")
+                if obstacle_type.message == '2': #door
+                    self.log_speak("Door detected, please open")
+                if obstacle_type.message == '3': #small obstacle
+                    self.log_speak("Small obstacle detected, please move it")
+                rospy.sleep(10.)
                 self.go_to_target(self.waypoint)
+
+            elif self.waypoint == 3:
+                self.go_to_target(self.waypoint)
+
+            elif self.waypoint == 4:
+                self.ID_person()
+
+            else: #waypoint 5
+                self.destination = 4.5
+                self.go_to_target(self.destination)
+                rospy.sleep(5)
+                self.log_speak("knock knock, would someone please open the door")
+                rospy.sleep(5)
+                self.go_to_target(self.waypoint)
+
             self.continue_on = False # True when reached target or abandoned target
-            while not self.continue_on:
-                rospy.sleep(1.)
             self.log_speak("Waypoint "+str(self.waypoint)+" completed, moving on")
             
 
@@ -118,20 +146,20 @@ class Controller():
             if self.waypoint == 2:
                 self.go_to_target(1.5)
                 #rospy.sleep(5)
-                self.log_speak("A door is in the way. Please open the door")
+                self.log_speak("A obstacle is in the way. Please remove it")
                 rospy.sleep(5.)
                 self.go_to_target(2)
             if self.waypoint == 5:
                 self.go_to_target(4.5)
-                rospy.sleep(5.)
-                self.log_speak("knock knock, would someone please open the door")
-                rospy.sleep(2.)
             if self.waypoint == 3:
                 self.continue_on = True
         return
 
     def go_to_target(self,w):
         self.pubGoal.publish(str(w))
+        self.continue_on = False
+        while not self.continue_on:
+            rospy.sleep(1.)
         return
 
     def ID_person(self):
@@ -152,20 +180,7 @@ class Controller():
     def nav_status_callback(self,data):
         status = data.data
         if status == "Success":
-            if self.destination == 1.5:
-                # TODO Call service
-                obstacle_type = self.detect_obstacle()
-                if obstacle_type.message == '1': #person
-                    self.log_speak("Person detected, please move")
-                if obstacle_type.message == '2': #door
-                    self.log_speak("Door detected, please open")
-                if obstacle_type.message == '3': #small obstacle
-                    self.log_speak("Small obstacle detected, please move it")
-                rospy.sleep(10.)
-                self.destination = 2
-                self.go_to_target(self.destination)
-            else:
-                self.continue_on = True
+            self.continue_on = True
         elif status == "Fail":
             self.handle_fail()
         return
