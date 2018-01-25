@@ -80,7 +80,8 @@ class SpeechRecognizer():
           
         self.audio_sources = [ 'mic', 'file' ]
         self.speech_recognition_engines = [ 'google', 'ibm', 'sphinx', 'google_cloud' ]   
-        self.r = sr.Recognizer()        
+        self.r = sr.Recognizer() 
+        self.r.operation_timeout = 10       
                     
     def set_audio_source(self, audio_source):
         self.audio_source = audio_source
@@ -340,7 +341,7 @@ if __name__ == "__main__":
 
            audio = speech_recognizer.get_audio_mic(energy_threshold, pause_threshold, dynamic_energy_threshold) 
            rospy.loginfo("SPEECH HEARD.....: ")
-           signal.alarm(60)
+           #signal.alarm(60)
            try:
                text  = speech_recognizer.recognize(audio)
            except Exception, exc:
