@@ -125,6 +125,14 @@ public:
   image_transport::Publisher image_pub_;
   }
 
+    double medianMat(cv::Mat Input)
+    {    
+        Input = Input.reshape(0,1); // spread Input Mat to single row
+        std::vector<double> vecFromMat;
+        Input.copyTo(vecFromMat); // Copy Input Mat to vector vecFromMat
+        std::nth_element(vecFromMat.begin(), vecFromMat.begin() + vecFromMat.size() / 2, vecFromMat.end());
+        return vecFromMat[vecFromMat.size() / 2];
+    }
 
   void imageCb(const sensor_msgs::ImageConstPtr& msg)
   {
@@ -223,8 +231,8 @@ public:
     // region is on the belly
     region.x = largestFaceBox.x;
     region.y = largestFaceBox.y + 1.8 * largestFaceBox.width;
-    region.width = largestFaceBox.width;
-    region.height = 1.6 * largestFaceBox.height;
+    region.width = 1.4 * largestFaceBox.width;
+    region.height = 1.8 * largestFaceBox.height; // 1.6
 
     // regionB is on the hat
     regionB.x = largestFaceBox.x;
@@ -271,7 +279,7 @@ public:
     cv::meanStdDev(rgb[0], meanVal0, stdDev0); // calculate the mean value and the standard deviation in the first region, for R, G and B respectively
     cv::meanStdDev(rgb[1], meanVal1, stdDev1);
     cv::meanStdDev(rgb[2], meanVal2, stdDev2);
-
+    
     //cv::meanStdDev(sampleB, meanVal3, stdDev3);
     //cv::meanStdDev(sampleC, meanVal4, stdDev4);
 
@@ -285,10 +293,16 @@ public:
     double meanValR = meanVal2.val[0];
     double meanGrey = (meanValB + meanValG + meanValR) / 3;
 
+    double medianB = medianMat(rgb[0]);
+    double medianG = medianMat(rgb[1]);
+    double medianR = medianMat(rgb[2]);
+    
+    cout << "medianB: " << medianB << ", medianG: " << medianG << ", medianR: " << medianR << ", sdValB: " << sdValB << ", sdValG: " << sdValG << ", sdValR: " << sdValR << endl;
+    
     //double meanValHat = meanVal3.val[0];
     //double meanValHatSmall = meanVal4.val[0];
  
-    cout << "meanValB: " << meanValB << ", meanValG: " << meanValG << ", meanValR: " << meanValR << ", sdValB: " << sdValB << ", sdValG: " << sdValG << ", sdValR: " << sdValR << endl;
+    //cout << "meanValB: " << meanValB << ", meanValG: " << meanValG << ", meanValR: " << meanValR << ", sdValB: " << sdValB << ", sdValG: " << sdValG << ", sdValR: " << sdValR << endl;
  
     Point posText1(faces[largestIndex].x, max(1, faces[largestIndex].y - 10));
 
@@ -296,10 +310,13 @@ public:
     std::string dispName;
    // if ((max(meanValR, meanValG) / min(meanValR, meanValG) < 1.2) && (max(meanValR, meanValB) / min(meanValR, meanValB) > 1.4) && (max(meanValG, meanValB) / min(meanValG, meanValB) > 1.3) && (avgSDVal < 30) && (meanValHat/meanValHatSmall < 0.8))
 
-    
-    if ((abs(meanValB - POSTMAN_B_MEAN) < THRESHOLD) &&
+/*     if ((abs(meanValB - POSTMAN_B_MEAN) < THRESHOLD) &&
         (abs(meanValG - POSTMAN_G_MEAN) < THRESHOLD) &&
         (abs(meanValR - POSTMAN_R_MEAN) < THRESHOLD) &&
+        */    
+    if ((abs(medianB - POSTMAN_B_MEAN) < THRESHOLD) &&
+        (abs(medianG - POSTMAN_G_MEAN) < THRESHOLD) &&
+        (abs(medianR - POSTMAN_R_MEAN) < THRESHOLD) &&
         (abs(sdValB - POSTMAN_B_STDEV) < THRESHOLD) &&
         (abs(sdValG - POSTMAN_G_STDEV) < THRESHOLD) &&
         (abs(sdValR - POSTMAN_R_STDEV) < THRESHOLD))
@@ -309,9 +326,9 @@ public:
         dispName = "POST MAN";
         putText(frame, dispName, posText1, FONT_HERSHEY_COMPLEX, 1.2, AMBER, 2, 8); // displaying recognised names
     }  
-    else if ((abs(meanValB - DELIMAN_B_MEAN) < THRESHOLD) &&
-        (abs(meanValG - DELIMAN_G_MEAN) < THRESHOLD) &&
-        (abs(meanValR - DELIMAN_R_MEAN) < THRESHOLD) &&
+    else if ((abs(medianB - DELIMAN_B_MEAN) < THRESHOLD) &&
+        (abs(medianG - DELIMAN_G_MEAN) < THRESHOLD) &&
+        (abs(medianR - DELIMAN_R_MEAN) < THRESHOLD) &&
         (abs(sdValB - DELIMAN_B_STDEV) < THRESHOLD) &&
         (abs(sdValG - DELIMAN_G_STDEV) < THRESHOLD) &&
         (abs(sdValR - DELIMAN_R_STDEV) < THRESHOLD))
