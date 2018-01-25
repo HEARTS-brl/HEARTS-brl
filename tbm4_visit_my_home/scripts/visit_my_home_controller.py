@@ -157,6 +157,7 @@ class Controller():
 
     def go_to_target(self,w):
         self.pubGoal.publish(str(w))
+        rospy.loginfo("Publish destination string:"+str(w))
         self.continue_on = False
         while not self.continue_on:
             rospy.sleep(1.)
