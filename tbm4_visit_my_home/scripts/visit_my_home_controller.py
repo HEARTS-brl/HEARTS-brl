@@ -175,6 +175,7 @@ class Controller():
             rospy.sleep(3.)
             success = self.start_track()
         self.log_speak("Found you. Please tell me the word stopping when we reach the destination")
+        self.log_speak("If I am lost, say train me again")
         self.log_speak("Lead onward")
         while not self.continue_on:
             rospy.sleep(1)
@@ -218,6 +219,9 @@ class Controller():
             _ = self.end_track()
             self.pub_talk("Heard Stop. Thanks for leading me. I will go inside now")
             self.continue_on = True
+        if words[0] == "train":
+            _ = self.end_track()
+            self.start_track()
         if words[0] in possible_verbs:
             valid_command = True
             verb = words[0]

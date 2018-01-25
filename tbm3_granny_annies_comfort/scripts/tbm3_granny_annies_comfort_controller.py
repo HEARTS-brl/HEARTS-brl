@@ -54,22 +54,22 @@ class Controller():
 		
 		# Granny Annies position in our map's coord system
 		# col 0= bed, col1 = sofa
-		#self.ulocx = [ -0.493560373783 ,-2.34082365036]
-		#self.ulocy = [ -3.79606962204,  -7.20651531219]
-		#self.uloct = [  0.995374783353,  0.92682136867]
+		self.ulocx = [ -0.493560373783 ,-2.34082365036]
+		self.ulocy = [ -3.79606962204,  -7.20651531219]
+		self.uloct = [  0.995374783353,  0.92682136867]
 		
 		#test version  
-		self.ulocx = [ 0.206475734711, 2.52560305595 ]
-		self.ulocy = [ 0.507319450378, 0.0467052459717 ]
-		self.uloct = [ 0.00143957138062, 0.00225162506104 ]
+		#self.ulocx = [ 0.206475734711, 2.52560305595 ]
+		#self.ulocy = [ 0.507319450378, 0.0467052459717 ]
+		#self.uloct = [ 0.00143957138062, 0.00225162506104 ]
 		
 		
 		# Granny Annies position in judges coord system
 		# h for high value and l for low value ie the range
-		self.jlocxh = [-0.40, 1.50]
-		self.jlocxl = [-1.80, 0.00]
-		self.jlocyh = [-2.20, -4.20]
-		self.jlocyl = [-4.20, -5.50]
+		self.jlocxh = [ 1.50,  1.50]
+		self.jlocxl = [-3.00,  0.00]
+		self.jlocyh = [-0.50, -4.20]
+		self.jlocyl = [-6.20, -5.50]
 
 
 		# Disable head manager

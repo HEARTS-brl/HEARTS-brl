@@ -90,10 +90,10 @@ bool ImageConverter::Start(std_srvs::TriggerRequest &req, std_srvs::TriggerRespo
 {
     cout << "Processing request..." << endl;
     
-    if (hasDoor(_d, _rgb))
-        res.message = "2";
-    else if (hasFace(_d, _rgb))
+    if (hasFace(_d, _rgb))
         res.message = "1";
+    else if (hasDoor(_d, _rgb))
+        res.message = "2";
     else
         res.message = "3";
     
@@ -205,16 +205,29 @@ bool ImageConverter::hasDoor(Mat& d, Mat& rgb)
     if (d.empty() || rgb.empty())
          return false;
          
+    Scalar m = mean(d);
+    
+    cout << "mean distance: " << m.val[0] << endl;
+    
+    return m.val[0] < 1800;
+    /*     
+    float maxDistance = std::numeric_limits<float>::min();
+         
     for (int i = 0; i < d.rows; i++)
     {
         for (int j = 0; j < d.cols; j++)
         {
-            if (d.at<double>(i, j) > 35000) // 3.5m
-                return false;
+            float distance = d.at<float>(i, j);
+            
+            if (maxDistance < distance && distance < 1000000)
+                maxDistance = distance;
         }
     }
     
-    return true;
+    cout << "maxDistance: " << maxDistance << endl;
+    
+    return maxDistance < 1800; // 3.5m
+    */
 }
 
 bool ImageConverter::hasFace(Mat& d, Mat& rgb)

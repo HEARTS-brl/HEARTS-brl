@@ -389,7 +389,7 @@ ImageConverter::ImageConverter()
                 geometry_msgs::Twist msg;
                 
                 double thetaLimit = M_PI/180; // 1 degree 
-                double xLimit = 0.1; // 10 cm
+                double xLimit = 0.05; // 5 cm
                                 
                 if (!isnan(theta))
                 {
@@ -397,9 +397,9 @@ ImageConverter::ImageConverter()
                         _prevTheta.pop_front();
 
                     if (theta < -thetaLimit)
-                        _prevTheta.push_back(+0.1); 
+                        _prevTheta.push_back(+0.3); 
                     else if (theta > +thetaLimit)
-                        _prevTheta.push_back(-0.1);
+                        _prevTheta.push_back(-0.3);
                     else 
                         _prevTheta.push_back(0);
 
@@ -411,9 +411,9 @@ ImageConverter::ImageConverter()
                     cout << "distance delta : " << x << endl;
                     
                     if (x < -xLimit)
-                        _prevX.push_back(+0.1);
+                        _prevX.push_back(+0.5);
                     else if (x > +xLimit)
-                        _prevX.push_back(-0.1); 
+                        _prevX.push_back(-0.5); 
                     else
                         _prevX.push_back(0);
                         
@@ -748,15 +748,16 @@ bool ImageConverter::train(Mat& d, Mat& rgb, double& dRegionAvgVal, double& rReg
 */
 // 640 x 480
     Rect region;
-    region.x = 270;
-    region.y = 190;
-    region.width = 100;
-    region.height = 100;
+    region.x = 220;
+    region.y = 230;
+    region.width = 200;
+    region.height = 200;
     rectangle(frame, region, BLUE);
     
     Mat dRegion = d(region);
     Scalar dRegionAvg = mean(dRegion);
-    dRegionAvgVal = dRegionAvg.val[0] / 10000; //0.10131; // double 
+    //dRegionAvgVal = dRegionAvg.val[0] / 10000; //0.10131; // double 
+    dRegionAvgVal = 0.001; //0.10131; // double 
     //cout << "avg. depth = " << dRegionAvgVal << endl;
     
     Mat rgbRegion = rgb(region);
