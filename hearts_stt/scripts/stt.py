@@ -4,7 +4,7 @@
 # Author : Alex Sleat followed by Derek Ripper
 # Purpose: 1: capture audio by microphone
 #          2; Process through one of the defined speech engines to translate to text
-#          3: added by Derek - also allow forwav file input so that multiple files
+#          3: added by Derek - also allow for wav file input so that multiple files
 #             can be processed
 #          4: added by Derek - convert to run code entirely under ROS for both
 #             - Normal speech recognition via microphone which listens indefinitely 
@@ -59,12 +59,6 @@ import gcp_keywords_r     as gcpk # google cloud platform preferred keyword/sphr
 import gcp_credentials    as gcpc # google cloud platform credentials to access GCP speech recognition
 
 import wave, array, os            # used by mono_to_stereo()
-import signal
-
-def handler (signum, frame):
-    raise Exception("Too slow my friend, try again!!! XD")
-
-signal.signal(signal.SIGALRM, handler)
 
 o_tt=TT.tag_topics()
 
@@ -73,6 +67,9 @@ global_bool = False
 class SpeechRecognizer():
         
     def __init__(self):
+
+        # listen to robot speaking
+        rospy.Subscriber("/hearts/tts",String, callback2)
 
         #  these are out of date - initial 30 day  tial period!!
         self.IBM_USERNAME = "c2db0a18-e3b6-4a21-9ecf-8afd2edeeb30"
@@ -179,15 +176,15 @@ class SpeechRecognizer():
             print("speech recognition engine could not understand audio")
             text = 'BAD_RECOGNITION'
         except sr.RequestError as e:
-            print("could not request results from speech recognition engine: {0}".format(e))
+            print("***** STT - could not request results from speech recognition engine: {0}".format(e))
         except TypeError:
-            print("****** STT returned a None Type -- Cannot understand so continue...")
+            print("****** STT - returned a None Type -- Cannot understand so continue...")
             text = 'BAD_RECOGNITION'
         except Exception as e:
-            print ("STT exception e: ")
+            print ("STT- exception e: ")
             print(e)
         except:
-            print("unknown error")  
+            print("STT - unknown error")  
         print("\n") # make screen more readable            
         if not text is None:    
             # correctly print unicode characters to standard output
@@ -223,7 +220,10 @@ class SpeechRecognizer():
             self.r.pause_threshold = pause_threshold   # Default is 0.8 secs
 
             return self.r.record(source)       # extract audio data from the file
-            
+
+#####  END OF: class SpeechRecognizer():      
+######################################## 
+     
 def callback(data):
     wav_out_file_path = data.data
     rospy.loginfo(rospy.get_name() + ": Received file: %s", wav_out_file_path)
@@ -242,11 +242,11 @@ def callback2(data):
     global global_bool
     l = text.split(' ')
     global_bool = True
-    rospy.loginfo("SPEAKING")
+    rospy.loginfo("***** stt - ROBOT SPEAKING in progress")
     for i in range(len(l)):
         rospy.sleep(0.1)
     global_bool = False
-    rospy.loginfo("DONE SPEAKING")
+    rospy.loginfo("***** stt - ROBOT has Finished SPEAKING based on delay loop in callback2")
         
 def mono_to_stereo(inputfile):
 # Author: Derek Ripper
@@ -278,6 +278,7 @@ def mono_to_stereo(inputfile):
         
         # rewrite .wav file with stereo characteristcs
         ofile = wave.open(outputfile, 'w')
+        ss
         ofile.setparams((2, sampwidth, framerate, nframes, comptype, compname))
         ofile.writeframes(stereo.tostring())
         ofile.close()
@@ -332,26 +333,27 @@ if __name__ == "__main__":
         rospy.Subscriber("Wav_FileIn",String, callback)
 
     else:
-        rospy.Subscriber("/hearts/tts",String, callback2)
         rospy.loginfo(rospy.get_name() + ": audio source is microphone")
         speech_recognizer.set_audio_source("mic")
         passes = 0
         rate = rospy.Rate(1)
+
         while not rospy.is_shutdown():
 
+           rospy.loginfo("***** stt - ROBOT Listening ....: ")            
            audio = speech_recognizer.get_audio_mic(energy_threshold, pause_threshold, dynamic_energy_threshold) 
-           rospy.loginfo("SPEECH HEARD.....: ")
-           #signal.alarm(60)
+           rospy.loginfo("***** stt - SPEECH HEARD by ROBOT.....: ")
+
            try:
                text  = speech_recognizer.recognize(audio)
            except Exception, exc:
-               print("Exception had")
-               print exc
+               print("Exception from Speech Recogniser")
+               print(exc)
            passes +=  1
            if global_bool:
-               rospy.loginfo("Speaking")
+               rospy.loginfo("***** stt - ROBOT Speaking")
            if not global_bool:
-               rospy.loginfo("Not speaking")
+               rospy.loginfo("***** stt - ROBOT Not Speaking")
            if not text is None and not global_bool: 
                text = text.strip()
                # provide break out of stt routine
