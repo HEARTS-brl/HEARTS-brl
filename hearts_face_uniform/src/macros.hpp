@@ -15,7 +15,7 @@
 
 #define CONFIDENCE_THRESH 180
 
-#define THRESHOLD 40
+#define THRESHOLD 50
 
 //#define POSTMAN_B_MEAN 59
 //#define POSTMAN_G_MEAN 213

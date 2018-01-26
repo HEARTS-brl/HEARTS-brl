@@ -66,10 +66,10 @@ class Controller():
 		
 		# Granny Annies position in judges coord system
 		# h for high value and l for low value ie the range
-		self.jlocxh = [ 1.50,  1.50]
-		self.jlocxl = [-3.00,  0.00]
+		self.jlocxh = [ 0.00,  1.50]
+		self.jlocxl = [-4.00,  0.00]
 		self.jlocyh = [-0.50, -4.20]
-		self.jlocyl = [-6.20, -5.50]
+		self.jlocyl = [-7.20, -5.50]
 
 
 		# Disable head manager

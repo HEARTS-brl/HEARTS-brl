@@ -353,6 +353,12 @@ ImageConverter::ImageConverter()
                 double a1 = curr[0];
                 double a2 = curr[1];
                 double h = curr[2];
+                
+                double xLimit = 0.1; // 5 cm
+                                
+                if (h < xLimit)
+                    h = xLimit;
+                    
                 //cout << "o: " << a1 << ", h: " << h << endl;
                 double theta = asin(a1/h);
                 //cout << "theta: " << (theta / (2*M_PI)) * 360 << " degrees" << endl;
@@ -409,7 +415,7 @@ ImageConverter::ImageConverter()
                 geometry_msgs::Twist msg;
                 
                 double thetaLimit = M_PI/180; // 1 degree 
-                double xLimit = 0.05; // 5 cm
+
                                 
                 if (!isnan(theta))
                 {
@@ -465,10 +471,10 @@ ImageConverter::ImageConverter()
         else
         {
             // stop!
-            geometry_msgs::Twist msg1;
-            msg1.linear.x = 0;
-            msg1.angular.z = 0;
-            pubVel.publish(msg1);
+            //geometry_msgs::Twist msg1;
+            //msg1.linear.x = 0;
+            //msg1.angular.z = 0;
+            //pubVel.publish(msg1);
         }
         
         ros::spinOnce();
@@ -775,12 +781,33 @@ bool ImageConverter::train(Mat& d, Mat& rgb, double& dRegionAvgVal, double& rReg
         return false;
 */
 // 640 x 480
+
+    Size size = frame.size();
+    Mat mask = Mat(size, CV_8UC1, 255);
+    
+    double h = size.height;
+    double w = size.width;
+    double h_2 = h / 2;
+    double w_2 = w / 2;    
+
+    double region_h = (h - (2 * _v_margin)) / _n_v_regions;
+    double region_w = (w - (2 * _h_margin)) / _n_h_regions;    
+    
+    Rect region;
+    region.x = (w - region_w) / 2;
+    region.y = (h - region_h) / 2;
+    region.width = region_w;
+    region.height = region_h;
+    rectangle(frame, region, BLUE);
+    
+    /*
     Rect region;
     region.x = 220;
     region.y = 230;
     region.width = 200;
     region.height = 200;
     rectangle(frame, region, BLUE);
+    */
     
     Mat dRegion = d(region);
     Scalar dRegionAvg = mean(dRegion);

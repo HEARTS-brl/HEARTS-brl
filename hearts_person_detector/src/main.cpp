@@ -80,7 +80,7 @@ private:
     void rgbTopicCb(const sensor_msgs::ImageConstPtr& msg);
     void jointStatesTopicCb(const sensor_msgs::JointState::ConstPtr& msg);
     string toString(double a);
-    bool hasFace(Mat& d, Mat& rgb);
+    bool hasFace();
     bool hasDoor(Mat& d, Mat& rgb);
     bool Start(std_srvs::TriggerRequest &req, std_srvs::TriggerResponse &res);
     void moveHead(double lrAngleRads, double udAngleRads);
@@ -90,7 +90,7 @@ bool ImageConverter::Start(std_srvs::TriggerRequest &req, std_srvs::TriggerRespo
 {
     cout << "Processing request..." << endl;
     
-    if (hasFace(_d, _rgb))
+    if (hasFace())
         res.message = "1";
     else if (hasDoor(_d, _rgb))
         res.message = "2";
@@ -230,23 +230,33 @@ bool ImageConverter::hasDoor(Mat& d, Mat& rgb)
     */
 }
 
-bool ImageConverter::hasFace(Mat& d, Mat& rgb)
-{    
-    if (d.empty() || rgb.empty())
-         return false;
-                 
-    // TODO: need to calculate mean distance as well! i actually need to call into a function each time depth or image frame changes
-    
-    moveHead(0, 0.4);
-    
-    Mat frame = rgb.clone();
-    Mat frame_gray;
-    cvtColor(rgb, frame_gray, COLOR_BGR2GRAY);
-
-    //-- Detect faces
+bool ImageConverter::hasFace()
+{          
+    ros::Rate rate(1);
     std::vector<Rect> faces;
-    face_cascade.detectMultiScale(frame_gray, faces, 1.2, 4, 0 | CASCADE_SCALE_IMAGE, Size(50, 50)); // this is face detection, MIN_FACE_SIZE
+    
+    for (double angle = 0; (angle < 0.8) && (faces.size() == 0); angle += 0.1)
+    {
+        if (!ros::ok())
+            break;
+            
+        moveHead(0, angle);
+    
+        rate.sleep();
+        
+        if (!_rgb.empty())
+        {
+            Mat gray;
+            cvtColor(_rgb, gray, COLOR_BGR2GRAY);
 
+            //-- Detect faces
+            
+            face_cascade.detectMultiScale(gray, faces, 1.05, 4, 0 | CASCADE_SCALE_IMAGE, Size(50, 50)); // 1/2, this is face detection, MIN_FACE_SIZE  
+        }
+        
+        ros::spinOnce();
+    }           
+    
     moveHead(0, 0);
 
     return faces.size() > 0;
