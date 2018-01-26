@@ -1,0 +1,4 @@
+<launch>
+  <node name="hearts_test" pkg="hearts_test_package" type="hearts_test_arm_actions.py" output="screen" />
+  <include file="$(find hearts_tts)/launch/hearts_tts.launch"/>
+</launch>

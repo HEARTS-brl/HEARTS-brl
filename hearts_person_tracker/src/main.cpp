@@ -208,6 +208,7 @@ class ImageConverter
   
   double _threshold;
   double _threshold2;
+  double _threshold3;
   
   deque<Vec3d> _prev;
   deque<double> _prevX;
@@ -218,6 +219,7 @@ class ImageConverter
     double _h_2;
     double _w_2;
     
+    bool _paused;
 public:
     ImageConverter();
     ~ImageConverter();
@@ -234,7 +236,22 @@ private:
     void rotateHead(double angleRads);
     bool Start(std_srvs::TriggerRequest &req, std_srvs::TriggerResponse &res);
     bool Stop(std_srvs::EmptyRequest &req, std_srvs::EmptyResponse &res);
+    bool Pause(std_srvs::TriggerRequest &req, std_srvs::TriggerResponse &res);
+    bool Unpause(std_srvs::TriggerRequest &req, std_srvs::TriggerResponse &res);
 };
+
+bool ImageConverter::Pause(std_srvs::TriggerRequest &req, std_srvs::TriggerResponse &res)
+{
+    res.success = _paused = true;
+    return true;
+}
+
+bool ImageConverter::Unpause(std_srvs::TriggerRequest &req, std_srvs::TriggerResponse &res)
+{
+    _paused = false;
+    res.success = true;
+    return true;
+}
 
 bool ImageConverter::Start(std_srvs::TriggerRequest &req, std_srvs::TriggerResponse &res)
 {
@@ -275,7 +292,8 @@ ImageConverter::ImageConverter()
     _n_h_regions = 15;
     _n_v_regions = 11;
     _threshold = 20;
-    _threshold2 = 10;
+    _threshold2 = 15;
+    _threshold3 = 15;
     _nPrev = 3;
     _started = false;
         
@@ -311,6 +329,8 @@ ImageConverter::ImageConverter()
     cv::namedWindow(RGB_OPENCV_WINDOW);
     
     ros::ServiceServer startService = nh_.advertiseService("start_person_tracking", &ImageConverter::Start, this);
+    ros::ServiceServer pauseService = nh_.advertiseService("pause_person_tracking", &ImageConverter::Pause, this);
+    ros::ServiceServer unpauseService = nh_.advertiseService("unpause_person_tracking", &ImageConverter::Unpause, this);
     ros::ServiceServer stopService = nh_.advertiseService("stop_person_tracking", &ImageConverter::Stop, this);
     
     ros::Publisher pubVel = nh_.advertise<geometry_msgs::Twist>("/key_vel", 10);
@@ -322,7 +342,7 @@ ImageConverter::ImageConverter()
 
     while (ros::ok())
     {
-        if (_started)
+        if (_started && !_paused)
         {                          
             Vec3d curr;
             if (process(curr))
@@ -333,6 +353,12 @@ ImageConverter::ImageConverter()
                 double a1 = curr[0];
                 double a2 = curr[1];
                 double h = curr[2];
+                
+                double xLimit = 0.1; // 5 cm
+                                
+                if (h < xLimit)
+                    h = xLimit;
+                    
                 //cout << "o: " << a1 << ", h: " << h << endl;
                 double theta = asin(a1/h);
                 //cout << "theta: " << (theta / (2*M_PI)) * 360 << " degrees" << endl;
@@ -389,7 +415,7 @@ ImageConverter::ImageConverter()
                 geometry_msgs::Twist msg;
                 
                 double thetaLimit = M_PI/180; // 1 degree 
-                double xLimit = 0.05; // 5 cm
+
                                 
                 if (!isnan(theta))
                 {
@@ -442,7 +468,15 @@ ImageConverter::ImageConverter()
                 pubVel.publish(msg);
             }
         }
-    
+        else
+        {
+            // stop!
+            //geometry_msgs::Twist msg1;
+            //msg1.linear.x = 0;
+            //msg1.angular.z = 0;
+            //pubVel.publish(msg1);
+        }
+        
         ros::spinOnce();
         loopRate.sleep();
     }
@@ -464,7 +498,7 @@ bool ImageConverter::isMatch(double bRegionAvgVal, double gRegionAvgVal, double 
  
 bool ImageConverter::isMatch2(double bRegionAvgVal, double gRegionAvgVal, double rRegionAvgVal, double bRegionStdDev, double gRegionStdDev, double rRegionStdDev)
 {
-    return (abs(bRegionAvgVal - _bRegionAvgVal) < _threshold2) && (abs(gRegionAvgVal - _gRegionAvgVal) < _threshold2) && (abs(rRegionAvgVal - _rRegionAvgVal) < _threshold2) && (abs(bRegionStdDev - _bRegionStdDev) < _threshold2) && (abs(gRegionStdDev - _gRegionStdDev) < _threshold2) && (abs(rRegionStdDev - _rRegionStdDev) < _threshold2);
+    return (abs(bRegionAvgVal - _bRegionAvgVal) < _threshold2) && (abs(gRegionAvgVal - _gRegionAvgVal) < _threshold2) && (abs(rRegionAvgVal - _rRegionAvgVal) < _threshold2) && (abs(bRegionStdDev - _bRegionStdDev) < _threshold3) && (abs(gRegionStdDev - _gRegionStdDev) < _threshold3) && (abs(rRegionStdDev - _rRegionStdDev) < _threshold3);
 } 
   
 bool ImageConverter::process(Vec3d& curr)
@@ -747,12 +781,33 @@ bool ImageConverter::train(Mat& d, Mat& rgb, double& dRegionAvgVal, double& rReg
         return false;
 */
 // 640 x 480
+
+    Size size = frame.size();
+    Mat mask = Mat(size, CV_8UC1, 255);
+    
+    double h = size.height;
+    double w = size.width;
+    double h_2 = h / 2;
+    double w_2 = w / 2;    
+
+    double region_h = (h - (2 * _v_margin)) / _n_v_regions;
+    double region_w = (w - (2 * _h_margin)) / _n_h_regions;    
+    
+    Rect region;
+    region.x = (w - region_w) / 2;
+    region.y = (h - region_h) / 2;
+    region.width = region_w;
+    region.height = region_h;
+    rectangle(frame, region, BLUE);
+    
+    /*
     Rect region;
     region.x = 220;
     region.y = 230;
     region.width = 200;
     region.height = 200;
     rectangle(frame, region, BLUE);
+    */
     
     Mat dRegion = d(region);
     Scalar dRegionAvg = mean(dRegion);

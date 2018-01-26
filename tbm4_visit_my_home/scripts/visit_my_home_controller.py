@@ -85,7 +85,7 @@ class Controller():
         self.execute = rospy.ServiceProxy('/roah_rsbb/end_execute', std_srvs.srv.Empty)
         self.change_maps = rospy.ServiceProxy('/pal_map_manager/change_map',Acknowledgment)
         self.start_track = rospy.ServiceProxy('/start_person_tracking',std_srvs.srv.Trigger)
-        self.end_track = rospy.ServiceProxy('/stop_person_tracking',std_srvs.srv.Trigger)
+        self.end_track = rospy.ServiceProxy('/stop_person_tracking',std_srvs.srv.Empty)
         self.detect_obstacle = rospy.ServiceProxy('/start_person_detection',std_srvs.srv.Trigger)
 
         # Disable head manager
@@ -94,50 +94,53 @@ class Controller():
         return(None)
         
     def begin(self):
-        self.ok_to_start = True
-        for self.waypoint in range(1,6):
-            self.log_speak("starting waypoint "+str(self.waypoint))
-            self.destination = self.waypoint #for handling waypoint 2
-            if self.waypoint == 1:
-                self.destination = .5
-                self.go_to_target(self.destination)
-                rospy.sleep(5)
-                self.log_speak("Person detected, I will go around")
+        while not rospy.is_shutdown():
+            if self.ok_to_start:
+                for self.waypoint in range(1,6):
+                    self.log_speak("starting waypoint "+str(self.waypoint))
+                    self.destination = self.waypoint #for handling waypoint 2
+                    if self.waypoint == 1:
+                        self.destination = .5
+                        self.go_to_target(self.destination)
+                        rospy.sleep(5)
+                        self.log_speak("Person detected, I will go around")
 
-                self.destination = .6
-                self.go_to_target(self.destination)
-                self.go_to_target(self.waypoint)
+                        self.destination = .6
+                        self.go_to_target(self.destination)
+                        self.go_to_target(self.waypoint)
 
-            elif self.waypoint == 2:
-                self.destination = 1.5
-                self.go_to_target(self.destination)
-                obstacle_type = self.detect_obstacle()
-                if obstacle_type.message == '1': #person
-                    self.log_speak("Person detected, please move")
-                if obstacle_type.message == '2': #door
-                    self.log_speak("Door detected, please open")
-                if obstacle_type.message == '3': #small obstacle
-                    self.log_speak("Small obstacle detected, please move it")
-                rospy.sleep(10.)
-                self.go_to_target(self.waypoint)
+                    elif self.waypoint == 2:
+                        self.destination = 1.5
+                        self.go_to_target(self.destination)
+                        obstacle_type = self.detect_obstacle()
+                        if obstacle_type.message == '1': #person
+                            self.log_speak("Person detected, please move")
+                        if obstacle_type.message == '2': #door
+                            self.log_speak("Door detected, please open")
+                        if obstacle_type.message == '3': #small obstacle
+                            self.log_speak("Small obstacle detected, please move it")
+                        rospy.sleep(10.)
+                        self.go_to_target(self.waypoint)
 
-            elif self.waypoint == 3:
-                self.go_to_target(self.waypoint)
+                    elif self.waypoint == 3:
+                        self.go_to_target(self.waypoint)
 
-            elif self.waypoint == 4:
-                self.ID_person()
+                    elif self.waypoint == 4:
+                        self.ID_person()
 
-            else: #waypoint 5
-                self.destination = 4.5
-                self.go_to_target(self.destination)
-                rospy.sleep(5)
-                self.log_speak("knock knock, would someone please open the door")
-                rospy.sleep(5)
-                self.go_to_target(self.waypoint)
+                    else: #waypoint 5
+                        self.destination = 4.5
+                        self.go_to_target(self.destination)
+                        rospy.sleep(5)
+                        self.log_speak("knock knock, would someone please open the door")
+                        rospy.sleep(5)
+                        self.go_to_target(self.waypoint)
+                        self.ok_to_start = False
 
-            self.continue_on = False # True when reached target or abandoned target
-            self.log_speak("Waypoint "+str(self.waypoint)+" completed, moving on")
-            
+                    self.continue_on = False # True when reached target or abandoned target
+                    self.log_speak("Waypoint "+str(self.waypoint)+" completed, moving on")
+            else:
+                rospy.sleep(1)            
 
     def handle_fail(self):
         if self.ok_to_start:
@@ -167,7 +170,7 @@ class Controller():
         rospy.loginfo("Looking for a person")
         #get from zeke or call zeke's functions
         self.log_speak("Please stand one meter directly in front of me")
-        rospy.sleep(5.)
+        rospy.sleep(2.)
         self.log_speak("Please say cheese")
         success = self.start_track()
         while not success:
@@ -214,10 +217,10 @@ class Controller():
         words = [x for x in words if x!='the']
         possible_verbs = self.tbm1_commands_dict.keys()
         if words[0] == "starting":
-            self.begin()
-        if words[0] =="stopping":
+            self.ok_to_start = True
+        if words[0] == "stopping":
             _ = self.end_track()
-            self.pub_talk("Heard Stop. Thanks for leading me. I will go inside now")
+            self.log_speak("Heard Stop. Thanks for leading me. I will go inside now")
             self.continue_on = True
         if words[0] == "train":
             _ = self.end_track()
@@ -325,4 +328,5 @@ if __name__ == '__main__':
     rospy.init_node('visit_my_home', anonymous=True)
     rospy.loginfo("Visit my home controller has started")
     controller = Controller()
+    controller.begin()
     rospy.spin()
