@@ -55,7 +55,7 @@ class Controller():
 		'the',
 		'please',
 		'my',
-		'me'    # nb trailing space to avoid corrupting "home"
+		'me'    
 		]
 
 		# List of words that ALL mean get
@@ -269,7 +269,7 @@ class Controller():
 	def half_B(self):
 		# HALF CLOSE Blinds as at 27 Dec2017 does not work - percentae type problem
 		run_service = rospy.ServiceProxy('/roah_rsbb/devices/blinds/set',Percentage)
-		percent = 40
+		percent = 50
 		run_service(percent) 
 		return
 
@@ -291,7 +291,7 @@ class Controller():
 		for LOC in location:
 			print("***** For object : "+object+" - Location is : "+LOC)
 			print("***** Go there")
-			self.move_to_location(location) #robot moves to corresponding position according to locations.json file in hearts_navigation
+			self.move_to_location(LOC) #robot moves to corresponding position according to locations.json file in hearts_navigation
 			print("***** Recognise object")
 			print("***** return to GA \n")
 			self.move_to_pose2D(self.user_location)
@@ -310,6 +310,7 @@ class Controller():
 				self.prepare() # END of PREPARE msg to service
 			except:
 				rospy.loginfo("Failed to reply PREPARE")
+
 		elif data.benchmark_state == BenchmarkState.EXECUTE:
 			rospy.loginfo("EXECUTE")
 			self.main()
@@ -318,7 +319,7 @@ class Controller():
 		rospy.loginfo("***** Waiting for call from GA")
 		self.wait = False
 		sub = rospy.Subscriber("/roah_rsbb/tablet/call", Empty, self.tablet_callback)
-		while self.wait == False:
+		while self.wait == False: #updated by tablet_callback
 			rospy.sleep(5)
 		print("***** Call recd from GA")	
 		rospy.sleep(15)
@@ -332,7 +333,7 @@ class Controller():
 		user_location_service = rospy.ServiceProxy('/roah_rsbb/tablet/map', std_srvs.srv.Empty)
 		user_location_service()
 		rospy.loginfo("going to while loop")
-		while self.user_location is None:
+		while self.user_location is None:  # updated by user_location_callback
 			rospy.sleep(5)
 			rospy.loginfo("Exiting while loop")
 		sub.unregister()
