@@ -6,7 +6,7 @@
 import rospy
 import time
 from std_msgs.msg import Empty, String
-from geometry_msgs.msg import Pose2D, Twist
+from geometry_msgs.msg import Pose2D, Twist, Pose
 from roah_rsbb_comm_ros.msg import Benchmark, BenchmarkState, DevicesState, TabletState
 import std_srvs.srv
 from collections import Counter
@@ -32,8 +32,12 @@ class Controller():
         rospy.Subscriber("roah_rsbb/devices/bell",     Empty, self.bell_callback)
         #rospy.Subscriber("hearts/front_door/leaving",     Empty, self.leaving_callback)
         
+        self.start_track = rospy.ServiceProxy('/start_person_tracking',std_srvs.srv.Trigger)
+        self.end_track = rospy.ServiceProxy('/stop_person_tracking',std_srvs.srv.Trigger)
+        
         self.tts_pub = rospy.Publisher("/hearts/tts", String, queue_size=10)
         self.location_result = ""
+        self.current_pose = None
         #self.leaving = False
 
         #self.loop()
@@ -56,7 +60,7 @@ class Controller():
         self.votes = [ ]
         sub = rospy.Subscriber("/hearts/face/user", String, self.face_callback)
         rospy.loginfo("subscribed to topic /hearts/face/user")
-        rospy.sleep(10)
+        rospy.sleep(20)
         sub.unregister()
         rospy.loginfo("unsubscribed from topic /hearts/face/user - votes = " + str(len(self.votes)))
         counts = Counter(self.votes)
@@ -115,7 +119,7 @@ class Controller():
         
         self.say("I am coming")
         
-        if self.move_to("hallway", 3) == False:
+        if self.move_to("entrance", 3) == False:
             self.say("I am unable to move to the front door")
             return
             
@@ -193,34 +197,15 @@ class Controller():
         # 4. detect door is open
         rospy.sleep(3)
 
-        # 5. speak to postman, instruct to follow robot: "Please follow me"
-        self.say("Hello! Please follow me")
-
-        # 6. move to kitchen
-        if self.move_to("kitchen", 3) == False:
-            self.say("I am unable to move to the kitchen")
-            return
-
-        # 7. speak to postman, instruct to leave parcel on table: "Please leave the parcel on the table"
-        self.say("Please leave the parcel on the table")
-
-        # 8. wait
-        # TODO
-        rospy.sleep(5)
-
-        # 9. speak to postman, instruct to follow robot: "Please follow me"
-        self.say("Please follow me")
-
-        # 10. move to front door
-        if self.move_to("entrance", 3) == False:
-            self.say("I am unable to move to the front door")
-            return
-
-        # 11. bid postman farewell
+        # 5. speak to postman, instruct to leave parcel on hallway floor
+        self.say("Please leave the parcel on the floor")
+        rospy.sleep(2)
+        
+        # 6. bid postman farewell
         self.say("Thank you for visiting. Goodbye!")
 
-        # 12. return to base
-        if self.move_to("kitchen", 3) == False:
+        # 7. return to base
+        if self.move_to("home", 3) == False:
             self.say("I am unable to move to the base")
             return
 
@@ -236,7 +221,7 @@ class Controller():
         self.say("Hello! Please follow me")
 
         # 6. move to kitchen
-        if self.move_to("kitchen", 3) == False:
+        if self.move_to("home", 3) == False:
             self.say("I am unable to move to the kitchen")
             return
 
@@ -251,7 +236,7 @@ class Controller():
         self.say("Please follow me")
 
         # 10. move to front door
-        if self.move_to("entrance", 3) == False:
+        if self.move_to("hallway", 3) == False:
             self.say("I am unable to move to the front door")
             return
 
@@ -259,45 +244,49 @@ class Controller():
         self.say("Thank you for visiting. Goodbye!")
 
         # 12. return to base
-        if self.move_to("kitchen", 3) == False:
+        if self.move_to("home", 3) == False:
             self.say("I am unable to move to the base")
             return
+
+    def current_pose_callback(self, pose):
+        self.current_pose = pose
 
     def process_face_doctor(self):
         # 1. speak to the doctor, "Hi Dr. Kimble, I am coming to open the door."
         self.say("Hello Dr. Kimble, please open the door")
 
-        # 4. detect door is open
+        # 2. detect door is open
         rospy.sleep(3)
 
-        # 5. speak to the doctor, instruct to follow robot: "Please follow me"
+        # 3. speak to the doctor, instruct to follow robot: "Please follow me"
         self.say("Please follow me")
 
-        # 6. move to bedroom
+        # 4. move to bedroom
         if self.move_to("outside bedroom", 3) == False:
             self.say("I am unable to move to the bedroom")
             return
 
-        # 7. speak to doctor, advise robot will wait
-        self.say("I will wait here until you are done.")
+        # 5. speak to doctor, advise robot will wait
+        self.say("Please enter. Stand facing me when you are done.")
     
-        # 8. wait until doctor exits the bedroom
-        rospy.sleep(5)
+        # 6. wait until doctor exits the bedroom
+        rospy.sleep(3)
         self.wait_for_scan_changed()
-
-        # 10. speak to the doctor, instruct to follow robot: "Please follow me"
-        self.say("Please follow me")
-
-        # 11. move to front door
-        if self.move_to("entrance", 3) == False:
+        self.say("Now you are done. I will follow you to the door. Please lead the way.")
+                
+        #self.say("Now you are done.")
+        rospy.sleep(2)
+        
+        # 9. move to hallway
+        if self.move_to("hallway", 3) == False:
             self.say("I am unable to move to the front door")
             return
-
-        # 12. bid farewell
+            
+        # 10. bid farewell
         self.say("Thank you for visiting. Goodbye!")
 
-        # 13. return to base
-        if self.move_to("kitchen", 3) == False:
+        # 11. return to base
+        if self.move_to("home", 3) == False:
             self.say("I am unable to move to the base")
             return
 
@@ -305,7 +294,7 @@ class Controller():
         # 1. speak to visitor, "Sorry, I don't know you. I cannot open the door."
         self.say("Sorry, I don't know you. I cannot open the door")
         
-        if self.move_to("kitchen", 3) == False:
+        if self.move_to("home", 3) == False:
             self.say("I am unable to move to the base")
             return
 

@@ -17,7 +17,7 @@ from   std_msgs.msg           import Empty, String
 from   geometry_msgs.msg      import Pose2D, Pose, Twist, PoseStamped
 from   roah_rsbb_comm_ros.msg import BenchmarkState
 from   roah_rsbb_comm_ros.srv import Percentage
-
+from random import *
 
 
 class Controller():
@@ -26,7 +26,8 @@ class Controller():
 		#Publishers  
 		self.tts_pub   = rospy.Publisher("/hearts/tts", String, queue_size=10)
 		self.pub_twist = rospy.Publisher('/mobile_base_controller/cmd_vel', Twist, queue_size=10)       
-
+		self.move_to_loc_pub = rospy.Publisher('/hearts/navigation/goal/location', String, queue_size=10)
+		self.pose_2d_pub = rospy.Publisher('hearts/navigation/goal', Pose2D, queue_size = 10)
 
 		#Subscribers
 		self.listen4cmd('on')
@@ -35,13 +36,41 @@ class Controller():
 		self.listen4ans('off')
 
 		rospy.Subscriber("roah_rsbb/benchmark/state", BenchmarkState, self.benchmark_state_callback)
-	
+			
 		#Services
 		self.prepare = rospy.ServiceProxy('/roah_rsbb/end_prepare', std_srvs.srv.Empty)
 		self.execute = rospy.ServiceProxy('/roah_rsbb/end_execute', std_srvs.srv.Empty)
-
-
+		self.user_location_service = rospy.ServiceProxy('/roah_rsbb/tablet/map', std_srvs.srv.Empty)
+		self.switch_2_on_service = rospy.ServiceProxy('/roah_rsbb/devices/switch_2/on', std_srvs.srv.Empty)
+		self.switch_2_off_service = rospy.ServiceProxy('/roah_rsbb/devices/switch_2/off', std_srvs.srv.Empty)
+		self.switch_1_on_service = rospy.ServiceProxy('/roah_rsbb/devices/switch_1/on', std_srvs.srv.Empty)
+		self.switch_1_off_service = rospy.ServiceProxy('/roah_rsbb/devices/switch_1/off', std_srvs.srv.Empty)
+		self.dimmer_set_service = rospy.ServiceProxy('/roah_rsbb/devices/dimmer/set',Percentage)
+		self.blinds_max_service = rospy.ServiceProxy('/roah_rsbb/devices/blinds/max', std_srvs.srv.Empty)
+		self.blinds_min_service = rospy.ServiceProxy('/roah_rsbb/devices/blinds/min', std_srvs.srv.Empty)
+		self.blinds_set_service = rospy.ServiceProxy('/roah_rsbb/devices/blinds/set',Percentage)
+		
 		self.user_location = None
+		
+		# Granny Annies position in our map's coord system
+		# col 0= bed, col1 = sofa
+		self.ulocx = [ -0.493560373783 ,-2.34082365036]
+		self.ulocy = [ -3.79606962204,  -7.20651531219]
+		self.uloct = [  0.995374783353,  0.92682136867]
+		
+		#test version  
+		#self.ulocx = [ 0.206475734711, 2.52560305595 ]
+		#self.ulocy = [ 0.507319450378, 0.0467052459717 ]
+		#self.uloct = [ 0.00143957138062, 0.00225162506104 ]
+		
+		
+		# Granny Annies position in judges coord system
+		# h for high value and l for low value ie the range
+		self.jlocxh = [ 0.00,  1.50]
+		self.jlocxl = [-4.00,  0.00]
+		self.jlocyh = [-0.50, -4.20]
+		self.jlocyl = [-7.20, -5.50]
+
 
 		# Disable head manager
 		#?head_mgr = NavigationCameraMgr()
@@ -55,7 +84,8 @@ class Controller():
 		'the',
 		'please',
 		'my',
-		'me'    
+		'to',
+		'me'    # nb trailing space to avoid corrupting "home"
 		]
 
 		# List of words that ALL mean get
@@ -65,7 +95,7 @@ class Controller():
 		'fetch'
 		]
 
-		# Dictionary for instructions to robot
+		# Dictionary for commands to robot
 		self.actions_dict = {
 		"switch on left light bedroom"  : "self.on_LLB()",
 		"switch off left light bedroom" : "self.off_LLB()",
@@ -73,6 +103,7 @@ class Controller():
 		"switch off right light bedroom": "self.off_RLB()",
 		"switch on both lights bedroom" : "self.on_BLB()" ,
 		"switch off both lights bedroom": "self.off_BLB()",
+        "set light dimmer half"         : "self.half_L()" ,
 		"open blinds"                   : "self.open_B()" ,
 		"close blinds"                  : "self.close_B()",
 		"leave blinds half open"        : "self.half_B()" ,
@@ -99,7 +130,8 @@ class Controller():
 		"mug"             : ["kitchen counter"],
 		"candle"          : ["coffee table"],
 		"cup"             : ["kitchen table"],
-		"reading glasses" : ["bedside table"] 
+		"reading glasses" : ["bedside table"],
+		"candle"          : ["coffee table"]
 		}
 
 	def listen4cmd(self,status):
@@ -131,21 +163,21 @@ class Controller():
 		if 'yes' in words:
 			self.say("OK then I will do that")
 			exec(self.code2exec)
-			self.say("Task is now complete. Please give me my next instruction")
+			self.say("The task is complete. Please give me another command")
 			
 			# re-establish subscribers	
 			self.listen4ans('off')
 			self.listen4cmd('on')
 
 		elif 'no' in words:
-			self.say("OK I will forget your last instruction. Please give me my next instruction")
+			self.say("OK I will forget your last command. Please give me another command")
 
 			# re-establish subscribers	
 			self.listen4ans('off')
 			self.listen4cmd('on')	
 
 		else:
-			self.say("Please answer with a yes or no")
+			self.say("Please answer with yes please or no thank you")
 
 		return
 
@@ -162,7 +194,7 @@ class Controller():
 
         # check that text has been returned
 		if "bad_recognition" in speech:
-			self.say("Sorry but no words were recognised please repeat your instruction")
+			self.say("Sorry, no words were recognised. Please repeat.")
 			return 
 
 		lookupkey = self.bld_lookupkey(speech)
@@ -174,13 +206,14 @@ class Controller():
 		# check that lookup key was found
 		if self.code2exec != None:
 			#listen for "answer"
-			self.say("You requested that I "+speech+' .')
-			self.say("Shall I do this now")
-			# get confirmation of instruction
+			self.say("You requested that I "+speech+'. Shall I do this now?')
+	
+			# get confirmation of command
 			self.listen4cmd('off')
 			self.listen4ans('on')
+			
 		else:
-			self.say("Your request was not understood       please repeat")
+			self.say("Sorry, your command was not understood. Please repeat.")
 
 		return
 	
@@ -220,64 +253,64 @@ class Controller():
 	# exec def's for DEVICE actions
 	def on_LLB(self):
 		# ON  Left Light Bedroom
-		run_service = rospy.ServiceProxy('/roah_rsbb/devices/switch_1/on', std_srvs.srv.Empty)
-		run_service()
+		self.switch_2_on_service()
 		return
 
 	def off_LLB(self):
 		# OFF Left Light Bedroom
-		run_service = rospy.ServiceProxy('/roah_rsbb/devices/switch_1/off', std_srvs.srv.Empty)
-		run_service()
+		self.switch_2_off_service()
 		return	
 
 	def on_RLB(self):
 		# ON   Right Light Bedroom
-		run_service = rospy.ServiceProxy('/roah_rsbb/devices/switch_2/on', std_srvs.srv.Empty)
-		run_service()
+		self.switch_1_on_service()
 		return
 
 	def off_RLB(self):
 		# OFF Right Light Bedroom
-		run_service = rospy.ServiceProxy('/roah_rsbb/devices/switch_2/off', std_srvs.srv.Empty)
-		run_service()
+		self.switch_1_off_service()
 		return
 
 	def on_BLB(self):
 		# ON  Both Light Bedroom
-		run_service = rospy.ServiceProxy('/roah_rsbb/devices/switch_3/on', std_srvs.srv.Empty)
-		run_service()
+		self.on_LLB()
+		self.on_RLB()
 		return
 
 	def off_BLB(self):
 		# OFF Both Light Bedroom
-		run_service = rospy.ServiceProxy('/roah_rsbb/devices/switch_3/off', std_srvs.srv.Empty)
-		run_service()
+		self.off_LLB()
+		self.off_RLB()
 		return
+
+        # set light dimmer to half
+	def half_L(self):
+		print("\n***** in dimmer call\n")
+		percent = 50
+ 		self.dimmer_set_service(percent) 
 	
 	def open_B(self):
 		# OPEN Blinds
-		run_service = rospy.ServiceProxy('/roah_rsbb/devices/blinds/max', std_srvs.srv.Empty)
-		run_service()																																											
+		self.blinds_max_service()																				
 		return
 
 	def close_B(self):
 		# CLOSE Blinds
-		run_service = rospy.ServiceProxy('/roah_rsbb/devices/blinds/min', std_srvs.srv.Empty)
-		run_service()
-		return	
+		self.blinds_min_service()
+		return
 
 	def half_B(self):
 		# HALF CLOSE Blinds as at 27 Dec2017 does not work - percentae type problem
-		run_service = rospy.ServiceProxy('/roah_rsbb/devices/blinds/set',Percentage)
 		percent = 50
-		run_service(percent) 
+		self.blinds_set_service(percent) 
 		return
 
 	def go_home(self):
 		print("\n************ write code to send me home!!\n")
-		print("***** Pretend I have gone HOME (Idiling Position)!\n")
+		print("*****  I have gone HOME (Idiling Position)!\n")
+		self.say("OK,  I am returning to my Initial home position now")
 		self.move_to_location("home")
-		self.say("I am going home now")
+
 		return
 
 	def get(self,object):
@@ -289,13 +322,17 @@ class Controller():
 		print(location)
 
 		for LOC in location:
-			print("***** For object : "+object+" - Location is : "+LOC)
-			print("***** Go there")
+			print("\n***** For object : "+object+" - Location is : "+LOC+"\n")
+			print("***** Go there now.")
 			self.move_to_location(LOC) #robot moves to corresponding position according to locations.json file in hearts_navigation
+
 			print("***** Recognise object")
+			self.say("I can see the "+object+" so now returning to granny annie")
+
 			print("***** return to GA \n")
 			self.move_to_pose2D(self.user_location)
-		
+			# cardboard box detection not working!
+			return
 		
 		return	
 
@@ -306,7 +343,7 @@ class Controller():
 		elif data.benchmark_state == BenchmarkState.PREPARE:
 			rospy.loginfo("PREPARE")
 			try:
-				time.sleep(5)
+				time.sleep(0.1)
 				self.prepare() # END of PREPARE msg to service
 			except:
 				rospy.loginfo("Failed to reply PREPARE")
@@ -319,10 +356,9 @@ class Controller():
 		rospy.loginfo("***** Waiting for call from GA")
 		self.wait = False
 		sub = rospy.Subscriber("/roah_rsbb/tablet/call", Empty, self.tablet_callback)
-		while self.wait == False: #updated by tablet_callback
-			rospy.sleep(5)
+		while self.wait == False:
+			rospy.sleep(0.1)
 		print("***** Call recd from GA")	
-		rospy.sleep(15)
 		sub.unregister()
 
 	def wait_for_user_location(self):
@@ -330,23 +366,50 @@ class Controller():
 		self.user_location = None
 		sub = rospy.Subscriber("/roah_rsbb/tablet/position", Pose2D, self.user_location_callback)
 		rospy.wait_for_service('/roah_rsbb/tablet/map')
-		user_location_service = rospy.ServiceProxy('/roah_rsbb/tablet/map', std_srvs.srv.Empty)
-		user_location_service()
+		
+		self.user_location_service()
 		rospy.loginfo("going to while loop")
-		while self.user_location is None:  # updated by user_location_callback
-			rospy.sleep(5)
-			rospy.loginfo("Exiting while loop")
+		while self.user_location is None:
+			rospy.sleep(0.1)
+			rospy.loginfo("Waiting for user location in while loop")
 		sub.unregister()
 
 
 		# Callback functions
 	def tablet_callback(self, msg):
+		self.say("granny annie has called for attention")
 		self.wait = True
 
 	def user_location_callback(self, msg):
 		rospy.loginfo("Waiting for user location callback")
 		rospy.loginfo(msg)
-		self.user_location = msg
+		found = False
+
+		print("msg.x     from GA tablet: "+str(msg.x))
+		print("msg.x     from GA tablet: "+str(msg.y))
+		print("msg.theta from GA tablet: "+str(msg.theta))
+
+
+
+		for idx in range (0,2):
+			if  msg.x > self.jlocxl[idx] and msg.x < self.jlocxh[idx] and \
+				msg.y > self.jlocyl[idx] and msg.y < self.jlocyh[idx]     :
+
+				# assign the coords in our system
+				msg.x = self.ulocx[idx]
+				msg.y = self.ulocy[idx]
+				msg.theta = self.uloct[idx]
+				self.user_location = msg
+				found = True
+
+		if not found :
+			print("Re-mapping for Grany Annie location failed!")
+			print("\n***** STOPPING PROGRAM *****\n")
+			quit()
+		print("remapped granny location")		
+		print("X     : "+str(self.user_location.x))
+		print("Y     : "+str(self.user_location.y))
+		print("theta : "+str(self.user_location.theta))
 
 	def navigation_callback(self, msg):
 		self.nav_status = msg.data
@@ -356,19 +419,19 @@ class Controller():
 	def move_to_pose2D(self, target_location_2D):
 		##publish granny annie's location
 		rospy.loginfo("Moving to Pose2D")
-		pub = rospy.Publisher('hearts/navigation/goal', Pose2D, queue_size = 10)
-		pub.publish(target_location_2D)
+		
+		self.pose_2d_pub.publish(target_location_2D)
 
-		self.wait_to_arrive(5)
-		pub.unregister()
-
+		self.wait_to_arrive(5)		
+		
 	def move_to_location(self, target_location):
 		rospy.loginfo("Moving to a location")
-		pub = rospy.Publisher('/hearts/navigation/goal/location', String, queue_size=10)
-		pub.publish(target_location)
+		
+		self.move_to_loc_pub.publish(target_location)
 
 		self.wait_to_arrive(5)
-		pub.unregister()
+
+		self.say("I have arrived at the "+target_location+" location")
 
 
 	def wait_to_arrive(self, count): #when this function is called, must specify no of counts before it breaks out of infinite loop
@@ -400,18 +463,25 @@ class Controller():
 
 	def main(self):
 		print ("\n***** MAIN Executing *****\n")
+		#go to home position
+		#self.move_to_location("home")
 
-		#wait for call 
+		#wait for call 		
+		self.say("Waiting to be called by granny annie.")
 		self.wait_for_call()
+
 		#request location
-		#DAR self.wait_for_user_location()
+		#self.say("Waiting for granny annie's location") - removed as delay seems to prevent user location callback from firing
+		self.wait_for_user_location()
 
 		#navigate to the user's location
-		#DAR self.move_to_pose2D(self.user_location)
+		self.say("hello granny annie, I am on my way to you.")
+		self.move_to_pose2D(self.user_location)
+		self.say("How can I help you today? Please give me a command")
 		
 		self.listen4cmd('on')
 
-		rospy.loginfo("End of programme")
+		rospy.loginfo("End of MAIN programme")
 
 
 

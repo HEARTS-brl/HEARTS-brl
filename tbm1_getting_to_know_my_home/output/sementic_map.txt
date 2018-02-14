@@ -1,22 +1,22 @@
-type(coffee_table, coffee_table).
-in(coffee_table, kitchen).
-type(lemon, food).
-in(lemon, kitchen).
-on(lemon, kitchen_cabinet).
-position (lemon, [2.54,2.84,0.5]).
-picture(lemon, lemon.jpg).
-type(glass, container).
-in(glass, kitchen).
-on(glass, kitchen_table).
-position (glass, [2.54,2.84,0.5]).
-picture(glass, glass.jpg).
-type(water, drink).
-in(water, dining_room).
-on(water, dining_table).
-position (water, [2.54,2.84,0.5]).
-picture(water, water.jpg).
-type(arm_chair, arm_chair).
-in(arm_chair, dining_room).
-type(door_bedroom, door).
-connects(door_bedroom, bedroom, living_room).
-isOpen(door_bedroom, false).
+type(toothpaste, toothpaste).
+in(toothpaste, kitchen).
+on(toothpaste, kitchen_counter).
+position (toothpaste, [2.54,2.84,0.5]).
+picture(toothpaste, toothpaste.jpg).
+type(plant, plant).
+in(plant, hall).
+type(kitchen_chair, kitchen_chair).
+in(kitchen_chair, living_room).
+type(weetabix, weetabix).
+in(weetabix, dining_room).
+on(weetabix, dining_table).
+position (weetabix, [2.54,2.84,0.5]).
+picture(weetabix, weetabix.jpg).
+type(door_entrance, door).
+connects(door_entrance, hall, outside).
+isOpen(door_entrance, false).
+type(juice, juice).
+in(juice, living_room).
+on(juice, tv_table).
+position (juice, [2.54,2.84,0.5]).
+picture(juice, juice.jpg).

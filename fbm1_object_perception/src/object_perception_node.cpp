@@ -32,7 +32,7 @@ public:
     {
         // TODO: define topics!
         std::string pub_topic = "/hearts/object_perception/recognised_image";
-        std::string sub_topic = "/camera/rgb/image_raw";
+        std::string sub_topic = "/xtion/rgb/image_raw";
 
         pub_ = nh_.advertise<std_msgs::String>(pub_topic, 1000);
 
@@ -77,6 +77,8 @@ public:
 
         // load training data
 
+        cout << "objects: " << objNum_ << ", training images: " << trainImgNum_ << endl;
+        
         // loading all training image data
         if ((objNum_ > 0) && (trainImgNum_ > 0))
         {
@@ -85,10 +87,12 @@ public:
                 for (int j = 1; j <= trainImgNum_; j++)
                 {
                     stringstream ss;
-                    ss << objName_[i] << "_" << j << ".jpg";
+                    ss << objName_[i] << "_" << j << ".png"; // jpg
                     string imName = ss.str();
+                    cout << "loading " << imName << "..." << endl;
                     Mat imgTemp = imread(trainPath + imName, IMREAD_GRAYSCALE);
                     trainData_.push_back(imgTemp);
+                    cout << "loaded " << imName << endl;
                 }
             }
         }
@@ -224,55 +228,60 @@ SurfDescriptorExtractor surfDesc;
                     best_matches.push_back(finalMatches[i]);
                 }
             }
+            
+            if (!bestImg.empty())
+            {            
+                //-- Draw only "good" matches
+                Mat img_matches;
+                drawMatches(bestImg, keypoints_best, query, keypoint_query,
+                    best_matches, img_matches, Scalar::all(-1), Scalar::all(-1),
+                    vector<char>(), 0); // default drawing
 
-            //-- Draw only "good" matches
-            Mat img_matches;
-            drawMatches(bestImg, keypoints_best, query, keypoint_query,
-            best_matches, img_matches, Scalar::all(-1), Scalar::all(-1),
-            vector<char>(), 0); // default drawing
-
-            //DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS
-
-            if (img_matches.cols > 1920) // resize if image too big
-            {
-                double resizeRatio = 1920.0 / img_matches.cols;
-                cv::resize(img_matches, img_matches, Size(), resizeRatio, resizeRatio);
-            }
-
-            double max_dist = 0; double min_dist = 100;
-
-		ROS_INFO_STREAM("NUM ROWS: " << descriptors_best.rows);
-            //-- Quick calculation of max and min distances between keypoints
-            for (int i = 0; i < descriptors_best.rows; i++)
-            {
-                double dist = finalMatches[i].distance;
- 		if (dist < min_dist) min_dist = dist;
+                cout << "3" << endl;
                 
-		//min_dist = dist;
-                if (dist > max_dist) max_dist = dist;
-            }
+                //DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS
 
-            ROS_INFO_STREAM("-- Min dist: " << min_dist << endl);
-            ROS_INFO_STREAM("-- Total distance (inversed): " << distVec.at(largestIndex) << endl);
+                if (img_matches.cols > 1920) // resize if image too big
+                {
+                    double resizeRatio = 1920.0 / img_matches.cols;
+                    cv::resize(img_matches, img_matches, Size(), resizeRatio, resizeRatio);
+                }
 
-            if (distVec.at(largestIndex) > dist_thresh)
-            {
-                int whichObjInx = floor(largestIndex) / trainImgNum_;
-                string whichObjStr = objName_.at(whichObjInx);
+                double max_dist = 0; double min_dist = 100;
 
-                ROS_INFO_STREAM(whichObjStr << " Recognised!" << endl);
-                putText(img_matches, whichObjStr + " Recognised!", posText, FONT_HERSHEY_COMPLEX, 1.2, BLUE, 2, 8); // displaying recognised names
-                imshow(openCvWindow, img_matches);
+		    ROS_INFO_STREAM("NUM ROWS: " << descriptors_best.rows);
+                //-- Quick calculation of max and min distances between keypoints
+                for (int i = 0; i < descriptors_best.rows; i++)
+                {
+                    double dist = finalMatches[i].distance;
+     		if (dist < min_dist) min_dist = dist;
+                    
+		    //min_dist = dist;
+                    if (dist > max_dist) max_dist = dist;
+                }
 
-                std_msgs::String msg;
-                msg.data = whichObjStr;
-                pub_.publish(msg);
+                ROS_INFO_STREAM("-- Min dist: " << min_dist << endl);
+                ROS_INFO_STREAM("-- Total distance (inversed): " << distVec.at(largestIndex) << endl);
 
-ROS_INFO("Published to topic!");
-            }
-            else
-            {
-                imshow(openCvWindow, query);
+                if (distVec.at(largestIndex) > dist_thresh)
+                {
+                    int whichObjInx = floor(largestIndex) / trainImgNum_;
+                    string whichObjStr = objName_.at(whichObjInx);
+
+                    ROS_INFO_STREAM(whichObjStr << " Recognised!" << endl);
+                    putText(img_matches, whichObjStr + " Recognised!", posText, FONT_HERSHEY_COMPLEX, 1.2, BLUE, 2, 8); // displaying recognised names
+                    imshow(openCvWindow, img_matches);
+
+                    std_msgs::String msg;
+                    msg.data = whichObjStr;
+                    pub_.publish(msg);
+
+    ROS_INFO("Published to topic!");
+                }
+                else
+                {
+                    imshow(openCvWindow, query);
+                }
             }
         }
     }
@@ -303,7 +312,7 @@ int main(int argc, char** argv)
   
     ObjectPerceiver op;
 
-    ROS_INFO("perceiving objects");
+    ROS_INFO("perceiving objects new!");
 
     ros::spin();
     return 0;
