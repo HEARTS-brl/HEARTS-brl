@@ -17,7 +17,7 @@ def callback(data):
     print("str len: "+str(lstr))
 
     soundhandle.say(data.data)
-    delay = lstr * 0.1
+    delay = lstr * 0.15
     time.sleep(delay)
     print("saying over  " + data.data)
     mixer_spk.setmute(1)
@@ -27,5 +27,5 @@ def callback(data):
 
 soundhandle = SoundClient()
 rospy.init_node("tts",anonymous=True)
-rospy.Subscriber("/hearts/tts", String, callback)
+rospy.Subscriber("/hearts/stt", String, callback)
 rospy.spin()
