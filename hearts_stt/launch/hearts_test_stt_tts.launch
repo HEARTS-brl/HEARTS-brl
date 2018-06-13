@@ -1,0 +1,25 @@
+<launch>
+    <!-- set speech to Text engine -->
+    <arg name="SR_speechrec_engine" default="google" />
+    <!-- determines whether audio is supplied from microphone ('') or audio file ('TH') -->
+    <arg name="SR_TH" default="" />
+    <!-- used to generate wav files e.g. wav out path -->
+    <arg name="SR_ERL_DATAPATHOUT" default=" $(find hearts_stt)/temp/" />
+    <!-- used to configure listening energy threshold -->
+    <arg name="SR_ENERGY_THRESHOLD" default="600" />
+    <!-- keywords for google -->
+    <arg name="SR_GCP_KEYWORDSFILE" default="$(find hearts_stt)/data_in/CFR/gcp_keywords_vb.txt" />
+    <!-- Used in microphone mode: default is to listen continuously  ="", or to wait on keystoke  ="listen" -->
+    <arg name="listen" default="" />
+    
+    <param name="SR_speechrec_engine" value="$(arg SR_speechrec_engine)" />
+    <param name='SR_TH' value="$(arg SR_TH)" />
+    <param name='SR_ERL_DATAPATHOUT' value="$(arg SR_ERL_DATAPATHOUT)" />
+    <param name='SR_ENERGY_THRESHOLD'  value="$(arg SR_ENERGY_THRESHOLD)" /> <!-- type='int' --> 
+    <param name='SR_GCP_KEYWORDSFILE' value="$(arg SR_GCP_KEYWORDSFILE)" />
+    <param name="listen" value="$(arg listen)" />
+    
+    <node name='stt' pkg='hearts_stt' output='screen' type='stt.py' args="$(arg listen)" />
+    <node name="sound_player" pkg="hearts_tts" output="screen" type="sound_player.py" />
+    <node name="tts" pkg="hearts_tts" output="screen" type="tts.py" />
+</launch>
