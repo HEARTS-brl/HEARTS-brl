@@ -347,6 +347,7 @@ class Controller():
 				self.prepare() # END of PREPARE msg to service
 			except:
 				rospy.loginfo("Failed to reply PREPARE")
+
 		elif data.benchmark_state == BenchmarkState.EXECUTE:
 			rospy.loginfo("EXECUTE")
 			self.main()
