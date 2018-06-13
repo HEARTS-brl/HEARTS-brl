@@ -16,10 +16,11 @@ _webcommander_
 http://tiago-25c:8080/
 
 _remote access_
+```
 ssh pal@tiago-25c
 scp [-r] pal@tiago-25c:<remote> <local>
 scp -r pal@tiago-25c:/home/pal/.pal/tiago_maps/configurations/<map_name>/ /home/turtlebot/<map_name>
-
+```
 
 _for stopping the head movement_
 head_manager
